@@ -1,0 +1,23 @@
+{
+  "name": "hirefrankie",
+  "version": "1.0.0",
+  "description": "",
+  "main": "APIService.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/autofranco/hireFrankie-google-sheet-add-on.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/autofranco/hireFrankie-google-sheet-add-on/issues"
+  },
+  "homepage": "https://github.com/autofranco/hireFrankie-google-sheet-add-on#readme",
+  "devDependencies": {
+    "@types/google-apps-script": "^1.0.99"
+  }
+}

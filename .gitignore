@@ -35,3 +35,7 @@ logs/
 *.bak
 temp/
 tmp/
+
+# Project files
+package-lock.json
+spec.txt
