@@ -16,6 +16,7 @@ function onOpen() {
   
   ui.createMenu('Auto Lead Warmer')
     .addItem('🚀 Run', 'runAutoLeadWarmer')
+    .addItem('🛑 Stop All', 'stopAllProcesses')
     .addSeparator()
     .addItem('⚙️ Setup Headers', 'setupHeaders')
     .addSeparator()
@@ -493,6 +494,83 @@ function showTriggerStats() {
   }
 }
 
+
+/**
+ * 停止所有處理程序（選單功能）
+ */
+function stopAllProcesses() {
+  const ui = SpreadsheetApp.getUi();
+  const result = ui.alert(
+    '🛑 停止所有處理程序',
+    '確定要停止此工作表的所有處理程序嗎？\n\n將會執行以下操作：\n• 將所有 Processing 狀態改為 Done\n• 將所有 Running 狀態改為 Done\n• 清理所有排程資料\n• 停止所有自動郵件發送\n\n⚠️ 此操作無法復原！',
+    ui.ButtonSet.YES_NO
+  );
+  
+  if (result === ui.Button.YES) {
+    try {
+      const stoppedCount = stopAllSheetProcesses();
+      ui.alert(
+        '✅ 停止完成', 
+        `已停止 ${stoppedCount} 個處理程序\n\n所有潛在客戶狀態已設為 Done\n排程資料已清理完畢`, 
+        ui.ButtonSet.OK
+      );
+    } catch (error) {
+      ui.alert('錯誤', `停止處理程序失敗: ${error.message}`, ui.ButtonSet.OK);
+    }
+  }
+}
+
+/**
+ * 停止當前工作表的所有處理程序
+ */
+function stopAllSheetProcesses() {
+  const sheet = SheetService.getMainSheet();
+  const lastRow = sheet.getLastRow();
+  let stoppedCount = 0;
+  
+  if (lastRow <= 1) {
+    console.log('沒有資料需要停止');
+    return 0;
+  }
+  
+  console.log('=== 開始停止所有處理程序 ===');
+  
+  // 1. 遍歷所有行，停止 Processing 和 Running 狀態的行
+  for (let i = 2; i <= lastRow; i++) {
+    const statusCell = sheet.getRange(i, COLUMNS.STATUS + 1);
+    const currentStatus = statusCell.getValue();
+    
+    if (currentStatus === 'Processing' || currentStatus === 'Running') {
+      // 更新狀態為 Done
+      SheetService.updateStatus(sheet, i, 'Done');
+      SheetService.updateInfo(sheet, i, '手動停止所有處理程序');
+      
+      // 清除 Send Now 按鈕
+      SheetService.setupSendNowButton(sheet, i); // 這會自動清除按鈕因為狀態不是 Running
+      
+      stoppedCount++;
+      console.log(`已停止第 ${i} 行的處理程序`);
+    }
+  }
+  
+  // 2. 清理所有 PropertiesService 中的排程資料
+  const properties = PropertiesService.getScriptProperties().getProperties();
+  let cleanedProperties = 0;
+  
+  for (const key of Object.keys(properties)) {
+    if (key.startsWith('production_email_')) {
+      PropertiesService.getScriptProperties().deleteProperty(key);
+      cleanedProperties++;
+      console.log(`清理排程資料: ${key}`);
+    }
+  }
+  
+  console.log(`=== 停止完成 ===`);
+  console.log(`停止了 ${stoppedCount} 個處理程序`);
+  console.log(`清理了 ${cleanedProperties} 個排程資料`);
+  
+  return stoppedCount;
+}
 
 /**
  * 刪除所有觸發器（選單功能）
