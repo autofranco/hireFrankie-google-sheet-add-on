@@ -21,6 +21,11 @@ const SheetService = {
   setupHeaders() {
     const sheet = this.getMainSheet();
     
+    // 自動生成 Sheet 標題
+    const timestamp = new Date();
+    const title = `Auto Lead Warmer - ${timestamp.toLocaleDateString('zh-TW')} ${timestamp.toLocaleTimeString('zh-TW', {hour12: false})}`;
+    SpreadsheetApp.getActiveSpreadsheet().rename(title);
+    
     const headers = [
       'Email Address',
       'First Name', 
@@ -46,7 +51,7 @@ const SheetService = {
     headerRange.setFontWeight('bold');
     headerRange.setBackground('#f0f0f0');
     
-    SpreadsheetApp.getUi().alert('表头设定完成！');
+    SpreadsheetApp.getUi().alert(`表头设定完成！\n工作表已重新命名為: ${title}`);
   },
 
   /**

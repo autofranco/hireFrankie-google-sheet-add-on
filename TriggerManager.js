@@ -68,6 +68,58 @@ const TriggerManager = {
       .timeBased()
       .everyHours(1)
       .create();
+  },
+
+  /**
+   * 創建全域郵件發送觸發器（正式模式專用）
+   */
+  createGlobalEmailTrigger() {
+    // 檢查是否已存在全域觸發器
+    const existingTriggers = this.getAllTriggers();
+    const globalTriggerExists = existingTriggers.some(trigger => 
+      trigger.getHandlerFunction() === 'checkAndSendMails'
+    );
+    
+    if (!globalTriggerExists) {
+      console.log('創建全域郵件發送觸發器（每15分鐘執行一次）');
+      ScriptApp.newTrigger('checkAndSendMails')
+        .timeBased()
+        .everyMinutes(15) // 每15分鐘檢查一次
+        .create();
+    } else {
+      console.log('全域郵件發送觸發器已存在');
+    }
+  },
+
+  /**
+   * 刪除全域郵件發送觸發器
+   */
+  deleteGlobalEmailTrigger() {
+    const triggers = this.getAllTriggers();
+    triggers.forEach(trigger => {
+      if (trigger.getHandlerFunction() === 'checkAndSendMails') {
+        this.deleteTrigger(trigger);
+        console.log('已刪除全域郵件發送觸發器');
+      }
+    });
+  },
+
+  /**
+   * 獲取觸發器統計資訊
+   */
+  getTriggerStats() {
+    const triggers = this.getAllTriggers();
+    const emailTriggers = triggers.filter(t => t.getHandlerFunction() === 'sendScheduledEmail').length;
+    const globalTriggers = triggers.filter(t => t.getHandlerFunction() === 'checkAndSendMails').length;
+    const cleanupTriggers = triggers.filter(t => t.getHandlerFunction() === 'cleanupTriggers').length;
+    
+    return {
+      total: triggers.length,
+      emailTriggers,
+      globalTriggers, 
+      cleanupTriggers,
+      others: triggers.length - emailTriggers - globalTriggers - cleanupTriggers
+    };
   }
 };
 

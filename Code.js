@@ -13,10 +13,15 @@
  */
 function onOpen() {
   const ui = SpreadsheetApp.getUi();
+  const currentModeDisplay = CURRENT_MODE === RUN_MODE.TEST ? '🧪 測試模式' : '🚀 正式模式';
+  
   ui.createMenu('Auto Lead Warmer')
     .addItem('🚀 Run', 'runAutoLeadWarmer')
     .addSeparator()
     .addItem('⚙️ Setup Headers', 'setupHeaders')
+    .addSeparator()
+    .addItem(`當前: ${currentModeDisplay}`, 'showCurrentMode')
+    .addItem('🔄 切換運行模式', 'toggleRunMode')
     .addSeparator()
     .addItem('🔗 Test API Connection', 'testAPIConnection')
     .addItem('🌐 Test Network', 'testNetworkConnection')
@@ -26,7 +31,8 @@ function onOpen() {
       .addItem('Test Mail Angles Only', 'testMailAnglesGeneration')
       .addItem('Test Raw API Call', 'testRawAPICall')
       .addItem('Check Sheet Data', 'checkSheetData')
-      .addItem('Reset Test Data', 'resetTestData'))
+      .addItem('Reset Test Data', 'resetTestData')
+      .addItem('Show Trigger Stats', 'showTriggerStats'))
     .addToUi();
 }
 
@@ -79,6 +85,9 @@ function onEdit(e) {
 function runAutoLeadWarmer() {
   try {
     console.log('=== 开始执行 Auto Lead Warmer ===');
+    
+    // 自動啟用回覆檢測觸發器
+    ReplyDetectionService.createReplyDetectionTrigger();
     
     const sheet = SheetService.getMainSheet();
     const data = SheetService.getUnprocessedData(sheet);
@@ -387,4 +396,63 @@ function findNextEmailToSend(row, rowIndex) {
   }
   
   return null;
+}
+
+/**
+ * 顯示當前運行模式
+ */
+function showCurrentMode() {
+  const modeText = CURRENT_MODE === RUN_MODE.TEST ? 
+    '🧪 測試模式\n\n郵件會使用 Utilities.sleep 立即發送，間隔短暫' :
+    '🚀 正式模式\n\n郵件會使用 Time-based Trigger 按排程發送';
+  
+  SpreadsheetApp.getUi().alert('當前運行模式', modeText, SpreadsheetApp.getUi().ButtonSet.OK);
+}
+
+/**
+ * 切換運行模式（需要手動修改 Config.js）
+ */
+function toggleRunMode() {
+  const ui = SpreadsheetApp.getUi();
+  const currentModeText = CURRENT_MODE === RUN_MODE.TEST ? '測試模式' : '正式模式';
+  const targetModeText = CURRENT_MODE === RUN_MODE.TEST ? '正式模式' : '測試模式';
+  
+  const result = ui.alert(
+    '切換運行模式',
+    `當前: ${currentModeText}\n\n要切換到 ${targetModeText} 嗎？\n\n注意：需要手動修改 Config.js 中的 CURRENT_MODE 設定`,
+    ui.ButtonSet.YES_NO
+  );
+  
+  if (result === ui.Button.YES) {
+    ui.alert(
+      '手動切換說明',
+      `請手動編輯 Config.js 檔案：\n\n將 CURRENT_MODE 改為:\n${CURRENT_MODE === RUN_MODE.TEST ? 'RUN_MODE.PRODUCTION' : 'RUN_MODE.TEST'}\n\n然後重新載入頁面`,
+      ui.ButtonSet.OK
+    );
+  }
+}
+
+/**
+ * 顯示觸發器統計資訊
+ */
+function showTriggerStats() {
+  try {
+    const stats = TriggerManager.getTriggerStats();
+    
+    const message = `📊 觸發器統計資訊：
+    
+總觸發器數量: ${stats.total}
+
+🚀 全域郵件觸發器: ${stats.globalTriggers}
+📧 回覆檢測觸發器: ${stats.others}
+🧹 清理觸發器: ${stats.cleanupTriggers}
+📨 舊版郵件觸發器: ${stats.emailTriggers}
+
+當前模式: ${CURRENT_MODE === RUN_MODE.TEST ? '測試模式' : '正式模式'}`;
+    
+    SpreadsheetApp.getUi().alert('觸發器統計', message, SpreadsheetApp.getUi().ButtonSet.OK);
+    
+  } catch (error) {
+    SpreadsheetApp.getUi().alert('錯誤', `無法取得觸發器統計: ${error.message}`, SpreadsheetApp.getUi().ButtonSet.OK);
+  }
 }

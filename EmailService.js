@@ -5,37 +5,251 @@
 const EmailService = {
   
   /**
-   * 设定邮件发送排程
+   * 设定邮件发送排程（根據模式決定使用測試或正式發送）
    */
   scheduleEmails(email, firstName, followUpMails, schedules, rowIndex) {
-    // 由于 Google Apps Script 的限制，我们需要使用触发器来实现排程发送
-    const triggers = [
-      { mail: followUpMails.mail1, time: schedules.schedule1, type: 'mail1' },
-      { mail: followUpMails.mail2, time: schedules.schedule2, type: 'mail2' },
-      { mail: followUpMails.mail3, time: schedules.schedule3, type: 'mail3' }
-    ];
-    
-    triggers.forEach((trigger, index) => {
-      // 建立时间触发器
-      ScriptApp.newTrigger('sendScheduledEmail')
-        .timeBased()
-        .at(trigger.time)
-        .create();
-      
-      // 将邮件资讯储存到 PropertiesService
-      const propertyKey = `email_${trigger.time.getTime()}_${email}`;
-      PropertiesService.getScriptProperties().setProperty(propertyKey, JSON.stringify({
-        email: email,
-        firstName: firstName,
-        content: trigger.mail,
-        scheduleType: trigger.type,
-        rowIndex: rowIndex
-      }));
-    });
+    if (CURRENT_MODE === RUN_MODE.TEST) {
+      // 測試模式：使用 setTimeout 立即發送
+      this.scheduleEmailsTestMode(email, firstName, followUpMails, schedules, rowIndex);
+    } else {
+      // 正式模式：使用 Time-based Trigger
+      this.scheduleEmailsProductionMode(email, firstName, followUpMails, schedules, rowIndex);
+    }
   },
 
   /**
-   * 发送排程邮件（由触发器呼叫）
+   * 測試模式：使用 Utilities.sleep 立即發送所有郵件
+   */
+  scheduleEmailsTestMode(email, firstName, followUpMails, schedules, rowIndex) {
+    console.log('使用測試模式發送郵件');
+    
+    const emails = [
+      { content: followUpMails.mail1, type: 'mail1' },
+      { content: followUpMails.mail2, type: 'mail2' },
+      { content: followUpMails.mail3, type: 'mail3' }
+    ];
+
+    // 測試模式間隔很短：1分鐘、1分鐘、1分鐘
+    const intervals = [1 * 60 * 1000, 1 * 60 * 1000, 1 * 60 * 1000]; // 毫秒
+
+    emails.forEach((emailData, index) => {
+      console.log(`排程第${index + 1}封郵件，${intervals[index] / 60000}分鐘後發送`);
+      
+      try {
+        // 第一封郵件立即發送，其他的等待
+        if (index > 0) {
+          console.log(`等待 ${intervals[index] / 60000} 分鐘...`);
+          Utilities.sleep(intervals[index]);
+        }
+        
+        // 發送郵件
+        this.sendEmail(email, firstName, emailData.content, `Follow Up #${index + 1}`);
+        
+        // 更新排程狀態（加刪除線）
+        const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+        SheetService.updateScheduleStatus(rowIndex, emailData.type);
+        
+        console.log(`✅ 測試模式：第${index + 1}封郵件已發送給 ${firstName} (${email})`);
+        
+      } catch (error) {
+        console.error(`❌ 測試模式發送第${index + 1}封郵件失敗:`, error);
+        const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+        SheetService.updateInfo(sheet, rowIndex, `[Error] 第${index + 1}封郵件發送失敗: ${error.message}`);
+      }
+    });
+    
+    // 測試模式完成後，更新狀態為 Done
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+    SheetService.updateStatus(sheet, rowIndex, 'Done');
+    SheetService.updateInfo(sheet, rowIndex, '測試模式：全部郵件已發送完成');
+  },
+
+  /**
+   * 正式模式：使用全域時間觸發器（新方法）
+   */
+  scheduleEmailsProductionMode(email, firstName, followUpMails, schedules, rowIndex) {
+    console.log('使用正式模式：全域觸發器方式');
+    
+    // 創建全域觸發器（如果不存在）
+    TriggerManager.createGlobalEmailTrigger();
+    
+    // 將郵件資訊儲存到 PropertiesService，供全域觸發器使用
+    const emailData = {
+      email: email,
+      firstName: firstName,
+      rowIndex: rowIndex,
+      emails: [
+        {
+          content: followUpMails.mail1,
+          schedule: schedules.schedule1,
+          type: 'mail1',
+          sent: false
+        },
+        {
+          content: followUpMails.mail2, 
+          schedule: schedules.schedule2,
+          type: 'mail2',
+          sent: false
+        },
+        {
+          content: followUpMails.mail3,
+          schedule: schedules.schedule3, 
+          type: 'mail3',
+          sent: false
+        }
+      ]
+    };
+    
+    // 使用唯一key儲存
+    const propertyKey = `production_email_${rowIndex}_${email.replace(/[^a-zA-Z0-9]/g, '_')}`;
+    PropertiesService.getScriptProperties().setProperty(propertyKey, JSON.stringify(emailData));
+    
+    console.log(`正式模式：已儲存郵件排程資料 - ${propertyKey}`);
+  },
+
+  /**
+   * 立即發送郵件（Send Now 功能）
+   */
+  sendImmediateEmail(email, firstName, subject, content, rowIndex, emailType) {
+    try {
+      this.sendEmail(email, firstName, content, subject);
+      
+      // 更新排程狀態（加刪除線）
+      SheetService.updateScheduleStatus(rowIndex, emailType);
+      
+      // 更新 info 欄位
+      const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+      SheetService.updateInfo(sheet, rowIndex, `立即發送: ${emailType} 已發送`);
+      
+      console.log(`立即發送成功: ${subject} 發送給 ${firstName} (${email})`);
+      
+    } catch (error) {
+      console.error('立即發送郵件失敗:', error);
+      const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+      SheetService.updateInfo(sheet, rowIndex, `[Error] 立即發送失敗: ${error.message}`);
+      throw error;
+    }
+  },
+
+  /**
+   * 核心郵件發送功能
+   */
+  sendEmail(email, firstName, content, subject) {
+    // 解析郵件內容，提取主旨和內文
+    const lines = content.split('\n');
+    const extractedSubject = lines.find(line => line.includes('主旨') || line.includes('Subject'))
+      ?.replace(/主旨[:：]?/g, '').trim();
+    
+    const finalSubject = extractedSubject || subject || `來自業務團隊的訊息 - ${firstName}`;
+    
+    // 發送郵件
+    GmailApp.sendEmail(email, finalSubject, content);
+    
+    console.log(`郵件已發送: ${finalSubject} -> ${email}`);
+  },
+
+  /**
+   * 全域郵件檢查和發送（正式模式專用 - 每15分鐘執行一次）
+   */
+  checkAndSendMails() {
+    try {
+      console.log('=== 全域郵件檢查開始 ===');
+      const now = new Date();
+      const properties = PropertiesService.getScriptProperties().getProperties();
+      let sentCount = 0;
+      let checkedCount = 0;
+      
+      // 掃描所有正式模式的郵件排程
+      for (const [key, value] of Object.entries(properties)) {
+        if (key.startsWith('production_email_')) {
+          checkedCount++;
+          
+          try {
+            const emailData = JSON.parse(value);
+            
+            // 檢查該筆資料是否仍為 Running 狀態
+            const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+            const statusCell = sheet.getRange(emailData.rowIndex, COLUMNS.STATUS + 1);
+            const currentStatus = statusCell.getValue();
+            
+            // 如果狀態不是 Running，跳過處理
+            if (currentStatus !== 'Running') {
+              console.log(`跳過非 Running 狀態的資料: Row ${emailData.rowIndex}, Status: ${currentStatus}`);
+              continue;
+            }
+            
+            // 檢查每封郵件是否需要發送
+            let dataUpdated = false;
+            
+            for (let i = 0; i < emailData.emails.length; i++) {
+              const email = emailData.emails[i];
+              
+              // 如果已發送，跳過
+              if (email.sent) continue;
+              
+              // 檢查是否到了發送時間
+              const scheduleTime = new Date(email.schedule);
+              
+              if (now >= scheduleTime) {
+                console.log(`發送時間已到: ${email.type} for ${emailData.firstName}`);
+                
+                try {
+                  // 發送郵件
+                  this.sendEmail(emailData.email, emailData.firstName, email.content, `Follow Up - ${email.type}`);
+                  
+                  // 標記為已發送
+                  emailData.emails[i].sent = true;
+                  dataUpdated = true;
+                  sentCount++;
+                  
+                  // 更新 Sheet 中的排程狀態（加刪除線）
+                  SheetService.updateScheduleStatus(emailData.rowIndex, email.type);
+                  
+                  console.log(`✅ 正式模式發送成功: ${email.type} -> ${emailData.email}`);
+                  
+                } catch (error) {
+                  console.error(`❌ 正式模式發送失敗: ${email.type} -> ${emailData.email}`, error);
+                  
+                  // 更新錯誤訊息
+                  SheetService.updateInfo(sheet, emailData.rowIndex, 
+                    `[Error] ${email.type} 發送失敗: ${error.message}`);
+                }
+              }
+            }
+            
+            // 檢查是否所有郵件都已發送
+            const allSent = emailData.emails.every(email => email.sent);
+            
+            if (allSent) {
+              // 所有郵件都已發送，更新狀態為 Done
+              SheetService.updateStatus(sheet, emailData.rowIndex, 'Done');
+              SheetService.updateInfo(sheet, emailData.rowIndex, '全部郵件已發送完成');
+              
+              // 刪除 PropertiesService 中的資料
+              PropertiesService.getScriptProperties().deleteProperty(key);
+              console.log(`🎉 完成所有郵件發送: Row ${emailData.rowIndex}`);
+              
+            } else if (dataUpdated) {
+              // 更新 PropertiesService 中的資料
+              PropertiesService.getScriptProperties().setProperty(key, JSON.stringify(emailData));
+            }
+            
+          } catch (error) {
+            console.error(`處理郵件排程資料時發生錯誤: ${key}`, error);
+          }
+        }
+      }
+      
+      console.log(`=== 全域郵件檢查完成 ===`);
+      console.log(`檢查了 ${checkedCount} 筆排程資料，發送了 ${sentCount} 封郵件`);
+      
+    } catch (error) {
+      console.error('全域郵件檢查發生錯誤:', error);
+    }
+  },
+
+  /**
+   * 发送排程邮件（由触发器呼叫 - 舊版本，保留相容性）
    */
   sendScheduledEmail(e) {
     try {
@@ -88,4 +302,8 @@ function scheduleEmails(email, firstName, followUpMails, schedules, rowIndex) {
 
 function sendScheduledEmail(e) {
   return EmailService.sendScheduledEmail(e);
+}
+
+function checkAndSendMails() {
+  return EmailService.checkAndSendMails();
 }

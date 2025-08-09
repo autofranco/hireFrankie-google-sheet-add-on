@@ -33,3 +33,12 @@ const EMAIL_SCHEDULE_INTERVALS = {
   SECOND: 2, // 分钟
   THIRD: 3   // 分钟
 };
+
+// 運行模式配置
+const RUN_MODE = {
+  TEST: 'test',     // 測試模式
+  PRODUCTION: 'production' // 正式模式
+};
+
+// 當前運行模式（可手動切換）
+const CURRENT_MODE = RUN_MODE.TEST;
