@@ -35,7 +35,9 @@ const SheetService = {
       '3rd mail angle',
       '3rd follow up mail',
       '3rd mail schedule',
-      'Processed'
+      'send now',
+      'status',
+      'info'
     ];
     
     // 设定表头
@@ -59,18 +61,25 @@ const SheetService = {
     const dataRange = sheet.getRange(2, 1, lastRow - 1, Object.keys(COLUMNS).length);
     const data = dataRange.getValues();
     
-    // 过滤未处理的数据
-    const unprocessedRows = data.filter((row, index) => {
-      return row[COLUMNS.PROCESSED] !== 'PROCESSED' && 
-             row[COLUMNS.EMAIL] && 
-             row[COLUMNS.FIRST_NAME] && 
-             row[COLUMNS.CONTEXT];
+    // 过滤未处理的数据 (status 為空白的)
+    const unprocessedRows = [];
+    const unprocessedRowIndexes = [];
+    
+    data.forEach((row, index) => {
+      if (!row[COLUMNS.STATUS] && // status 為空白
+          row[COLUMNS.EMAIL] && 
+          row[COLUMNS.FIRST_NAME] && 
+          row[COLUMNS.CONTEXT]) {
+        unprocessedRows.push(row);
+        unprocessedRowIndexes.push(index + 2); // +2 因為從第2行開始且index從0開始
+      }
     });
     
     return {
       rows: unprocessedRows,
       startRow: 2,
-      allData: data
+      allData: data,
+      rowIndexes: unprocessedRowIndexes
     };
   },
 
@@ -102,17 +111,78 @@ const SheetService = {
   },
 
   /**
-   * 标记行为已处理
+   * 更新狀態
    */
-  markRowProcessed(sheet, rowIndex) {
-    sheet.getRange(rowIndex, COLUMNS.PROCESSED + 1).setValue('PROCESSED');
+  updateStatus(sheet, rowIndex, status) {
+    sheet.getRange(rowIndex, COLUMNS.STATUS + 1).setValue(status);
   },
 
   /**
-   * 标记行错误
+   * 更新詳細訊息
+   */
+  updateInfo(sheet, rowIndex, infoMessage) {
+    sheet.getRange(rowIndex, COLUMNS.INFO + 1).setValue(infoMessage);
+  },
+
+  /**
+   * 標記行為已處理 (更新為新的狀態系統)
+   */
+  markRowProcessed(sheet, rowIndex) {
+    this.updateStatus(sheet, rowIndex, 'Running');
+    this.updateInfo(sheet, rowIndex, '已完成內容生成並設定排程');
+  },
+
+  /**
+   * 標記行錯誤
    */
   markRowError(sheet, rowIndex, errorMessage) {
-    sheet.getRange(rowIndex, COLUMNS.PROCESSED + 1).setValue(`错误: ${errorMessage}`);
+    this.updateInfo(sheet, rowIndex, `[Error] ${errorMessage}`);
+  },
+
+  /**
+   * 設置 Send Now 按鈕 (只在狀態為 Running 時顯示)
+   */
+  setupSendNowButton(sheet, rowIndex) {
+    const statusCell = sheet.getRange(rowIndex, COLUMNS.STATUS + 1);
+    const status = statusCell.getValue();
+    
+    const sendNowCell = sheet.getRange(rowIndex, COLUMNS.SEND_NOW + 1);
+    
+    if (status === 'Running') {
+      sendNowCell.setValue('Send Now');
+      // 設置資料驗證下拉選單
+      const rule = SpreadsheetApp.newDataValidation()
+        .requireValueInList(['Send Now', ''], true)
+        .build();
+      sendNowCell.setDataValidation(rule);
+    } else {
+      // 清除 Send Now 按鈕
+      sendNowCell.clearContent();
+      sendNowCell.clearDataValidations();
+    }
+  },
+
+  /**
+   * 更新所有行的 Send Now 按鈕狀態
+   */
+  updateAllSendNowButtons(sheet) {
+    const lastRow = sheet.getLastRow();
+    if (lastRow <= 1) return;
+    
+    for (let i = 2; i <= lastRow; i++) {
+      this.setupSendNowButton(sheet, i);
+    }
+  },
+
+  /**
+   * 設置狀態下拉選單
+   */
+  setupStatusDropdown(sheet, rowIndex) {
+    const cell = sheet.getRange(rowIndex, COLUMNS.STATUS + 1);
+    const rule = SpreadsheetApp.newDataValidation()
+      .requireValueInList(['', 'Processing', 'Running', 'Done'], true)
+      .build();
+    cell.setDataValidation(rule);
   },
 
   /**

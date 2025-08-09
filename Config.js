@@ -21,7 +21,9 @@ const COLUMNS = {
   MAIL_ANGLE_3: 10, // K: 3rd mail angle
   FOLLOW_UP_3: 11,  // L: 3rd follow up mail
   SCHEDULE_3: 12,   // M: 3rd mail schedule
-  PROCESSED: 13     // N: 处理状态标记
+  SEND_NOW: 13,     // N: send now 按鈕
+  STATUS: 14,       // O: status 狀態
+  INFO: 15          // P: info 詳細訊息 (原 Processed)
 };
 
 // 其他配置常量

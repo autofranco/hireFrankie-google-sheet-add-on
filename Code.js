@@ -31,6 +31,49 @@ function onOpen() {
 }
 
 /**
+ * 當儲存格編輯時觸發 - 處理狀態變更和 Send Now 按鈕
+ */
+function onEdit(e) {
+  try {
+    const sheet = e.source.getActiveSheet();
+    const range = e.range;
+    
+    // 只處理主要工作表
+    if (sheet.getName() !== SHEET_NAME) {
+      return;
+    }
+    
+    // 只處理資料行（非表頭）
+    if (range.getRow() <= 1) {
+      return;
+    }
+    
+    const rowIndex = range.getRow();
+    const col = range.getColumn();
+    
+    // 當狀態欄位被修改時，更新 Send Now 按鈕
+    if (col === COLUMNS.STATUS + 1) {
+      SheetService.setupSendNowButton(sheet, rowIndex);
+      
+      // 處理狀態改為 Done 的情況（手動停止）
+      if (e.value === 'Done') {
+        SheetService.updateInfo(sheet, rowIndex, '手動停止後續信件寄送');
+      }
+    }
+    
+    // 處理 Send Now 按鈕點擊
+    if (col === COLUMNS.SEND_NOW + 1 && e.value === 'Send Now') {
+      handleSendNowClick(sheet, rowIndex);
+      // 清空 Send Now 欄位，避免重複觸發
+      sheet.getRange(rowIndex, COLUMNS.SEND_NOW + 1).setValue('');
+    }
+    
+  } catch (error) {
+    console.error('onEdit 觸發錯誤:', error);
+  }
+}
+
+/**
  * 主要执行函数
  */
 function runAutoLeadWarmer() {
@@ -55,10 +98,13 @@ function runAutoLeadWarmer() {
     
     for (let i = 0; i < data.rows.length; i++) {
       const row = data.rows[i];
-      const rowIndex = data.startRow + i;
+      const rowIndex = data.rowIndexes[i]; // 使用正確的行索引
       
       try {
         console.log(`--- 处理第 ${i + 1}/${data.rows.length} 行 (Sheet行号: ${rowIndex}) ---`);
+        
+        // 立即更新狀態為 Processing
+        SheetService.updateStatus(sheet, rowIndex, 'Processing');
         
         // 处理单行数据
         const success = processRow(sheet, row, rowIndex);
@@ -109,7 +155,11 @@ function processRow(sheet, row, rowIndex) {
   console.log(`处理客户: ${row[COLUMNS.FIRST_NAME]} (${row[COLUMNS.EMAIL]})`);
   
   try {
-    // 1. 生成潜在客户画像
+    // 設置下拉選單
+    SheetService.setupStatusDropdown(sheet, rowIndex);
+    SheetService.setupSendNowButton(sheet, rowIndex);
+    
+    // 1. 生成潜在客户画像 - 即時寫入
     console.log('步骤1: 生成客户画像...');
     const leadsProfile = ContentGenerator.generateLeadsProfile(
       row[COLUMNS.CONTEXT], 
@@ -120,10 +170,11 @@ function processRow(sheet, row, rowIndex) {
       throw new Error('客户画像生成失败或内容过短');
     }
     
+    // 即時寫入客戶畫像
     sheet.getRange(rowIndex, COLUMNS.LEADS_PROFILE + 1).setValue(leadsProfile);
     console.log(`客户画像生成成功 (${leadsProfile.length} 字符)`);
     
-    // 2. 生成三个信件切入点
+    // 2. 生成三个信件切入点 - 即時寫入
     console.log('步骤2: 生成邮件切入点...');
     const mailAngles = ContentGenerator.generateMailAngles(
       leadsProfile, 
@@ -137,10 +188,11 @@ function processRow(sheet, row, rowIndex) {
       throw new Error('邮件切入点生成失败，返回了默认值');
     }
     
+    // 即時寫入切入點
     SheetService.updateMailAngles(sheet, rowIndex, mailAngles);
     console.log('邮件切入点生成成功');
     
-    // 3. 生成三封追踪信件
+    // 3. 生成三封追踪信件 - 即時寫入
     console.log('步骤3: 生成追踪邮件...');
     const followUpMails = ContentGenerator.generateFollowUpMails(
       leadsProfile, 
@@ -155,6 +207,7 @@ function processRow(sheet, row, rowIndex) {
       throw new Error('追踪邮件生成失败');
     }
     
+    // 即時寫入郵件內容
     SheetService.updateFollowUpMails(sheet, rowIndex, followUpMails);
     console.log('追踪邮件生成成功');
     
@@ -235,4 +288,103 @@ function runAutoLeadWarmerBatch() {
     console.error('批量处理错误:', error);
     SpreadsheetApp.getUi().alert(`批量处理错误: ${error.message}`);
   }
+}
+
+/**
+ * 處理 Send Now 按鈕點擊
+ */
+function handleSendNowClick(sheet, rowIndex) {
+  try {
+    // 獲取該行資料
+    const dataRange = sheet.getRange(rowIndex, 1, 1, Object.keys(COLUMNS).length);
+    const row = dataRange.getValues()[0];
+    
+    // 檢查必要欄位
+    if (!row[COLUMNS.EMAIL] || !row[COLUMNS.FIRST_NAME]) {
+      SpreadsheetApp.getUi().alert('該行缺少必要的 Email 或姓名資料');
+      return;
+    }
+    
+    // 檢查狀態是否為 Running
+    if (row[COLUMNS.STATUS] !== 'Running') {
+      SpreadsheetApp.getUi().alert('只能對狀態為 "Running" 的行使用 Send Now 功能');
+      return;
+    }
+    
+    // 找出下一封待寄的信件
+    const nextEmail = findNextEmailToSend(row, rowIndex);
+    
+    if (!nextEmail) {
+      SpreadsheetApp.getUi().alert('沒有待發送的郵件');
+      return;
+    }
+    
+    // 立即發送郵件
+    EmailService.sendImmediateEmail(
+      row[COLUMNS.EMAIL],
+      row[COLUMNS.FIRST_NAME],
+      nextEmail.subject,
+      nextEmail.content,
+      rowIndex,
+      nextEmail.type
+    );
+    
+    console.log(`Send Now: 郵件已立即發送給 ${row[COLUMNS.FIRST_NAME]} (${row[COLUMNS.EMAIL]})`);
+    
+  } catch (error) {
+    console.error('Send Now 點擊處理錯誤:', error);
+    SpreadsheetApp.getUi().alert(`Send Now 錯誤: ${error.message}`);
+  }
+}
+
+/**
+ * 找出下一封待寄的郵件
+ */
+function findNextEmailToSend(row, rowIndex) {
+  // 檢查三封信的排程時間和內容
+  const emails = [
+    {
+      type: 'mail1',
+      schedule: row[COLUMNS.SCHEDULE_1],
+      content: row[COLUMNS.FOLLOW_UP_1],
+      subject: `Follow Up #1 - ${row[COLUMNS.FIRST_NAME]}`
+    },
+    {
+      type: 'mail2', 
+      schedule: row[COLUMNS.SCHEDULE_2],
+      content: row[COLUMNS.FOLLOW_UP_2],
+      subject: `Follow Up #2 - ${row[COLUMNS.FIRST_NAME]}`
+    },
+    {
+      type: 'mail3',
+      schedule: row[COLUMNS.SCHEDULE_3], 
+      content: row[COLUMNS.FOLLOW_UP_3],
+      subject: `Follow Up #3 - ${row[COLUMNS.FIRST_NAME]}`
+    }
+  ];
+  
+  // 找出第一封有內容但未發送的郵件
+  for (const email of emails) {
+    if (email.content && email.schedule) {
+      // 檢查該排程時間欄位是否有刪除線（表示已發送）
+      const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+      let scheduleColumnIndex;
+      
+      switch (email.type) {
+        case 'mail1': scheduleColumnIndex = COLUMNS.SCHEDULE_1 + 1; break;
+        case 'mail2': scheduleColumnIndex = COLUMNS.SCHEDULE_2 + 1; break;
+        case 'mail3': scheduleColumnIndex = COLUMNS.SCHEDULE_3 + 1; break;
+      }
+      
+      const scheduleCell = sheet.getRange(rowIndex, scheduleColumnIndex);
+      const fontLine = scheduleCell.getFontLine();
+      
+      // 如果沒有刪除線，表示未發送
+      if (fontLine !== 'line-through') {
+        return email;
+      }
+    }
+  }
+  
+  return null;
 }
