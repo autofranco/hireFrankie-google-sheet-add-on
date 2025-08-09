@@ -66,10 +66,10 @@ function onEdit(e) {
     }
     
     // 處理 Send Now 按鈕點擊
-    if (col === COLUMNS.SEND_NOW + 1 && e.value === 'Send Now') {
+    if (col === COLUMNS.SEND_NOW + 1 && (e.value === '✅ Send Now' || e.value === 'Send Now')) {
       handleSendNowClick(sheet, rowIndex);
-      // 清空 Send Now 欄位，避免重複觸發
-      sheet.getRange(rowIndex, COLUMNS.SEND_NOW + 1).setValue('');
+      // 重置按鈕狀態
+      sheet.getRange(rowIndex, COLUMNS.SEND_NOW + 1).setValue('🚀 Send Now');
     }
     
   } catch (error) {
@@ -83,6 +83,9 @@ function onEdit(e) {
 function runAutoLeadWarmer() {
   try {
     console.log('=== 开始执行 Auto Lead Warmer ===');
+    
+    // 清理舊的多餘觸發器，避免觸發器過多錯誤
+    TriggerManager.cleanupOldTriggers();
     
     // 自動啟用回覆檢測觸發器
     ReplyDetectionService.createReplyDetectionTrigger();
@@ -165,8 +168,11 @@ function processRow(sheet, row, rowIndex) {
     // 設置狀態下拉選單
     SheetService.setupStatusDropdown(sheet, rowIndex);
     
-    // 1. 生成潜在客户画像 - 即時寫入
+    // 1. 生成潜在客户画像 - 逐步填入
     console.log('步骤1: 生成客户画像...');
+    SheetService.updateInfo(sheet, rowIndex, '正在生成客戶畫像...');
+    SpreadsheetApp.flush(); // 立即顯示更新
+    
     const leadsProfile = ContentGenerator.generateLeadsProfile(
       row[COLUMNS.CONTEXT], 
       row[COLUMNS.FIRST_NAME]
@@ -176,30 +182,55 @@ function processRow(sheet, row, rowIndex) {
       throw new Error('客户画像生成失败或内容过短');
     }
     
-    // 即時寫入客戶畫像
+    // 立即填入客戶畫像
     sheet.getRange(rowIndex, COLUMNS.LEADS_PROFILE + 1).setValue(leadsProfile);
+    SheetService.updateInfo(sheet, rowIndex, '✅ 客戶畫像已生成');
+    SpreadsheetApp.flush();
     console.log(`客户画像生成成功 (${leadsProfile.length} 字符)`);
     
-    // 2. 生成三个信件切入点 - 即時寫入
-    console.log('步骤2: 生成邮件切入点...');
+    // 2. 生成第1個信件切入点
+    console.log('步骤2: 生成第1個邮件切入点...');
+    SheetService.updateInfo(sheet, rowIndex, '正在生成第1個郵件切入點...');
+    SpreadsheetApp.flush();
+    
     const mailAngles = ContentGenerator.generateMailAngles(
       leadsProfile, 
       row[COLUMNS.FIRST_NAME]
     );
     
-    // 验证切入点是否成功生成（不是默认值）
+    // 验证切入点是否成功生成
     if (mailAngles.angle1.includes('切入点1：解决客户痛点的方案') ||
         mailAngles.angle2.includes('切入点2：展示获利机会') ||
         mailAngles.angle3.includes('切入点3：建立信任关系')) {
       throw new Error('邮件切入点生成失败，返回了默认值');
     }
     
-    // 即時寫入切入點
-    SheetService.updateMailAngles(sheet, rowIndex, mailAngles);
-    console.log('邮件切入点生成成功');
+    // 逐個填入切入點
+    sheet.getRange(rowIndex, COLUMNS.MAIL_ANGLE_1 + 1).setValue(mailAngles.angle1);
+    SheetService.updateInfo(sheet, rowIndex, '✅ 第1個郵件切入點已生成');
+    SpreadsheetApp.flush();
     
-    // 3. 生成三封追踪信件 - 即時寫入
-    console.log('步骤3: 生成追踪邮件...');
+    console.log('步骤3: 生成第2個邮件切入点...');
+    SheetService.updateInfo(sheet, rowIndex, '正在生成第2個郵件切入點...');
+    SpreadsheetApp.flush();
+    
+    sheet.getRange(rowIndex, COLUMNS.MAIL_ANGLE_2 + 1).setValue(mailAngles.angle2);
+    SheetService.updateInfo(sheet, rowIndex, '✅ 第2個郵件切入點已生成');
+    SpreadsheetApp.flush();
+    
+    console.log('步骤4: 生成第3個邮件切入点...');
+    SheetService.updateInfo(sheet, rowIndex, '正在生成第3個郵件切入點...');
+    SpreadsheetApp.flush();
+    
+    sheet.getRange(rowIndex, COLUMNS.MAIL_ANGLE_3 + 1).setValue(mailAngles.angle3);
+    SheetService.updateInfo(sheet, rowIndex, '✅ 所有郵件切入點已生成');
+    SpreadsheetApp.flush();
+    
+    // 3. 生成第1封追踪信件
+    console.log('步骤5: 生成第1封追踪邮件...');
+    SheetService.updateInfo(sheet, rowIndex, '正在生成第1封追蹤郵件...');
+    SpreadsheetApp.flush();
+    
     const followUpMails = ContentGenerator.generateFollowUpMails(
       leadsProfile, 
       mailAngles, 
@@ -213,21 +244,48 @@ function processRow(sheet, row, rowIndex) {
       throw new Error('追踪邮件生成失败');
     }
     
-    // 即時寫入郵件內容
-    SheetService.updateFollowUpMails(sheet, rowIndex, followUpMails);
-    console.log('追踪邮件生成成功');
+    // 逐封填入郵件內容
+    sheet.getRange(rowIndex, COLUMNS.FOLLOW_UP_1 + 1).setValue(followUpMails.mail1);
+    SheetService.updateInfo(sheet, rowIndex, '✅ 第1封追蹤郵件已生成');
+    SpreadsheetApp.flush();
+    
+    console.log('步骤6: 生成第2封追踪邮件...');
+    SheetService.updateInfo(sheet, rowIndex, '正在生成第2封追蹤郵件...');
+    SpreadsheetApp.flush();
+    
+    sheet.getRange(rowIndex, COLUMNS.FOLLOW_UP_2 + 1).setValue(followUpMails.mail2);
+    SheetService.updateInfo(sheet, rowIndex, '✅ 第2封追蹤郵件已生成');
+    SpreadsheetApp.flush();
+    
+    console.log('步骤7: 生成第3封追踪邮件...');
+    SheetService.updateInfo(sheet, rowIndex, '正在生成第3封追蹤郵件...');
+    SpreadsheetApp.flush();
+    
+    sheet.getRange(rowIndex, COLUMNS.FOLLOW_UP_3 + 1).setValue(followUpMails.mail3);
+    SheetService.updateInfo(sheet, rowIndex, '✅ 第3封追蹤郵件已生成');
+    SpreadsheetApp.flush();
     
     // 4. 设定排程时间
-    console.log('步骤4: 设定排程时间...');
+    console.log('步骤8: 设定排程时间...');
+    SheetService.updateInfo(sheet, rowIndex, '正在設定郵件排程時間...');
+    SpreadsheetApp.flush();
+    
     const schedules = Utils.generateScheduleTimes();
-    SheetService.updateSchedules(sheet, rowIndex, schedules);
+    
+    // 逐個填入排程時間
+    sheet.getRange(rowIndex, COLUMNS.SCHEDULE_1 + 1).setValue(schedules.schedule1);
+    sheet.getRange(rowIndex, COLUMNS.SCHEDULE_2 + 1).setValue(schedules.schedule2);
+    sheet.getRange(rowIndex, COLUMNS.SCHEDULE_3 + 1).setValue(schedules.schedule3);
+    
+    SheetService.updateInfo(sheet, rowIndex, '✅ 排程時間已設定');
+    SpreadsheetApp.flush();
     console.log('排程时间设定成功');
     
-    // 5. 标记为已处理
-    SheetService.markRowProcessed(sheet, rowIndex);
+    // 5. 设定邮件发送触发器
+    console.log('步骤9: 设定邮件发送触发器...');
+    SheetService.updateInfo(sheet, rowIndex, '正在設定郵件發送排程...');
+    SpreadsheetApp.flush();
     
-    // 6. 设定邮件发送触发器
-    console.log('步骤5: 设定邮件发送触发器...');
     EmailService.scheduleEmails(
       row[COLUMNS.EMAIL], 
       row[COLUMNS.FIRST_NAME], 
@@ -235,6 +293,12 @@ function processRow(sheet, row, rowIndex) {
       schedules, 
       rowIndex
     );
+    
+    // 6. 标记为已处理並設置 Send Now 按鈕
+    SheetService.markRowProcessed(sheet, rowIndex);
+    
+    SheetService.updateInfo(sheet, rowIndex, '🎉 完成！已設定所有郵件排程');
+    SpreadsheetApp.flush();
     console.log('邮件发送触发器设定成功');
     
     return true;

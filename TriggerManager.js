@@ -106,6 +106,52 @@ const TriggerManager = {
 
 
   /**
+   * 清理舊的多餘觸發器（避免達到20個觸發器上限）
+   */
+  cleanupOldTriggers() {
+    const triggers = this.getAllTriggers();
+    let deletedCount = 0;
+    
+    // 刪除舊版本的個別郵件觸發器
+    triggers.forEach(trigger => {
+      const handlerFunction = trigger.getHandlerFunction();
+      // 只保留必要的觸發器，刪除舊的個別觸發器
+      if (handlerFunction === 'sendScheduledEmail') {
+        this.deleteTrigger(trigger);
+        console.log(`清理舊觸發器: ${handlerFunction}`);
+        deletedCount++;
+      }
+    });
+    
+    // 確保只有一個全域觸發器
+    const globalTriggers = triggers.filter(t => t.getHandlerFunction() === 'checkAndSendMails');
+    if (globalTriggers.length > 1) {
+      // 保留最新的，刪除多餘的
+      for (let i = 1; i < globalTriggers.length; i++) {
+        this.deleteTrigger(globalTriggers[i]);
+        deletedCount++;
+        console.log('刪除多餘的全域觸發器');
+      }
+    }
+    
+    // 確保只有一個回覆檢測觸發器
+    const replyTriggers = triggers.filter(t => t.getHandlerFunction() === 'checkAllRunningLeadsForReplies');
+    if (replyTriggers.length > 1) {
+      for (let i = 1; i < replyTriggers.length; i++) {
+        this.deleteTrigger(replyTriggers[i]);
+        deletedCount++;
+        console.log('刪除多餘的回覆檢測觸發器');
+      }
+    }
+    
+    if (deletedCount > 0) {
+      console.log(`清理完成：刪除了 ${deletedCount} 個多餘觸發器`);
+    }
+    
+    return deletedCount;
+  },
+
+  /**
    * 刪除所有 Auto Lead Warmer 相關觸發器
    */
   deleteAllLeadWarmerTriggers() {

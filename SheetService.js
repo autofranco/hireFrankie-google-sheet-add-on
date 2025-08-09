@@ -157,16 +157,25 @@ const SheetService = {
     const sendNowCell = sheet.getRange(rowIndex, COLUMNS.SEND_NOW + 1);
     
     if (status === 'Running') {
-      sendNowCell.setValue('Send Now');
-      // 設置資料驗證下拉選單
+      // 設置看起來像按鈕的格式
+      sendNowCell.setValue('🚀 Send Now');
+      sendNowCell.setBackground('#4CAF50'); // 綠色背景
+      sendNowCell.setFontColor('#FFFFFF'); // 白色文字
+      sendNowCell.setHorizontalAlignment('center');
+      sendNowCell.setFontWeight('bold');
+      
+      // 設置資料驗證，讓用戶點擊時可以選擇
       const rule = SpreadsheetApp.newDataValidation()
-        .requireValueInList(['Send Now', ''], true)
+        .requireValueInList(['🚀 Send Now', '✅ Send Now', ''], true)
         .build();
       sendNowCell.setDataValidation(rule);
     } else {
       // 清除 Send Now 按鈕
       sendNowCell.clearContent();
       sendNowCell.clearDataValidations();
+      sendNowCell.setBackground(null);
+      sendNowCell.setFontColor(null);
+      sendNowCell.setFontWeight('normal');
     }
   },
 
