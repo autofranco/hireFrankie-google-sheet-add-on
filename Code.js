@@ -272,10 +272,18 @@ function processRow(sheet, row, rowIndex) {
     
     const schedules = Utils.generateScheduleTimes();
     
-    // 逐個填入排程時間
-    sheet.getRange(rowIndex, COLUMNS.SCHEDULE_1 + 1).setValue(schedules.schedule1);
-    sheet.getRange(rowIndex, COLUMNS.SCHEDULE_2 + 1).setValue(schedules.schedule2);
-    sheet.getRange(rowIndex, COLUMNS.SCHEDULE_3 + 1).setValue(schedules.schedule3);
+    // 逐個填入排程時間，確保沒有刪除線
+    const schedule1Cell = sheet.getRange(rowIndex, COLUMNS.SCHEDULE_1 + 1);
+    schedule1Cell.setValue(schedules.schedule1);
+    schedule1Cell.setFontLine('none'); // 確保沒有刪除線
+    
+    const schedule2Cell = sheet.getRange(rowIndex, COLUMNS.SCHEDULE_2 + 1);
+    schedule2Cell.setValue(schedules.schedule2);
+    schedule2Cell.setFontLine('none'); // 確保沒有刪除線
+    
+    const schedule3Cell = sheet.getRange(rowIndex, COLUMNS.SCHEDULE_3 + 1);
+    schedule3Cell.setValue(schedules.schedule3);
+    schedule3Cell.setFontLine('none'); // 確保沒有刪除線
     
     SheetService.updateInfo(sheet, rowIndex, '✅ 排程時間已設定');
     SpreadsheetApp.flush();

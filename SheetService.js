@@ -110,9 +110,18 @@ const SheetService = {
    * 更新排程时间
    */
   updateSchedules(sheet, rowIndex, schedules) {
-    sheet.getRange(rowIndex, COLUMNS.SCHEDULE_1 + 1).setValue(schedules.schedule1);
-    sheet.getRange(rowIndex, COLUMNS.SCHEDULE_2 + 1).setValue(schedules.schedule2);
-    sheet.getRange(rowIndex, COLUMNS.SCHEDULE_3 + 1).setValue(schedules.schedule3);
+    // 設定排程時間並確保沒有刪除線格式
+    const schedule1Cell = sheet.getRange(rowIndex, COLUMNS.SCHEDULE_1 + 1);
+    schedule1Cell.setValue(schedules.schedule1);
+    schedule1Cell.setFontLine('none');
+    
+    const schedule2Cell = sheet.getRange(rowIndex, COLUMNS.SCHEDULE_2 + 1);
+    schedule2Cell.setValue(schedules.schedule2);
+    schedule2Cell.setFontLine('none');
+    
+    const schedule3Cell = sheet.getRange(rowIndex, COLUMNS.SCHEDULE_3 + 1);
+    schedule3Cell.setValue(schedules.schedule3);
+    schedule3Cell.setFontLine('none');
   },
 
   /**
@@ -203,7 +212,7 @@ const SheetService = {
   },
 
   /**
-   * 更新排程状态（加上删除线）
+   * 更新排程状态（加上删除线）- 只在郵件發送完成後調用
    */
   updateScheduleStatus(rowIndex, scheduleType) {
     try {
@@ -226,6 +235,8 @@ const SheetService = {
       
       const cell = sheet.getRange(rowIndex, columnIndex);
       cell.setFontLine('line-through');
+      
+      console.log(`✅ 已為第 ${rowIndex} 行的 ${scheduleType} 添加刪除線 (郵件已發送)`);
       
     } catch (error) {
       console.error('更新排程状态时发生错误:', error);
