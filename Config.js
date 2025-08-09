@@ -34,11 +34,10 @@ const EMAIL_SCHEDULE_INTERVALS = {
   THIRD: 3   // 分钟
 };
 
-// 運行模式配置
+// 移除測試模式，只使用正式模式
 const RUN_MODE = {
-  TEST: 'test',     // 測試模式
   PRODUCTION: 'production' // 正式模式
 };
 
-// 當前運行模式（可手動切換）
-const CURRENT_MODE = RUN_MODE.TEST;
+// 固定使用正式模式
+const CURRENT_MODE = RUN_MODE.PRODUCTION;

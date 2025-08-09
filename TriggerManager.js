@@ -81,10 +81,10 @@ const TriggerManager = {
     );
     
     if (!globalTriggerExists) {
-      console.log('創建全域郵件發送觸發器（每15分鐘執行一次）');
+      console.log('創建全域郵件發送觸發器（每小時執行一次）');
       ScriptApp.newTrigger('checkAndSendMails')
         .timeBased()
-        .everyMinutes(15) // 每15分鐘檢查一次
+        .everyHours(1) // Google 最小間隔為1小時
         .create();
     } else {
       console.log('全域郵件發送觸發器已存在');
@@ -102,6 +102,30 @@ const TriggerManager = {
         console.log('已刪除全域郵件發送觸發器');
       }
     });
+  },
+
+
+  /**
+   * 刪除所有 Auto Lead Warmer 相關觸發器
+   */
+  deleteAllLeadWarmerTriggers() {
+    const triggers = this.getAllTriggers();
+    let deletedCount = 0;
+    
+    triggers.forEach(trigger => {
+      const handlerFunction = trigger.getHandlerFunction();
+      if (handlerFunction === 'checkAndSendMails' || 
+          handlerFunction === 'sendScheduledEmail' ||
+          handlerFunction === 'checkAllRunningLeadsForReplies' ||
+          handlerFunction === 'cleanupTriggers') {
+        this.deleteTrigger(trigger);
+        console.log(`已刪除觸發器: ${handlerFunction}`);
+        deletedCount++;
+      }
+    });
+    
+    console.log(`總共刪除了 ${deletedCount} 個觸發器`);
+    return deletedCount;
   },
 
   /**

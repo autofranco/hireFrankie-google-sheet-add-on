@@ -5,67 +5,15 @@
 const EmailService = {
   
   /**
-   * 设定邮件发送排程（根據模式決定使用測試或正式發送）
+   * 设定邮件发送排程（正式模式）
    */
   scheduleEmails(email, firstName, followUpMails, schedules, rowIndex) {
-    if (CURRENT_MODE === RUN_MODE.TEST) {
-      // 測試模式：使用 setTimeout 立即發送
-      this.scheduleEmailsTestMode(email, firstName, followUpMails, schedules, rowIndex);
-    } else {
-      // 正式模式：使用 Time-based Trigger
-      this.scheduleEmailsProductionMode(email, firstName, followUpMails, schedules, rowIndex);
-    }
+    // 只使用正式模式
+    this.scheduleEmailsProductionMode(email, firstName, followUpMails, schedules, rowIndex);
   },
 
   /**
-   * 測試模式：使用 Utilities.sleep 立即發送所有郵件
-   */
-  scheduleEmailsTestMode(email, firstName, followUpMails, schedules, rowIndex) {
-    console.log('使用測試模式發送郵件');
-    
-    const emails = [
-      { content: followUpMails.mail1, type: 'mail1' },
-      { content: followUpMails.mail2, type: 'mail2' },
-      { content: followUpMails.mail3, type: 'mail3' }
-    ];
-
-    // 測試模式間隔很短：1分鐘、1分鐘、1分鐘
-    const intervals = [1 * 60 * 1000, 1 * 60 * 1000, 1 * 60 * 1000]; // 毫秒
-
-    emails.forEach((emailData, index) => {
-      console.log(`排程第${index + 1}封郵件，${intervals[index] / 60000}分鐘後發送`);
-      
-      try {
-        // 第一封郵件立即發送，其他的等待
-        if (index > 0) {
-          console.log(`等待 ${intervals[index] / 60000} 分鐘...`);
-          Utilities.sleep(intervals[index]);
-        }
-        
-        // 發送郵件
-        this.sendEmail(email, firstName, emailData.content, `Follow Up #${index + 1}`);
-        
-        // 更新排程狀態（加刪除線）
-        const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
-        SheetService.updateScheduleStatus(rowIndex, emailData.type);
-        
-        console.log(`✅ 測試模式：第${index + 1}封郵件已發送給 ${firstName} (${email})`);
-        
-      } catch (error) {
-        console.error(`❌ 測試模式發送第${index + 1}封郵件失敗:`, error);
-        const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
-        SheetService.updateInfo(sheet, rowIndex, `[Error] 第${index + 1}封郵件發送失敗: ${error.message}`);
-      }
-    });
-    
-    // 測試模式完成後，更新狀態為 Done
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
-    SheetService.updateStatus(sheet, rowIndex, 'Done');
-    SheetService.updateInfo(sheet, rowIndex, '測試模式：全部郵件已發送完成');
-  },
-
-  /**
-   * 正式模式：使用全域時間觸發器（新方法）
+   * 正式模式：使用全域時間觸發器
    */
   scheduleEmailsProductionMode(email, firstName, followUpMails, schedules, rowIndex) {
     console.log('使用正式模式：全域觸發器方式');
@@ -149,7 +97,7 @@ const EmailService = {
   },
 
   /**
-   * 全域郵件檢查和發送（正式模式專用 - 每15分鐘執行一次）
+   * 全域郵件檢查和發送（正式模式專用 - 每小時執行一次）
    */
   checkAndSendMails() {
     try {
@@ -251,7 +199,7 @@ const EmailService = {
   /**
    * 发送排程邮件（由触发器呼叫 - 舊版本，保留相容性）
    */
-  sendScheduledEmail(e) {
+  sendScheduledEmail() {
     try {
       const now = new Date().getTime();
       const properties = PropertiesService.getScriptProperties().getProperties();
@@ -300,8 +248,8 @@ function scheduleEmails(email, firstName, followUpMails, schedules, rowIndex) {
   return EmailService.scheduleEmails(email, firstName, followUpMails, schedules, rowIndex);
 }
 
-function sendScheduledEmail(e) {
-  return EmailService.sendScheduledEmail(e);
+function sendScheduledEmail() {
+  return EmailService.sendScheduledEmail();
 }
 
 function checkAndSendMails() {

@@ -13,15 +13,11 @@
  */
 function onOpen() {
   const ui = SpreadsheetApp.getUi();
-  const currentModeDisplay = CURRENT_MODE === RUN_MODE.TEST ? '🧪 測試模式' : '🚀 正式模式';
   
   ui.createMenu('Auto Lead Warmer')
     .addItem('🚀 Run', 'runAutoLeadWarmer')
     .addSeparator()
     .addItem('⚙️ Setup Headers', 'setupHeaders')
-    .addSeparator()
-    .addItem(`當前: ${currentModeDisplay}`, 'showCurrentMode')
-    .addItem('🔄 切換運行模式', 'toggleRunMode')
     .addSeparator()
     .addItem('🔗 Test API Connection', 'testAPIConnection')
     .addItem('🌐 Test Network', 'testNetworkConnection')
@@ -32,7 +28,9 @@ function onOpen() {
       .addItem('Test Raw API Call', 'testRawAPICall')
       .addItem('Check Sheet Data', 'checkSheetData')
       .addItem('Reset Test Data', 'resetTestData')
-      .addItem('Show Trigger Stats', 'showTriggerStats'))
+      .addSeparator()
+      .addItem('Show Trigger Stats', 'showTriggerStats')
+      .addItem('🗑️ Delete All Triggers', 'deleteAllTriggersMenu'))
     .addToUi();
 }
 
@@ -164,9 +162,8 @@ function processRow(sheet, row, rowIndex) {
   console.log(`处理客户: ${row[COLUMNS.FIRST_NAME]} (${row[COLUMNS.EMAIL]})`);
   
   try {
-    // 設置下拉選單
+    // 設置狀態下拉選單
     SheetService.setupStatusDropdown(sheet, rowIndex);
-    SheetService.setupSendNowButton(sheet, rowIndex);
     
     // 1. 生成潜在客户画像 - 即時寫入
     console.log('步骤1: 生成客户画像...');
@@ -398,39 +395,6 @@ function findNextEmailToSend(row, rowIndex) {
   return null;
 }
 
-/**
- * 顯示當前運行模式
- */
-function showCurrentMode() {
-  const modeText = CURRENT_MODE === RUN_MODE.TEST ? 
-    '🧪 測試模式\n\n郵件會使用 Utilities.sleep 立即發送，間隔短暫' :
-    '🚀 正式模式\n\n郵件會使用 Time-based Trigger 按排程發送';
-  
-  SpreadsheetApp.getUi().alert('當前運行模式', modeText, SpreadsheetApp.getUi().ButtonSet.OK);
-}
-
-/**
- * 切換運行模式（需要手動修改 Config.js）
- */
-function toggleRunMode() {
-  const ui = SpreadsheetApp.getUi();
-  const currentModeText = CURRENT_MODE === RUN_MODE.TEST ? '測試模式' : '正式模式';
-  const targetModeText = CURRENT_MODE === RUN_MODE.TEST ? '正式模式' : '測試模式';
-  
-  const result = ui.alert(
-    '切換運行模式',
-    `當前: ${currentModeText}\n\n要切換到 ${targetModeText} 嗎？\n\n注意：需要手動修改 Config.js 中的 CURRENT_MODE 設定`,
-    ui.ButtonSet.YES_NO
-  );
-  
-  if (result === ui.Button.YES) {
-    ui.alert(
-      '手動切換說明',
-      `請手動編輯 Config.js 檔案：\n\n將 CURRENT_MODE 改為:\n${CURRENT_MODE === RUN_MODE.TEST ? 'RUN_MODE.PRODUCTION' : 'RUN_MODE.TEST'}\n\n然後重新載入頁面`,
-      ui.ButtonSet.OK
-    );
-  }
-}
 
 /**
  * 顯示觸發器統計資訊
@@ -448,11 +412,33 @@ function showTriggerStats() {
 🧹 清理觸發器: ${stats.cleanupTriggers}
 📨 舊版郵件觸發器: ${stats.emailTriggers}
 
-當前模式: ${CURRENT_MODE === RUN_MODE.TEST ? '測試模式' : '正式模式'}`;
+運行模式: 正式模式 (每小時檢查)`;
     
     SpreadsheetApp.getUi().alert('觸發器統計', message, SpreadsheetApp.getUi().ButtonSet.OK);
     
   } catch (error) {
     SpreadsheetApp.getUi().alert('錯誤', `無法取得觸發器統計: ${error.message}`, SpreadsheetApp.getUi().ButtonSet.OK);
+  }
+}
+
+
+/**
+ * 刪除所有觸發器（選單功能）
+ */
+function deleteAllTriggersMenu() {
+  const ui = SpreadsheetApp.getUi();
+  const result = ui.alert(
+    '⚠️ 刪除所有觸發器',
+    '確定要刪除所有 Auto Lead Warmer 相關觸發器嗎？\n\n這將停止所有郵件發送和自動檢測功能。\n\n⚠️ 此操作無法復原！',
+    ui.ButtonSet.YES_NO
+  );
+  
+  if (result === ui.Button.YES) {
+    try {
+      const deletedCount = TriggerManager.deleteAllLeadWarmerTriggers();
+      ui.alert('成功', `已刪除 ${deletedCount} 個觸發器\n\n所有自動功能已停止`, ui.ButtonSet.OK);
+    } catch (error) {
+      ui.alert('錯誤', `刪除觸發器失敗: ${error.message}`, ui.ButtonSet.OK);
+    }
   }
 }
