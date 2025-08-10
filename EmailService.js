@@ -18,8 +18,7 @@ const EmailService = {
   scheduleEmailsProductionMode(email, firstName, followUpMails, schedules, rowIndex) {
     console.log('使用正式模式：全域觸發器方式');
     
-    // 創建全域觸發器（如果不存在）
-    TriggerManager.createGlobalEmailTrigger();
+    // 注意：全域觸發器應該在主流程中創建，不在每行處理時創建
     
     // 將郵件資訊儲存到 PropertiesService，供全域觸發器使用
     const emailData = {

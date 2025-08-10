@@ -86,10 +86,29 @@ function runAutoLeadWarmer() {
     console.log('=== 开始执行 Auto Lead Warmer ===');
     
     // 清理舊的多餘觸發器，避免觸發器過多錯誤
-    TriggerManager.cleanupOldTriggers();
+    const deletedTriggerCount = TriggerManager.cleanupOldTriggers();
     
-    // 自動啟用回覆檢測觸發器
-    ReplyDetectionService.createReplyDetectionTrigger();
+    if (deletedTriggerCount > 0) {
+      console.log(`已刪除 ${deletedTriggerCount} 個舊觸發器，等待2秒後創建新觸發器...`);
+      Utilities.sleep(2000); // 等待刪除操作完成
+    }
+    
+    // 創建必要的觸發器（只在主流程中創建一次）
+    try {
+      TriggerManager.createGlobalEmailTrigger();
+    } catch (error) {
+      console.error('全域觸發器創建失敗，但繼續執行:', error);
+      // 觸發器創建失敗不應該阻止主流程繼續
+    }
+    
+    Utilities.sleep(1000); // 等待1秒避免衝突
+    
+    try {
+      ReplyDetectionService.createReplyDetectionTrigger();
+    } catch (error) {
+      console.error('回覆檢測觸發器創建失敗，但繼續執行:', error);
+      // 觸發器創建失敗不應該阻止主流程繼續
+    }
     
     const sheet = SheetService.getMainSheet();
     const data = SheetService.getUnprocessedData(sheet);
@@ -103,9 +122,6 @@ function runAutoLeadWarmer() {
     
     let processedCount = 0;
     let errorCount = 0;
-    
-    // 显示进度对话框
-    const ui = SpreadsheetApp.getUi();
     
     for (let i = 0; i < data.rows.length; i++) {
       const row = data.rows[i];

@@ -74,20 +74,26 @@ const TriggerManager = {
    * 創建全域郵件發送觸發器（正式模式專用）
    */
   createGlobalEmailTrigger() {
-    // 檢查是否已存在全域觸發器
-    const existingTriggers = this.getAllTriggers();
-    const globalTriggerExists = existingTriggers.some(trigger => 
-      trigger.getHandlerFunction() === 'checkAndSendMails'
-    );
-    
-    if (!globalTriggerExists) {
-      console.log('創建全域郵件發送觸發器（每小時執行一次）');
-      ScriptApp.newTrigger('checkAndSendMails')
-        .timeBased()
-        .everyHours(1) // Google 最小間隔為1小時
-        .create();
-    } else {
-      console.log('全域郵件發送觸發器已存在');
+    try {
+      // 檢查是否已存在全域觸發器
+      const existingTriggers = this.getAllTriggers();
+      const globalTriggerExists = existingTriggers.some(trigger => 
+        trigger.getHandlerFunction() === 'checkAndSendMails'
+      );
+      
+      if (!globalTriggerExists) {
+        console.log('創建全域郵件發送觸發器（每小時執行一次）');
+        ScriptApp.newTrigger('checkAndSendMails')
+          .timeBased()
+          .everyHours(1) // Google 最小間隔為1小時
+          .create();
+        console.log('✅ 全域郵件發送觸發器創建成功');
+      } else {
+        console.log('全域郵件發送觸發器已存在');
+      }
+    } catch (error) {
+      console.error('創建全域郵件發送觸發器時發生錯誤:', error);
+      throw new Error(`觸發器創建失敗: ${error.message}`);
     }
   },
 

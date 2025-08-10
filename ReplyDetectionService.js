@@ -152,19 +152,25 @@ const ReplyDetectionService = {
    * 創建回覆檢測觸發器（每小時執行一次）
    */
   createReplyDetectionTrigger() {
-    const existingTriggers = ScriptApp.getProjectTriggers();
-    const triggerExists = existingTriggers.some(trigger => 
-      trigger.getHandlerFunction() === 'checkAllRunningLeadsForReplies'
-    );
-    
-    if (!triggerExists) {
-      console.log('創建回覆檢測觸發器（每小時執行一次）');
-      ScriptApp.newTrigger('checkAllRunningLeadsForReplies')
-        .timeBased()
-        .everyHours(1)
-        .create();
-    } else {
-      console.log('回覆檢測觸發器已存在');
+    try {
+      const existingTriggers = ScriptApp.getProjectTriggers();
+      const triggerExists = existingTriggers.some(trigger => 
+        trigger.getHandlerFunction() === 'checkAllRunningLeadsForReplies'
+      );
+      
+      if (!triggerExists) {
+        console.log('創建回覆檢測觸發器（每小時執行一次）');
+        ScriptApp.newTrigger('checkAllRunningLeadsForReplies')
+          .timeBased()
+          .everyHours(1)
+          .create();
+        console.log('✅ 回覆檢測觸發器創建成功');
+      } else {
+        console.log('回覆檢測觸發器已存在');
+      }
+    } catch (error) {
+      console.error('創建回覆檢測觸發器時發生錯誤:', error);
+      throw new Error(`回覆檢測觸發器創建失敗: ${error.message}`);
     }
   },
 
