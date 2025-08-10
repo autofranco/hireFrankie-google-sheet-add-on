@@ -30,6 +30,8 @@ function onOpen() {
       .addItem('Check Sheet Data', 'checkSheetData')
       .addItem('Reset Test Data', 'resetTestData')
       .addSeparator()
+      .addItem('🧪 Test Send Now Manually', 'testSendNowManually')
+      .addSeparator()
       .addItem('Show Trigger Stats', 'showTriggerStats')
       .addItem('🗑️ Delete All Triggers', 'deleteAllTriggersMenu'))
     .addToUi();
@@ -66,11 +68,11 @@ function onEdit(e) {
       }
     }
     
-    // 處理 Send Now 按鈕點擊
-    if (col === COLUMNS.SEND_NOW + 1 && (e.value === '✅ Send Now' || e.value === 'Send Now')) {
+    // 處理 Send Now 復選框點擊
+    if (col === COLUMNS.SEND_NOW + 1 && e.value === true) {
       handleSendNowClick(sheet, rowIndex);
-      // 重置按鈕狀態
-      sheet.getRange(rowIndex, COLUMNS.SEND_NOW + 1).setValue('🚀 Send Now');
+      // 立即重置復選框為未勾選狀態
+      sheet.getRange(rowIndex, COLUMNS.SEND_NOW + 1).setValue(false);
     }
     
   } catch (error) {
@@ -107,8 +109,11 @@ function runAutoLeadWarmer() {
       ReplyDetectionService.createReplyDetectionTrigger();
     } catch (error) {
       console.error('回覆檢測觸發器創建失敗，但繼續執行:', error);
-      // 觸發器創建失敗不應該阻止主流程繼續
     }
+    
+    Utilities.sleep(1000); // 等待1秒避免衝突
+    
+    // onEdit 是 Google Sheets 內建的 simple trigger，無需手動創建
     
     const sheet = SheetService.getMainSheet();
     const data = SheetService.getUnprocessedData(sheet);
@@ -386,7 +391,7 @@ function runAutoLeadWarmerBatch() {
 }
 
 /**
- * 處理 Send Now 按鈕點擊
+ * 處理 Send Now 復選框點擊
  */
 function handleSendNowClick(sheet, rowIndex) {
   try {
@@ -425,6 +430,9 @@ function handleSendNowClick(sheet, rowIndex) {
     );
     
     console.log(`Send Now: 郵件已立即發送給 ${row[COLUMNS.FIRST_NAME]} (${row[COLUMNS.EMAIL]})`);
+    
+    // 提供用戶反饋
+    SpreadsheetApp.getUi().alert('✅ 郵件發送成功', `已立即發送 ${nextEmail.type} 給 ${row[COLUMNS.FIRST_NAME]}`, SpreadsheetApp.getUi().ButtonSet.OK);
     
   } catch (error) {
     console.error('Send Now 點擊處理錯誤:', error);
@@ -561,8 +569,8 @@ function stopAllSheetProcesses() {
       SheetService.updateStatus(sheet, i, 'Done');
       SheetService.updateInfo(sheet, i, '手動停止所有處理程序');
       
-      // 清除 Send Now 按鈕
-      SheetService.setupSendNowButton(sheet, i); // 這會自動清除按鈕因為狀態不是 Running
+      // 清除 Send Now 復選框
+      SheetService.setupSendNowButton(sheet, i); // 這會自動清除復選框因為狀態不是 Running
       
       stoppedCount++;
       console.log(`已停止第 ${i} 行的處理程序`);
@@ -586,6 +594,40 @@ function stopAllSheetProcesses() {
   console.log(`清理了 ${cleanedProperties} 個排程資料`);
   
   return stoppedCount;
+}
+
+
+
+
+
+/**
+ * 手動測試 Send Now 功能（調試用）
+ */
+function testSendNowManually() {
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+    const ui = SpreadsheetApp.getUi();
+    
+    // 讓用戶選擇要測試的行號
+    const result = ui.prompt('測試 Send Now', '請輸入要測試的行號 (例如: 2)', ui.ButtonSet.OK_CANCEL);
+    
+    if (result.getSelectedButton() === ui.Button.OK) {
+      const rowIndex = parseInt(result.getResponseText());
+      
+      if (isNaN(rowIndex) || rowIndex < 2) {
+        ui.alert('錯誤', '請輸入有效的行號 (>= 2)', ui.ButtonSet.OK);
+        return;
+      }
+      
+      console.log(`手動測試 Send Now: 第 ${rowIndex} 行`);
+      handleSendNowClick(sheet, rowIndex);
+      
+      ui.alert('測試完成', `已嘗試發送第 ${rowIndex} 行的郵件`, ui.ButtonSet.OK);
+    }
+  } catch (error) {
+    console.error('手動測試失敗:', error);
+    SpreadsheetApp.getUi().alert('測試失敗', error.message, SpreadsheetApp.getUi().ButtonSet.OK);
+  }
 }
 
 /**

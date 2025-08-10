@@ -169,7 +169,8 @@ const TriggerManager = {
       if (handlerFunction === 'checkAndSendMails' || 
           handlerFunction === 'sendScheduledEmail' ||
           handlerFunction === 'checkAllRunningLeadsForReplies' ||
-          handlerFunction === 'cleanupTriggers') {
+          handlerFunction === 'cleanupTriggers' ||
+          handlerFunction === 'onEdit') {
         this.deleteTrigger(trigger);
         console.log(`已刪除觸發器: ${handlerFunction}`);
         deletedCount++;
@@ -179,6 +180,7 @@ const TriggerManager = {
     console.log(`總共刪除了 ${deletedCount} 個觸發器`);
     return deletedCount;
   },
+
 
   /**
    * 獲取觸發器統計資訊

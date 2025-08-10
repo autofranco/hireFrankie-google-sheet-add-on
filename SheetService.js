@@ -157,7 +157,7 @@ const SheetService = {
   },
 
   /**
-   * 設置 Send Now 按鈕 (只在狀態為 Running 時顯示)
+   * 設置 Send Now 復選框 (只在狀態為 Running 時顯示)
    */
   setupSendNowButton(sheet, rowIndex) {
     const statusCell = sheet.getRange(rowIndex, COLUMNS.STATUS + 1);
@@ -166,20 +166,21 @@ const SheetService = {
     const sendNowCell = sheet.getRange(rowIndex, COLUMNS.SEND_NOW + 1);
     
     if (status === 'Running') {
-      // 設置看起來像按鈕的格式
-      sendNowCell.setValue('🚀 Send Now');
-      sendNowCell.setBackground('#4CAF50'); // 綠色背景
-      sendNowCell.setFontColor('#FFFFFF'); // 白色文字
+      // 設置復選框
+      sendNowCell.setValue(false); // 預設為未勾選 (標準 false 值)
+      sendNowCell.setBackground(null); // 透明/白色背景
+      sendNowCell.setFontColor('#000000'); // 黑色文字
       sendNowCell.setHorizontalAlignment('center');
-      sendNowCell.setFontWeight('bold');
       
-      // 設置資料驗證，讓用戶點擊時可以選擇
+      // 設置資料驗證為標準復選框 (true/false)
       const rule = SpreadsheetApp.newDataValidation()
-        .requireValueInList(['🚀 Send Now', '✅ Send Now', ''], true)
+        .requireCheckbox() // 使用標準 true/false 值
         .build();
       sendNowCell.setDataValidation(rule);
+      
+      console.log(`已設置第 ${rowIndex} 行的 Send Now 復選框`);
     } else {
-      // 清除 Send Now 按鈕
+      // 清除 Send Now 復選框
       sendNowCell.clearContent();
       sendNowCell.clearDataValidations();
       sendNowCell.setBackground(null);
