@@ -16,6 +16,7 @@ function onOpen() {
   
   ui.createMenu('Auto Lead Warmer')
     .addItem('🚀 Run', 'runAutoLeadWarmer')
+    .addItem('📧 Send Now', 'sendNowFromMenu')
     .addItem('🛑 Stop All', 'stopAllProcesses')
     .addSeparator()
     .addItem('⚙️ Setup Headers', 'setupHeaders')
@@ -68,12 +69,7 @@ function onEdit(e) {
       }
     }
     
-    // 處理 Send Now 復選框點擊
-    if (col === COLUMNS.SEND_NOW + 1 && e.value === true) {
-      handleSendNowClick(sheet, rowIndex);
-      // 立即重置復選框為未勾選狀態
-      sheet.getRange(rowIndex, COLUMNS.SEND_NOW + 1).setValue(false);
-    }
+    // Send Now 現在透過選單處理，不依賴 onEdit 觸發器
     
   } catch (error) {
     console.error('onEdit 觸發錯誤:', error);
@@ -391,7 +387,7 @@ function runAutoLeadWarmerBatch() {
 }
 
 /**
- * 處理 Send Now 復選框點擊
+ * 處理 Send Now 下拉選單點擊
  */
 function handleSendNowClick(sheet, rowIndex) {
   try {
@@ -431,12 +427,44 @@ function handleSendNowClick(sheet, rowIndex) {
     
     console.log(`Send Now: 郵件已立即發送給 ${row[COLUMNS.FIRST_NAME]} (${row[COLUMNS.EMAIL]})`);
     
+    // 檢查是否所有郵件都已發送完成
+    checkAndUpdateStatusIfAllEmailsSent(sheet, rowIndex);
+    
     // 提供用戶反饋
     SpreadsheetApp.getUi().alert('✅ 郵件發送成功', `已立即發送 ${nextEmail.type} 給 ${row[COLUMNS.FIRST_NAME]}`, SpreadsheetApp.getUi().ButtonSet.OK);
     
   } catch (error) {
     console.error('Send Now 點擊處理錯誤:', error);
     SpreadsheetApp.getUi().alert(`Send Now 錯誤: ${error.message}`);
+  }
+}
+
+/**
+ * 檢查是否所有郵件都已發送，如果是則更新狀態為 Done
+ */
+function checkAndUpdateStatusIfAllEmailsSent(sheet, rowIndex) {
+  try {
+    // 檢查三個排程欄位是否都有刪除線
+    const schedule1Cell = sheet.getRange(rowIndex, COLUMNS.SCHEDULE_1 + 1);
+    const schedule2Cell = sheet.getRange(rowIndex, COLUMNS.SCHEDULE_2 + 1);
+    const schedule3Cell = sheet.getRange(rowIndex, COLUMNS.SCHEDULE_3 + 1);
+    
+    const mail1Sent = schedule1Cell.getFontLine() === 'line-through';
+    const mail2Sent = schedule2Cell.getFontLine() === 'line-through';
+    const mail3Sent = schedule3Cell.getFontLine() === 'line-through';
+    
+    // 如果所有郵件都已發送（都有刪除線）
+    if (mail1Sent && mail2Sent && mail3Sent) {
+      SheetService.updateStatus(sheet, rowIndex, 'Done');
+      SheetService.updateInfo(sheet, rowIndex, '全部郵件已手動發送完成');
+      
+      // 清除 Send Now 復選框
+      SheetService.setupSendNowButton(sheet, rowIndex);
+      
+      console.log(`第 ${rowIndex} 行所有郵件已發送完成，狀態更新為 Done`);
+    }
+  } catch (error) {
+    console.error(`檢查郵件發送狀態時發生錯誤 (第 ${rowIndex} 行):`, error);
   }
 }
 
@@ -518,6 +546,60 @@ function showTriggerStats() {
   }
 }
 
+
+/**
+ * 從選單執行 Send Now（掃描所有勾選的復選框）
+ */
+function sendNowFromMenu() {
+  try {
+    const sheet = SheetService.getMainSheet();
+    const lastRow = sheet.getLastRow();
+    
+    if (lastRow <= 1) {
+      SpreadsheetApp.getUi().alert('沒有資料', '工作表中沒有資料可以處理', SpreadsheetApp.getUi().ButtonSet.OK);
+      return;
+    }
+    
+    let processedCount = 0;
+    let errorCount = 0;
+    
+    // 掃描所有行，尋找勾選的 Send Now 復選框
+    for (let i = 2; i <= lastRow; i++) {
+      const sendNowCell = sheet.getRange(i, COLUMNS.SEND_NOW + 1);
+      const isChecked = sendNowCell.getValue() === true;
+      const status = sheet.getRange(i, COLUMNS.STATUS + 1).getValue();
+      
+      // 只處理狀態為 Running 且復選框被勾選的行
+      if (status === 'Running' && isChecked) {
+        try {
+          console.log(`處理第 ${i} 行的 Send Now 請求`);
+          handleSendNowClick(sheet, i);
+          
+          // 取消勾選復選框（表示已處理）
+          sendNowCell.setValue(false);
+          processedCount++;
+          
+        } catch (error) {
+          console.error(`第 ${i} 行 Send Now 失敗:`, error);
+          SheetService.updateInfo(sheet, i, `[Error] Send Now 失敗: ${error.message}`);
+          errorCount++;
+        }
+      }
+    }
+    
+    // 顯示結果
+    if (processedCount === 0 && errorCount === 0) {
+      SpreadsheetApp.getUi().alert('沒有發現勾選項目', '請先勾選要立即發送郵件的行，然後再點擊 Send Now', SpreadsheetApp.getUi().ButtonSet.OK);
+    } else {
+      const message = `Send Now 完成！\n\n✅ 成功發送: ${processedCount} 封郵件\n${errorCount > 0 ? `❌ 發送失敗: ${errorCount} 封郵件` : ''}`;
+      SpreadsheetApp.getUi().alert('Send Now 結果', message, SpreadsheetApp.getUi().ButtonSet.OK);
+    }
+    
+  } catch (error) {
+    console.error('Send Now 從選單執行失敗:', error);
+    SpreadsheetApp.getUi().alert('錯誤', `Send Now 執行失敗: ${error.message}`, SpreadsheetApp.getUi().ButtonSet.OK);
+  }
+}
 
 /**
  * 停止所有處理程序（選單功能）

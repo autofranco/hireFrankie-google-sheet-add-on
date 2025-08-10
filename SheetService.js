@@ -166,15 +166,15 @@ const SheetService = {
     const sendNowCell = sheet.getRange(rowIndex, COLUMNS.SEND_NOW + 1);
     
     if (status === 'Running') {
-      // 設置復選框
-      sendNowCell.setValue(false); // 預設為未勾選 (標準 false 值)
-      sendNowCell.setBackground(null); // 透明/白色背景
+      // 設置復選框供用戶手動勾選
+      sendNowCell.setValue(false); // 預設為未勾選
+      sendNowCell.setBackground(null); // 透明背景
       sendNowCell.setFontColor('#000000'); // 黑色文字
       sendNowCell.setHorizontalAlignment('center');
       
-      // 設置資料驗證為標準復選框 (true/false)
+      // 設置標準復選框
       const rule = SpreadsheetApp.newDataValidation()
-        .requireCheckbox() // 使用標準 true/false 值
+        .requireCheckbox() // 標準 true/false 值
         .build();
       sendNowCell.setDataValidation(rule);
       
