@@ -42,15 +42,14 @@ const EmailService = {
    * 核心郵件發送功能
    */
   sendEmail(email, firstName, content, subject) {
-    // 解析郵件內容，提取主旨和內文
-    const lines = content.split('\n');
-    const extractedSubject = lines.find(line => line.includes('主旨') || line.includes('Subject'))
-      ?.replace(/主旨[:：]?/g, '').trim();
+    // 使用 Utils 函數解析郵件內容
+    const parsed = Utils.parseEmailContent(content);
     
-    const finalSubject = extractedSubject || subject || `來自業務團隊的訊息 - ${firstName}`;
+    const finalSubject = parsed.subject || subject || `來自業務團隊的訊息 - ${firstName}`;
+    const finalBody = parsed.body || content;
     
     // 發送郵件
-    GmailApp.sendEmail(email, finalSubject, content);
+    GmailApp.sendEmail(email, finalSubject, finalBody);
     
     console.log(`郵件已發送: ${finalSubject} -> ${email}`);
   },
@@ -208,12 +207,10 @@ const EmailService = {
           if (Math.abs(now - scheduleTime) <= 5 * 60 * 1000) {
             const emailData = JSON.parse(value);
             
-            // 解析邮件内容，提取主旨和内文
-            const lines = emailData.content.split('\n');
-            const subject = lines.find(line => line.includes('主旨') || line.includes('Subject'))
-              ?.replace(/主旨[:：]?/g, '').trim() || 
-              `来自业务团队的讯息 - ${emailData.firstName}`;
-            const body = emailData.content;
+            // 使用 Utils 函數解析郵件內容
+            const parsed = Utils.parseEmailContent(emailData.content);
+            const subject = parsed.subject || `来自业务团队的讯息 - ${emailData.firstName}`;
+            const body = parsed.body || emailData.content;
             
             // 发送邮件
             GmailApp.sendEmail(

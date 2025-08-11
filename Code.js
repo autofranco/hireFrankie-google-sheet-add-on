@@ -18,6 +18,7 @@ function onOpen() {
     .addItem('🚀 Run', 'runAutoLeadWarmer')
     .addItem('📧 Send Now', 'sendNowFromMenu')
     .addItem('🛑 Stop All', 'stopAllProcesses')
+    .addItem('⏸️ Stop New Processing', 'stopNewProcessing')
     .addSeparator()
     .addItem('⚙️ Setup Headers', 'setupHeaders')
     .addSeparator()
@@ -86,6 +87,13 @@ function runAutoLeadWarmer() {
   try {
     console.log('=== 开始执行 Auto Lead Warmer ===');
     
+    // 清除任何現有的停止標記（允許重新開始處理）
+    const existingStopFlag = PropertiesService.getScriptProperties().getProperty('stop_processing');
+    if (existingStopFlag === 'true') {
+      PropertiesService.getScriptProperties().deleteProperty('stop_processing');
+      console.log('已清除先前的停止標記，重新開始處理');
+    }
+    
     // 清理舊的多餘觸發器，避免觸發器過多錯誤
     const deletedTriggerCount = TriggerManager.cleanupOldTriggers();
     
@@ -128,6 +136,16 @@ function runAutoLeadWarmer() {
     let errorCount = 0;
     
     for (let i = 0; i < data.rows.length; i++) {
+      // 檢查是否有停止處理的標記
+      const shouldStop = PropertiesService.getScriptProperties().getProperty('stop_processing');
+      if (shouldStop === 'true') {
+        console.log('檢測到停止處理標記，終止處理新行');
+        SpreadsheetApp.getUi().alert('處理已停止', `已成功處理 ${processedCount} 行，剩餘 ${data.rows.length - i} 行未處理`, SpreadsheetApp.getUi().ButtonSet.OK);
+        // 清除停止標記
+        PropertiesService.getScriptProperties().deleteProperty('stop_processing');
+        break;
+      }
+      
       const row = data.rows[i];
       const rowIndex = data.rowIndexes[i]; // 使用正確的行索引
       
@@ -293,17 +311,20 @@ function processRow(sheet, row, rowIndex) {
     
     const schedules = Utils.generateScheduleTimes();
     
-    // 逐個填入排程時間 Date 物件，確保沒有刪除線
+    // 逐個填入排程時間為格式化字串，設定為純文字格式
     const schedule1Cell = sheet.getRange(rowIndex, COLUMNS.SCHEDULE_1 + 1);
-    schedule1Cell.setValue(schedules.schedule1); // 直接存 Date 物件
+    schedule1Cell.setNumberFormat('@'); // 設定為純文字格式
+    schedule1Cell.setValue(Utils.formatScheduleTime(schedules.schedule1)); // 存為格式化字串
     schedule1Cell.setFontLine('none'); // 確保沒有刪除線
     
     const schedule2Cell = sheet.getRange(rowIndex, COLUMNS.SCHEDULE_2 + 1);
-    schedule2Cell.setValue(schedules.schedule2); // 直接存 Date 物件
+    schedule2Cell.setNumberFormat('@'); // 設定為純文字格式
+    schedule2Cell.setValue(Utils.formatScheduleTime(schedules.schedule2)); // 存為格式化字串
     schedule2Cell.setFontLine('none'); // 確保沒有刪除線
     
     const schedule3Cell = sheet.getRange(rowIndex, COLUMNS.SCHEDULE_3 + 1);
-    schedule3Cell.setValue(schedules.schedule3); // 直接存 Date 物件
+    schedule3Cell.setNumberFormat('@'); // 設定為純文字格式
+    schedule3Cell.setValue(Utils.formatScheduleTime(schedules.schedule3)); // 存為格式化字串
     schedule3Cell.setFontLine('none'); // 確保沒有刪除線
     
     SheetService.updateInfo(sheet, rowIndex, '✅ 排程時間已設定');
@@ -600,6 +621,31 @@ function sendNowFromMenu() {
   } catch (error) {
     console.error('Send Now 從選單執行失敗:', error);
     SpreadsheetApp.getUi().alert('錯誤', `Send Now 執行失敗: ${error.message}`, SpreadsheetApp.getUi().ButtonSet.OK);
+  }
+}
+
+/**
+ * 停止處理新行（只停止 runAutoLeadWarmer 繼續處理，不影響現有 Running 狀態）
+ */
+function stopNewProcessing() {
+  const ui = SpreadsheetApp.getUi();
+  const result = ui.alert(
+    '⏸️ 停止處理新行',
+    '確定要停止處理新的潛在客戶嗎？\n\n將會執行以下操作：\n• 停止 Auto Lead Warmer 繼續處理新行\n• 當前處理中的行會完成後停止\n• 保持現有 Running 狀態的潛客不變\n• 保持所有排程和觸發器不變\n\n✅ 此操作可以隨時重新開始處理',
+    ui.ButtonSet.YES_NO
+  );
+  
+  if (result === ui.Button.YES) {
+    // 設定停止標記
+    PropertiesService.getScriptProperties().setProperty('stop_processing', 'true');
+    
+    ui.alert(
+      '✅ 已設定停止標記', 
+      '系統將在處理完當前行後停止處理新行\n\n• 現有 Running 狀態保持不變\n• 排程和觸發器繼續運作\n• 可隨時點擊 "🚀 Run" 重新開始', 
+      ui.ButtonSet.OK
+    );
+    
+    console.log('已設定停止處理新行標記');
   }
 }
 

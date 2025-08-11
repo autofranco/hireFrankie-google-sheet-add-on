@@ -56,48 +56,85 @@ const Utils = {
   },
 
   /**
-   * 解析排程時間 - 支援 Date 物件、Date 字串、和 MM/DD HH:MM 格式
+   * 解析排程時間字串回 Date 物件
    */
-  parseScheduleTime(scheduleValue) {
-    if (!scheduleValue) {
+  parseScheduleTime(scheduleText) {
+    if (!scheduleText || typeof scheduleText !== 'string') {
       return null;
     }
     
     try {
-      // 如果已經是 Date 對象，直接返回
-      if (scheduleValue instanceof Date) {
-        if (isNaN(scheduleValue.getTime())) {
-          console.error(`無效的 Date 物件: ${scheduleValue}`);
-          return null;
-        }
-        return scheduleValue;
+      // 格式: "08/10 18:00" 
+      const currentYear = new Date().getFullYear();
+      const fullDateString = `${currentYear}/${scheduleText}`;
+      const parsedDate = new Date(fullDateString);
+      
+      // 驗證解析結果
+      if (isNaN(parsedDate.getTime())) {
+        console.error(`無效的排程時間格式: ${scheduleText}`);
+        return null;
       }
       
-      // 如果是字串，嘗試解析
-      if (typeof scheduleValue === 'string') {
-        // 嘗試解析完整的 Date 字串
-        const parsedDate = new Date(scheduleValue);
-        if (!isNaN(parsedDate.getTime())) {
-          return parsedDate;
-        }
-        
-        // 如果是 MM/DD HH:MM 格式，轉換為完整日期
-        if (scheduleValue.match(/^\d{1,2}\/\d{1,2} \d{1,2}:\d{2}$/)) {
-          const currentYear = new Date().getFullYear();
-          const fullDateString = `${currentYear}/${scheduleValue}`;
-          const parsedDate2 = new Date(fullDateString);
-          if (!isNaN(parsedDate2.getTime())) {
-            return parsedDate2;
-          }
-        }
-      }
-      
-      console.error(`無法解析排程時間: ${scheduleValue} (type: ${typeof scheduleValue})`);
-      return null;
+      return parsedDate;
     } catch (error) {
-      console.error(`解析排程時間錯誤: ${scheduleValue}`, error);
+      console.error(`解析排程時間錯誤: ${scheduleText}`, error);
       return null;
     }
+  },
+
+  /**
+   * 解析郵件內容，分離主旨和內文
+   * 輸入格式：主旨：標題\n內容：\n正文內容
+   * 返回：{ subject: string, body: string }
+   */
+  parseEmailContent(content) {
+    if (!content || typeof content !== 'string') {
+      return { subject: null, body: content || '' };
+    }
+    
+    const lines = content.split('\n');
+    let subject = null;
+    let bodyLines = [];
+    let inBodySection = false;
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      
+      // 檢查主旨行
+      if (line.includes('主旨：') || line.includes('主旨:')) {
+        subject = line.replace(/主旨[:：]/g, '').trim();
+        continue;
+      }
+      
+      // 檢查內容開始行
+      if (line.includes('內容：') || line.includes('內容:')) {
+        inBodySection = true;
+        continue;
+      }
+      
+      // 如果在內容區域，收集所有後續行
+      if (inBodySection) {
+        bodyLines.push(lines[i]); // 保持原始格式和縮排
+      }
+    }
+    
+    // 如果沒有找到內容標記，但找到主旨，則將剩餘內容作為body
+    if (!inBodySection && subject && lines.length > 1) {
+      const subjectLineIndex = lines.findIndex(line => line.includes('主旨'));
+      if (subjectLineIndex >= 0 && subjectLineIndex < lines.length - 1) {
+        bodyLines = lines.slice(subjectLineIndex + 1);
+      }
+    }
+    
+    // 如果都沒有標記，將整個內容作為body
+    if (!subject && !inBodySection) {
+      bodyLines = lines;
+    }
+    
+    return {
+      subject: subject,
+      body: bodyLines.join('\n').trim()
+    };
   },
 
   /**
