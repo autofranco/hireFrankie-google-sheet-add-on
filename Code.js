@@ -15,29 +15,18 @@ function onOpen() {
   const ui = SpreadsheetApp.getUi();
   
   ui.createMenu('Auto Lead Warmer')
+    .addItem('⚙️ Initial Setup', 'setupHeaders')
     .addItem('🚀 Run', 'runAutoLeadWarmer')
     .addItem('📧 Send Now', 'sendNowFromMenu')
-    .addItem('🛑 Stop All', 'stopAllProcesses')
     .addItem('⏸️ Stop New Processing', 'stopNewProcessing')
-    .addSeparator()
-    .addItem('⚙️ Setup Headers', 'setupHeaders')
     .addItem('🎨 Format All Rows', 'formatAllLeadRows')
     .addSeparator()
-    .addItem('🔗 Test API Connection', 'testAPIConnection')
-    .addItem('🌐 Test Network', 'testNetworkConnection')
-    .addSeparator()
     .addSubMenu(ui.createMenu('🔧 Debug Tools')
-      .addItem('Test Full Process', 'testFullContentGeneration')
-      .addItem('Test Mail Angles Only', 'testMailAnglesGeneration')
-      .addItem('Test Raw API Call', 'testRawAPICall')
-      .addItem('Check Sheet Data', 'checkSheetData')
-      .addItem('Reset Test Data', 'resetTestData')
-      .addSeparator()
-      .addItem('🧪 Test Send Now Manually', 'testSendNowManually')
+      .addItem('🔗 Test API Connection', 'testAPIConnection')
+      .addItem('🌐 Test Network', 'testNetworkConnection')
       .addSeparator()
       .addItem('📧 Test Global Email Check', 'testGlobalEmailCheckManually')
       .addItem('📬 Test Reply Detection', 'testReplyDetectionManually')
-      .addItem('🔄 Recreate Global Trigger', 'recreateGlobalTrigger')
       .addItem('Show Trigger Stats', 'showTriggerStats')
       .addItem('🗑️ Delete All Triggers', 'deleteAllTriggersMenu'))
     .addToUi();
@@ -650,116 +639,11 @@ function stopNewProcessing() {
   }
 }
 
-/**
- * 停止所有處理程序（選單功能）
- */
-function stopAllProcesses() {
-  const ui = SpreadsheetApp.getUi();
-  const result = ui.alert(
-    '🛑 停止所有處理程序',
-    '確定要停止此工作表的所有處理程序嗎？\n\n將會執行以下操作：\n• 將所有 Processing 狀態改為 Done\n• 將所有 Running 狀態改為 Done\n• 清理所有排程資料\n• 停止所有自動郵件發送\n\n⚠️ 此操作無法復原！',
-    ui.ButtonSet.YES_NO
-  );
-  
-  if (result === ui.Button.YES) {
-    try {
-      const stoppedCount = stopAllSheetProcesses();
-      ui.alert(
-        '✅ 停止完成', 
-        `已停止 ${stoppedCount} 個處理程序\n\n所有潛在客戶狀態已設為 Done\n排程資料已清理完畢`, 
-        ui.ButtonSet.OK
-      );
-    } catch (error) {
-      ui.alert('錯誤', `停止處理程序失敗: ${error.message}`, ui.ButtonSet.OK);
-    }
-  }
-}
-
-/**
- * 停止當前工作表的所有處理程序
- */
-function stopAllSheetProcesses() {
-  const sheet = SheetService.getMainSheet();
-  const lastRow = sheet.getLastRow();
-  let stoppedCount = 0;
-  
-  if (lastRow <= 1) {
-    console.log('沒有資料需要停止');
-    return 0;
-  }
-  
-  console.log('=== 開始停止所有處理程序 ===');
-  
-  // 1. 遍歷所有行，停止 Processing 和 Running 狀態的行
-  for (let i = 2; i <= lastRow; i++) {
-    const statusCell = sheet.getRange(i, COLUMNS.STATUS + 1);
-    const currentStatus = statusCell.getValue();
-    
-    if (currentStatus === 'Processing' || currentStatus === 'Running') {
-      // 更新狀態為 Done
-      SheetService.updateStatus(sheet, i, 'Done');
-      SheetService.updateInfo(sheet, i, '手動停止所有處理程序');
-      
-      // 清除 Send Now 復選框
-      SheetService.setupSendNowButton(sheet, i); // 這會自動清除復選框因為狀態不是 Running
-      
-      stoppedCount++;
-      console.log(`已停止第 ${i} 行的處理程序`);
-    }
-  }
-  
-  // 2. 清理所有 PropertiesService 中的排程資料
-  const properties = PropertiesService.getScriptProperties().getProperties();
-  let cleanedProperties = 0;
-  
-  for (const key of Object.keys(properties)) {
-    if (key.startsWith('production_email_')) {
-      PropertiesService.getScriptProperties().deleteProperty(key);
-      cleanedProperties++;
-      console.log(`清理排程資料: ${key}`);
-    }
-  }
-  
-  console.log(`=== 停止完成 ===`);
-  console.log(`停止了 ${stoppedCount} 個處理程序`);
-  console.log(`清理了 ${cleanedProperties} 個排程資料`);
-  
-  return stoppedCount;
-}
 
 
 
 
 
-/**
- * 手動測試 Send Now 功能（調試用）
- */
-function testSendNowManually() {
-  try {
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
-    const ui = SpreadsheetApp.getUi();
-    
-    // 讓用戶選擇要測試的行號
-    const result = ui.prompt('測試 Send Now', '請輸入要測試的行號 (例如: 2)', ui.ButtonSet.OK_CANCEL);
-    
-    if (result.getSelectedButton() === ui.Button.OK) {
-      const rowIndex = parseInt(result.getResponseText());
-      
-      if (isNaN(rowIndex) || rowIndex < 2) {
-        ui.alert('錯誤', '請輸入有效的行號 (>= 2)', ui.ButtonSet.OK);
-        return;
-      }
-      
-      console.log(`手動測試 Send Now: 第 ${rowIndex} 行`);
-      handleSendNowClick(sheet, rowIndex);
-      
-      ui.alert('測試完成', `已嘗試發送第 ${rowIndex} 行的郵件`, ui.ButtonSet.OK);
-    }
-  } catch (error) {
-    console.error('手動測試失敗:', error);
-    SpreadsheetApp.getUi().alert('測試失敗', error.message, SpreadsheetApp.getUi().ButtonSet.OK);
-  }
-}
 
 /**
  * 刪除所有觸發器（選單功能）
@@ -828,36 +712,6 @@ function testGlobalEmailCheckManually() {
   }
 }
 
-/**
- * 手動重新建立全域觸發器（調試用）
- */
-function recreateGlobalTrigger() {
-  try {
-    const ui = SpreadsheetApp.getUi();
-    
-    console.log('=== 手動重新建立全域觸發器 ===');
-    
-    // 先刪除現有的全域觸發器
-    TriggerManager.deleteGlobalEmailTrigger();
-    
-    // 等待一秒
-    Utilities.sleep(1000);
-    
-    // 重新建立觸發器
-    TriggerManager.createGlobalEmailTrigger();
-    
-    // 檢查結果
-    const stats = TriggerManager.getTriggerStats();
-    
-    const message = `✅ 全域觸發器重新建立完成！\n\n📊 觸發器統計：\n🚀 全域郵件觸發器: ${stats.globalTriggers}\n📧 回覆檢測觸發器: ${stats.replyTriggers}\n🔧 其他觸發器: ${stats.others}\n\n觸發器應該會在下個整點執行 checkAndSendMails 函數。`;
-    
-    ui.alert('觸發器重建完成', message, ui.ButtonSet.OK);
-    
-  } catch (error) {
-    console.error('重新建立觸發器失敗:', error);
-    SpreadsheetApp.getUi().alert('重建失敗', `觸發器重建失敗: ${error.message}`, SpreadsheetApp.getUi().ButtonSet.OK);
-  }
-}
 
 /**
  * 手動測試回覆檢測功能（調試用）

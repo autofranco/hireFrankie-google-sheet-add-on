@@ -19,7 +19,7 @@ const EmailService = {
    */
   sendImmediateEmail(email, firstName, subject, content, rowIndex, emailType) {
     try {
-      this.sendEmail(email, firstName, content, subject);
+      this.sendEmail(email, firstName, content, subject, rowIndex, emailType);
       
       // 更新排程狀態（加刪除線）
       SheetService.updateScheduleStatus(rowIndex, emailType);
@@ -41,7 +41,7 @@ const EmailService = {
   /**
    * 核心郵件發送功能
    */
-  sendEmail(email, firstName, content, subject) {
+  sendEmail(email, firstName, content, subject, rowIndex = null, emailType = null) {
     // 使用 Utils 函數解析郵件內容
     const parsed = Utils.parseEmailContent(content);
     
@@ -51,7 +51,36 @@ const EmailService = {
     // 發送郵件
     GmailApp.sendEmail(email, finalSubject, finalBody);
     
+    // 記錄發送的郵件信息用於回復檢測
+    if (rowIndex && emailType) {
+      this.recordSentEmail(email, finalSubject, rowIndex, emailType);
+    }
+    
     console.log(`郵件已發送: ${finalSubject} -> ${email}`);
+  },
+
+  /**
+   * 記錄已發送的郵件信息用於回復檢測
+   */
+  recordSentEmail(email, subject, rowIndex, emailType) {
+    try {
+      const sentTime = new Date().getTime();
+      const recordKey = `sent_email_${rowIndex}_${emailType}`;
+      
+      const emailRecord = {
+        email: email,
+        subject: subject,
+        sentTime: sentTime,
+        rowIndex: rowIndex,
+        emailType: emailType
+      };
+      
+      PropertiesService.getScriptProperties().setProperty(recordKey, JSON.stringify(emailRecord));
+      console.log(`記錄已發送郵件: ${recordKey}`);
+      
+    } catch (error) {
+      console.error('記錄發送郵件失敗:', error);
+    }
   },
 
   /**
@@ -148,7 +177,7 @@ const EmailService = {
             try {
               // 發送郵件
               const subject = `Follow Up #${emailInfo.type.slice(-1)} - ${firstName}`;
-              this.sendEmail(email, firstName, content, subject);
+              this.sendEmail(email, firstName, content, subject, rowIndex, emailInfo.type);
               
               // 標記為已發送（加刪除線）
               scheduleCell.setFontLine('line-through');
