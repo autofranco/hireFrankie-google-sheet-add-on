@@ -9,10 +9,17 @@ const Utils = {
    */
   generateScheduleTimes() {
     const now = new Date();
+    
+    // 取得當前小時，設定為整點
+    const currentHour = new Date(now);
+    currentHour.setMinutes(0);
+    currentHour.setSeconds(0);
+    currentHour.setMilliseconds(0);
+    
     return {
-      schedule1: new Date(now.getTime() + EMAIL_SCHEDULE_INTERVALS.FIRST * 60 * 1000),
-      schedule2: new Date(now.getTime() + EMAIL_SCHEDULE_INTERVALS.SECOND * 60 * 1000),
-      schedule3: new Date(now.getTime() + EMAIL_SCHEDULE_INTERVALS.THIRD * 60 * 1000)
+      schedule1: new Date(currentHour.getTime()), // 這小時
+      schedule2: new Date(currentHour.getTime() + 60 * 60 * 1000), // 下小時
+      schedule3: new Date(currentHour.getTime() + 2 * 60 * 60 * 1000) // 後小時
     };
   },
 

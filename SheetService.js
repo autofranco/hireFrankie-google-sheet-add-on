@@ -51,7 +51,10 @@ const SheetService = {
     headerRange.setFontWeight('bold');
     headerRange.setBackground('#f0f0f0');
     
-    SpreadsheetApp.getUi().alert(`表头设定完成！\n工作表已重新命名為: ${title}`);
+    // 同時設置用戶資訊工作表
+    UserInfoService.getUserInfoSheet();
+    
+    SpreadsheetApp.getUi().alert(`設定完成！\n\n✅ 工作表已重新命名為: ${title}\n✅ User Info 工作表已創建\n\n💡 請到 "User Info" 工作表填入您的個人資訊，這會自動添加到所有郵件簽名中。`);
   },
 
   /**

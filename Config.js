@@ -28,10 +28,20 @@ const COLUMNS = {
 
 // 其他配置常量
 const SHEET_NAME = '工作表1';
+const USER_INFO_SHEET_NAME = 'User Info';
+
+// 用戶資訊欄位對應
+const USER_INFO_FIELDS = {
+  GREETING: { row: 2, col: 2, label: 'Email Greeting', default: '順頌商祺' },
+  NAME: { row: 3, col: 2, label: 'Name' },
+  COMPANY: { row: 4, col: 2, label: 'Company' },
+  TITLE: { row: 5, col: 2, label: 'Title' },
+  CONTACT: { row: 6, col: 2, label: 'Contact' }
+};
 const EMAIL_SCHEDULE_INTERVALS = {
-  FIRST: 1,  // 分钟
-  SECOND: 2, // 分钟
-  THIRD: 3   // 分钟
+  FIRST: 0,   // 這小時（立即）
+  SECOND: 60, // 下小時（60分鐘後）
+  THIRD: 120  // 後小時（120分鐘後）
 };
 
 // 移除測試模式，只使用正式模式

@@ -184,6 +184,7 @@ const ContentGenerator = {
 - 包含明确的行动呼籲
 - 語调要专业但友善
 - 长度控制在200字以内
+- 重要：不要包含任何签名、敬祝商祺或联系方式，只写邮件正文内容
 
 请按照以下格式提供：
 主旨：[邮件主旨]
@@ -191,6 +192,12 @@ const ContentGenerator = {
 
       console.log('生成第一封邮件...');
       results.mail1 = APIService.callPerplexityAPI(prompt1);
+      
+      // 添加用戶簽名
+      const signature = UserInfoService.generateEmailSignature();
+      if (signature) {
+        results.mail1 += signature;
+      }
 
       // 生成第二封信件
       const prompt2 = `请根据以下资讯撰写第二封追踪信件。请用繁体中文撰写。
@@ -205,6 +212,7 @@ const ContentGenerator = {
 - 包含社会证明或案例
 - 明确的行动呼籲
 - 长度控制在200字以内
+- 重要：不要包含任何签名、敬祝商祺或联系方式，只写邮件正文内容
 
 请按照以下格式提供：
 主旨：[邮件主旨]
@@ -212,6 +220,11 @@ const ContentGenerator = {
 
       console.log('生成第二封邮件...');
       results.mail2 = APIService.callPerplexityAPI(prompt2);
+      
+      // 添加用戶簽名
+      if (signature) {
+        results.mail2 += signature;
+      }
 
       // 生成第三封信件
       const prompt3 = `请根据以下资讯撰写第三封追踪信件。请用繁体中文撰写。
@@ -226,6 +239,7 @@ const ContentGenerator = {
 - 提供最后的价值
 - 留下好印象，为未来合作铺路
 - 长度控制在200字以内
+- 重要：不要包含任何签名、敬祝商祺或联系方式，只写邮件正文内容
 
 请按照以下格式提供：
 主旨：[邮件主旨]
@@ -233,6 +247,11 @@ const ContentGenerator = {
 
       console.log('生成第三封邮件...');
       results.mail3 = APIService.callPerplexityAPI(prompt3);
+      
+      // 添加用戶簽名
+      if (signature) {
+        results.mail3 += signature;
+      }
 
       console.log('所有邮件生成完成');
       return results;
