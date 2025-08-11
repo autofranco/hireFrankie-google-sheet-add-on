@@ -56,28 +56,46 @@ const Utils = {
   },
 
   /**
-   * 解析排程時間字串回 Date 物件
+   * 解析排程時間 - 支援 Date 物件、Date 字串、和 MM/DD HH:MM 格式
    */
-  parseScheduleTime(scheduleText) {
-    if (!scheduleText || typeof scheduleText !== 'string') {
+  parseScheduleTime(scheduleValue) {
+    if (!scheduleValue) {
       return null;
     }
     
     try {
-      // 格式: "08/10 18:00"
-      const currentYear = new Date().getFullYear();
-      const fullDateString = `${currentYear}/${scheduleText}`;
-      const parsedDate = new Date(fullDateString);
-      
-      // 驗證解析結果
-      if (isNaN(parsedDate.getTime())) {
-        console.error(`無效的排程時間格式: ${scheduleText}`);
-        return null;
+      // 如果已經是 Date 對象，直接返回
+      if (scheduleValue instanceof Date) {
+        if (isNaN(scheduleValue.getTime())) {
+          console.error(`無效的 Date 物件: ${scheduleValue}`);
+          return null;
+        }
+        return scheduleValue;
       }
       
-      return parsedDate;
+      // 如果是字串，嘗試解析
+      if (typeof scheduleValue === 'string') {
+        // 嘗試解析完整的 Date 字串
+        const parsedDate = new Date(scheduleValue);
+        if (!isNaN(parsedDate.getTime())) {
+          return parsedDate;
+        }
+        
+        // 如果是 MM/DD HH:MM 格式，轉換為完整日期
+        if (scheduleValue.match(/^\d{1,2}\/\d{1,2} \d{1,2}:\d{2}$/)) {
+          const currentYear = new Date().getFullYear();
+          const fullDateString = `${currentYear}/${scheduleValue}`;
+          const parsedDate2 = new Date(fullDateString);
+          if (!isNaN(parsedDate2.getTime())) {
+            return parsedDate2;
+          }
+        }
+      }
+      
+      console.error(`無法解析排程時間: ${scheduleValue} (type: ${typeof scheduleValue})`);
+      return null;
     } catch (error) {
-      console.error(`解析排程時間錯誤: ${scheduleText}`, error);
+      console.error(`解析排程時間錯誤: ${scheduleValue}`, error);
       return null;
     }
   },

@@ -72,6 +72,46 @@ const TriggerManager = {
     });
   },
 
+  /**
+   * 創建回覆檢測觸發器（每小時執行一次）
+   */
+  createReplyDetectionTrigger() {
+    try {
+      // 檢查是否已存在回覆檢測觸發器
+      const existingTriggers = this.getAllTriggers();
+      const replyTriggerExists = existingTriggers.some(trigger => 
+        trigger.getHandlerFunction() === 'checkAllRunningLeadsForReplies'
+      );
+      
+      if (!replyTriggerExists) {
+        console.log('創建回覆檢測觸發器（每小時執行一次）');
+        ScriptApp.newTrigger('checkAllRunningLeadsForReplies')
+          .timeBased()
+          .everyHours(1)
+          .create();
+        console.log('✅ 回覆檢測觸發器創建成功');
+      } else {
+        console.log('回覆檢測觸發器已存在');
+      }
+    } catch (error) {
+      console.error('創建回覆檢測觸發器時發生錯誤:', error);
+      throw new Error(`回覆檢測觸發器創建失敗: ${error.message}`);
+    }
+  },
+
+  /**
+   * 刪除回覆檢測觸發器
+   */
+  deleteReplyDetectionTrigger() {
+    const triggers = this.getAllTriggers();
+    triggers.forEach(trigger => {
+      if (trigger.getHandlerFunction() === 'checkAllRunningLeadsForReplies') {
+        this.deleteTrigger(trigger);
+        console.log('已刪除回覆檢測觸發器');
+      }
+    });
+  },
+
 
   /**
    * 清理舊的多餘觸發器（避免達到20個觸發器上限）

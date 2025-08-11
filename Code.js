@@ -33,7 +33,9 @@ function onOpen() {
       .addSeparator()
       .addItem('🧪 Test Send Now Manually', 'testSendNowManually')
       .addSeparator()
+      .addItem('📧 Test Global Email Check', 'testGlobalEmailCheckManually')
       .addItem('📬 Test Reply Detection', 'testReplyDetectionManually')
+      .addItem('🔄 Recreate Global Trigger', 'recreateGlobalTrigger')
       .addItem('Show Trigger Stats', 'showTriggerStats')
       .addItem('🗑️ Delete All Triggers', 'deleteAllTriggersMenu'))
     .addToUi();
@@ -103,7 +105,7 @@ function runAutoLeadWarmer() {
     Utilities.sleep(1000); // 等待1秒避免衝突
     
     try {
-      ReplyDetectionService.createReplyDetectionTrigger();
+      TriggerManager.createReplyDetectionTrigger();
     } catch (error) {
       console.error('回覆檢測觸發器創建失敗，但繼續執行:', error);
     }
@@ -291,17 +293,17 @@ function processRow(sheet, row, rowIndex) {
     
     const schedules = Utils.generateScheduleTimes();
     
-    // 逐個填入排程時間，確保沒有刪除線
+    // 逐個填入排程時間 Date 物件，確保沒有刪除線
     const schedule1Cell = sheet.getRange(rowIndex, COLUMNS.SCHEDULE_1 + 1);
-    schedule1Cell.setValue(Utils.formatScheduleTime(schedules.schedule1));
+    schedule1Cell.setValue(schedules.schedule1); // 直接存 Date 物件
     schedule1Cell.setFontLine('none'); // 確保沒有刪除線
     
     const schedule2Cell = sheet.getRange(rowIndex, COLUMNS.SCHEDULE_2 + 1);
-    schedule2Cell.setValue(Utils.formatScheduleTime(schedules.schedule2));
+    schedule2Cell.setValue(schedules.schedule2); // 直接存 Date 物件
     schedule2Cell.setFontLine('none'); // 確保沒有刪除線
     
     const schedule3Cell = sheet.getRange(rowIndex, COLUMNS.SCHEDULE_3 + 1);
-    schedule3Cell.setValue(Utils.formatScheduleTime(schedules.schedule3));
+    schedule3Cell.setValue(schedules.schedule3); // 直接存 Date 物件
     schedule3Cell.setFontLine('none'); // 確保沒有刪除線
     
     SheetService.updateInfo(sheet, rowIndex, '✅ 排程時間已設定');
@@ -730,6 +732,83 @@ function deleteAllTriggersMenu() {
     } catch (error) {
       ui.alert('錯誤', `刪除觸發器失敗: ${error.message}`, ui.ButtonSet.OK);
     }
+  }
+}
+
+/**
+ * 手動測試全域郵件檢查功能（調試用）
+ */
+function testGlobalEmailCheckManually() {
+  try {
+    const ui = SpreadsheetApp.getUi();
+    
+    console.log('=== 手動測試全域郵件檢查 ===');
+    
+    // 執行全域郵件檢查
+    const result = EmailService.checkAndSendMails();
+    
+    let message = `📧 全域郵件檢查測試結果：\n\n`;
+    
+    if (result.error) {
+      message += `❌ 錯誤：${result.error}`;
+    } else {
+      message += `✅ 檢查了 ${result.checked} 個潛在客戶\n📬 發送了 ${result.sent} 封郵件`;
+    }
+    
+    // 檢查工作表狀態
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('工作表1');
+    const lastRow = sheet.getLastRow();
+    let runningCount = 0;
+    
+    if (lastRow > 1) {
+      for (let i = 2; i <= lastRow; i++) {
+        const status = sheet.getRange(i, 15).getValue(); // STATUS column
+        if (status === 'Running') {
+          runningCount++;
+        }
+      }
+    }
+    
+    message += `\n\n📊 工作表狀態：\n🔄 Running 狀態的潛客數: ${runningCount}`;
+    
+    ui.alert('全域郵件檢查測試', message, ui.ButtonSet.OK);
+    
+    console.log('測試結果:', result);
+    
+  } catch (error) {
+    console.error('手動測試全域郵件檢查失敗:', error);
+    SpreadsheetApp.getUi().alert('測試失敗', `全域郵件檢查測試失敗: ${error.message}`, SpreadsheetApp.getUi().ButtonSet.OK);
+  }
+}
+
+/**
+ * 手動重新建立全域觸發器（調試用）
+ */
+function recreateGlobalTrigger() {
+  try {
+    const ui = SpreadsheetApp.getUi();
+    
+    console.log('=== 手動重新建立全域觸發器 ===');
+    
+    // 先刪除現有的全域觸發器
+    TriggerManager.deleteGlobalEmailTrigger();
+    
+    // 等待一秒
+    Utilities.sleep(1000);
+    
+    // 重新建立觸發器
+    TriggerManager.createGlobalEmailTrigger();
+    
+    // 檢查結果
+    const stats = TriggerManager.getTriggerStats();
+    
+    const message = `✅ 全域觸發器重新建立完成！\n\n📊 觸發器統計：\n🚀 全域郵件觸發器: ${stats.globalTriggers}\n📧 回覆檢測觸發器: ${stats.replyTriggers}\n🔧 其他觸發器: ${stats.others}\n\n觸發器應該會在下個整點執行 checkAndSendMails 函數。`;
+    
+    ui.alert('觸發器重建完成', message, ui.ButtonSet.OK);
+    
+  } catch (error) {
+    console.error('重新建立觸發器失敗:', error);
+    SpreadsheetApp.getUi().alert('重建失敗', `觸發器重建失敗: ${error.message}`, SpreadsheetApp.getUi().ButtonSet.OK);
   }
 }
 
