@@ -21,6 +21,7 @@ function onOpen() {
     .addItem('⏸️ Stop New Processing', 'stopNewProcessing')
     .addSeparator()
     .addItem('⚙️ Setup Headers', 'setupHeaders')
+    .addItem('🎨 Format All Rows', 'formatAllLeadRows')
     .addSeparator()
     .addItem('🔗 Test API Connection', 'testAPIConnection')
     .addItem('🌐 Test Network', 'testNetworkConnection')

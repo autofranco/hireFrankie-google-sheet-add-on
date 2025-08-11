@@ -51,10 +51,13 @@ const SheetService = {
     headerRange.setFontWeight('bold');
     headerRange.setBackground('#f0f0f0');
     
+    // 設定列寬
+    this.setupColumnWidths(sheet);
+    
     // 同時設置用戶資訊工作表
     UserInfoService.getUserInfoSheet();
     
-    SpreadsheetApp.getUi().alert(`設定完成！\n\n✅ 工作表已重新命名為: ${title}\n✅ User Info 工作表已創建\n\n💡 請到 "User Info" 工作表填入您的個人資訊，這會自動添加到所有郵件簽名中。`);
+    SpreadsheetApp.getUi().alert(`設定完成！\n\n✅ 工作表已重新命名為: ${title}\n✅ User Info 工作表已創建\n✅ 列寬已設定\n\n💡 請到 "User Info" 工作表填入您的個人資訊，這會自動添加到所有郵件簽名中。`);
   },
 
   /**
@@ -150,6 +153,139 @@ const SheetService = {
     
     // 當狀態變為 Running 時，設置 Send Now 按鈕
     this.setupSendNowButton(sheet, rowIndex);
+  },
+
+  /**
+   * 設定列寬
+   */
+  setupColumnWidths(sheet) {
+    try {
+      console.log('設定列寬...');
+      
+      // Email Address: 120px (column A)
+      sheet.setColumnWidth(1, 120);
+      
+      // First Name: 70px (column B) 
+      sheet.setColumnWidth(2, 70);
+      
+      // Context: 200px (column C)
+      sheet.setColumnWidth(3, 200);
+      
+      // Leads Profile: 200px (column D)
+      sheet.setColumnWidth(4, 200);
+      
+      // 1st mail angle: 150px (column E)
+      sheet.setColumnWidth(5, 150);
+      
+      // 1st follow up mail: 150px (column F)
+      sheet.setColumnWidth(6, 150);
+      
+      // 1st mail schedule: 75px (column G)
+      sheet.setColumnWidth(7, 75);
+      
+      // 2nd mail angle: 150px (column H)
+      sheet.setColumnWidth(8, 150);
+      
+      // 2nd follow up mail: 150px (column I)
+      sheet.setColumnWidth(9, 150);
+      
+      // 2nd mail schedule: 75px (column J)
+      sheet.setColumnWidth(10, 75);
+      
+      // 3rd mail angle: 150px (column K)
+      sheet.setColumnWidth(11, 150);
+      
+      // 3rd follow up mail: 150px (column L)
+      sheet.setColumnWidth(12, 150);
+      
+      // 3rd mail schedule: 75px (column M)
+      sheet.setColumnWidth(13, 75);
+      
+      // send now: 70px (column N)
+      sheet.setColumnWidth(14, 70);
+      
+      // status: 70px (column O)
+      sheet.setColumnWidth(15, 70);
+      
+      // 強制刷新以確保更改立即生效
+      SpreadsheetApp.flush();
+      console.log('列寬設定完成並已刷新');
+    } catch (error) {
+      console.error('設定列寬時發生錯誤:', error);
+    }
+  },
+
+  /**
+   * 格式化所有潛在客戶行（手動觸發）- 使用 Sheets API
+   */
+  formatAllLeadRows() {
+    try {
+      const sheet = this.getMainSheet();
+      const spreadsheetId = SpreadsheetApp.getActiveSpreadsheet().getId();
+      const sheetId = sheet.getSheetId();
+      const lastRow = sheet.getLastRow();
+      let formattedCount = 0;
+      
+      console.log('開始格式化所有潛在客戶行...');
+      
+      // 先設定列寬
+      this.setupColumnWidths(sheet);
+      
+      // 準備 API 請求
+      const requests = [];
+      
+      // 格式化每一行（跳過標題行）
+      for (let rowIndex = 2; rowIndex <= lastRow; rowIndex++) {
+        const status = sheet.getRange(rowIndex, COLUMNS.STATUS + 1).getValue();
+        
+        // 只格式化有狀態的行（已處理的潛在客戶）
+        if (status && status !== '') {
+          // 使用 Sheets API 設定行高
+          requests.push({
+            "updateDimensionProperties": {
+              "range": {
+                "sheetId": sheetId,
+                "dimension": "ROWS",
+                "startIndex": rowIndex - 1,
+                "endIndex": rowIndex
+              },
+              "properties": {
+                "pixelSize": 200
+              },
+              "fields": "pixelSize"
+            }
+          });
+          
+          // 啟用文字換行（但維持固定200px高度）
+          const range = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn());
+          range.setWrap(true);
+          
+          formattedCount++;
+        }
+      }
+      
+      // 執行 API 請求
+      if (requests.length > 0) {
+        const resource = {
+          requests: requests
+        };
+        
+        Sheets.Spreadsheets.batchUpdate(resource, spreadsheetId);
+        console.log(`已透過 API 設定 ${requests.length} 行高度`);
+      }
+      
+      // 強制刷新
+      SpreadsheetApp.flush();
+      
+      const message = `✅ 格式化完成！\n\n已格式化 ${formattedCount} 行潛在客戶資料\n• 使用 Sheets API 設定行高為 200px\n• 列寬已調整\n• 啟用文字換行（固定高度）`;
+      SpreadsheetApp.getUi().alert('格式化完成', message, SpreadsheetApp.getUi().ButtonSet.OK);
+      
+      console.log(`格式化完成: ${formattedCount} 行`);
+      
+    } catch (error) {
+      console.error('格式化時發生錯誤:', error);
+      SpreadsheetApp.getUi().alert('格式化失敗', `錯誤: ${error.message}`, SpreadsheetApp.getUi().ButtonSet.OK);
+    }
   },
 
   /**
@@ -251,4 +387,11 @@ const SheetService = {
 // 全局函数包装器
 function setupHeaders() {
   return SheetService.setupHeaders();
+}
+
+/**
+ * 格式化所有潛在客戶行（全域函數）
+ */
+function formatAllLeadRows() {
+  return SheetService.formatAllLeadRows();
 }

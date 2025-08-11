@@ -20,16 +20,40 @@ const ContentGenerator = {
 4. 溝通偏好
 5. 潛在需求
 
-请提供具体且实用的分析，帮助业务人员更好地了解这位潜在客户。`;
+請提供具體且實用的分析，幫助業務人員更好地了解這位潛在客戶。
+
+注意：請不要使用任何 Markdown 格式（如 **粗體** 或 *斜體*），請使用純文字格式，可以用「」符號來強調重點內容。`;
 
     try {
       const response = APIService.callPerplexityAPI(prompt);
       console.log('生成客户画像成功:', response.substring(0, 100) + '...');
-      return response;
+      
+      // 清理 Markdown 格式，使其適合 Google Sheets 顯示
+      const cleanedResponse = this.cleanMarkdownForSheets(response);
+      return cleanedResponse;
     } catch (error) {
       console.error('生成客户画像失败:', error);
       throw new Error(`生成客户画像失败: ${error.message}`);
     }
+  },
+
+  /**
+   * 清理 Markdown 格式，使其適合 Google Sheets 顯示
+   */
+  cleanMarkdownForSheets(text) {
+    if (!text) return text;
+    
+    return text
+      // 移除粗體標記 **text** -> 「text」
+      .replace(/\*\*(.*?)\*\*/g, '「$1」')
+      // 移除斜體標記 *text* -> text (但保留單個星號)
+      .replace(/(?<!\*)\*(?!\*)([^*]+?)(?<!\*)\*(?!\*)/g, '$1')
+      // 移除其他常見 markdown 符號
+      .replace(/#{1,6}\s/g, '') // 移除標題標記
+      .replace(/`([^`]+)`/g, '「$1」') // 移除程式碼標記，改用引號
+      // 清理多餘的空行
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
   },
 
   /**
