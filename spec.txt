@@ -1,0 +1,255 @@
+# MVP 規格（含測試版 / 實際運行標註）
+
+---
+
+## 1. 產品概述 (Product Overview)
+
+* **1.1 產品名稱：** Auto Lead Warmer
+* **1.2 產品目標：** 開發一個 MVP 產品，在 Google Sheet 中自動化潛在客戶資料的蒐集、分析、信件撰寫與寄送，以提升業務追蹤效率。
+* **1.3 目標使用者：** 有大量冷客需要追蹤的業務員。
+
+---
+
+## 2. 核心功能 (Core Features)
+
+### 2.1 Google Sheet 介面
+
+* **啟動方式：** 以 Google Sheet 擴充功能（Add-on）的形式運作。
+* **使用者介面：** 在 Google Sheet 儲存格中輸入資料，透過 Add-on Menu 按鈕啟動自動化。
+
+#### Sheet 規則
+
+* **【新增】** Sheet 標題為必填，且由系統自動產生。
+
+#### Google Sheet 欄位
+
+* `Email Address`：手動輸入潛在客戶信箱。
+* `First Name`：手動輸入潛在客戶名稱。
+* `Context`：手動輸入客戶背景資訊。
+* `Leads Profile`：自動生成的潛在客戶畫像。
+* `1st mail angle`：第一封追蹤信件切入點與內容大綱。
+* `1st follow up mail`：第一封追蹤信件內容。
+* `1st mail schedule`：第一封信件排程時間。
+* `2nd mail angle`：第二封追蹤信件切入點與內容大綱。
+* `2nd follow up mail`：第二封追蹤信件內容。
+* `2nd mail schedule`：第二封信件排程時間。
+* `3rd mail angle`：第三封追蹤信件切入點與內容大綱。
+* `3rd follow up mail`：第三封追蹤信件內容。
+* `3rd mail schedule`：第三封信件排程時間。
+* **【修改】** `send now 復選框`：
+    * 狀態為 `Running` 時出現復選框。
+    * 使用者勾選後透過 `Add-on Menu > Send Now` 立即發送下一封待寄郵件。
+    * 發送完成後復選框自動重置為未勾選。
+    * 當所有三封郵件都透過 `Send Now` 發送完成後，系統自動將 `status` 改為 `Done`。
+* **【新增】** `status`：潛客資料處理的狀態（下拉選單）。
+    * `空白`（預設：未處理）
+    * `Processing`（`Add-on Menu` 的 `Run` 按鈕執行後立即變為此狀態）
+    * `Running`（`Lead Profile`、三封 `Email` 都生成完成，且排程設定完成）
+    * `Done`（流程完成、用戶手動停止、或潛客已回信）
+* **【修改】** `info` (原 Processed)：顯示該筆資料處理狀態的詳細訊息。
+    * 錯誤訊息
+    * 狀態說明：`潛客已回信`、`用戶手動停止`、`等待排程寄送`、`全部寄送完成`
+
+### 2.2 自動化執行流程
+
+#### 使用者輸入
+
+* 用戶手動輸入 `Email Address`、`First Name`、`Context`。
+
+#### 執行與停止
+
+* 用戶按下 `Add-on Menu` 的 `Run` 按鈕後：
+    * `status` 從 `空白` → `Processing`。
+    * 生成 `Leads Profile`、`Angles`、`Emails` 並設定排程後，`status` 變成 `Running`。
+* 用戶將 `status` 改成 `Done` → 立即終止該筆潛客後續排程寄送（系統只會處理 `status` 為 `空白` 的潛客資料）。
+* 若系統完成最後一封信寄送 → 自動將 `status` 改成 `Done` 並更新 `info`。
+
+#### 潛在客戶畫像生成
+
+* 系統根據 `Context` 欄位訊息，利用 Perplexity API 搜尋相關訊息後推測並補全用戶畫像。
+* 根據搜尋結果自動生成並填入 `Leads Profile`。
+
+#### 生成信件切入點與內容大綱
+
+* 系統根據 `Leads Profile`，利用 Perplexity API 想出三個不同方向的切入點與內容大綱。
+* 分別填入 `1st~3rd mail angle`。
+
+#### 信件生成
+
+* 根據切入點與 `Leads Profile`，自動生成三封不同方向的追蹤信件，填入 `1st~3rd follow up mail`。
+
+#### 信件排程設定
+
+* **【修改】** 系統自動設定寄送日期，使用字串格式避免 Google Sheets 日期選擇器剝離時間：
+    * 格式：「MM/DD HH:MM」(例如：「08/10 18:00」)
+* **測試模式：**
+    * 第一封：執行時間 + 1 分鐘
+    * 第二封：第一封寄送時間 + 1 分鐘
+    * 第三封：第一封寄送時間 + 2 分鐘
+* **實際運行模式：**
+    * 第一封：執行時間 + 1 分鐘（立即寄出第一封）
+    * 第二封：第一封寄送時間 + 7 天
+    * 第三封：第二封寄送時間 + 7 天
+* 若使用者手動修改 `mail schedule` 欄位，系統會更新排程時間。
+
+#### **【增強】智能回覆檢測系統**
+
+* 只檢測對特定已發送郵件的回覆，避免誤判任何來信。
+* 自動將 `status` 改成 `Done`，並在 `info` 標註「潛客已回信」。
+* 使用 `PropertiesService` 記錄每封已發送郵件的主旨和時間戳記。
+* 透過 Gmail API 搜尋功能精確匹配回覆郵件。
+* 每小時執行回覆檢測，及時停止後續郵件發送。
+
+#### **【新增】生成速度優化**
+
+* 採「分步即時寫入」策略：
+    * `Leads Profile` 生成後立即寫入。
+    * `Angles` 生成後立即寫入。
+    * `Emails` 生成後立即寫入。
+* 避免整批處理完成後才一次寫入，減少等待時間。
+
+#### 自動寄送
+
+* 系統於 `mail schedule` 指定時間透過使用者 Gmail 寄出信件。
+* **【新增】測試模式：** 每封信獨立使用 `Utilities.sleep` / 直接 `setTimeout` 類流程進行寄送，不需要 `trigger` 優化。
+
+#### **【升級】Sheet-only 架構**
+
+* 系統採用 Sheet 單一資料源設計，支援使用者即時編輯郵件內容和排程時間。
+* 建立全域 Time-based Trigger 每小時執行 `checkAndSendMails()`。
+* 該 Trigger 會掃描整份 Google Sheet，找到「寄送時間已到且未寄送」的潛在客戶，批次寄送這些信件。
+
+#### 批次寄送時會檢查 `status` 與 `mail schedule`
+
+* `status` 必須為 `Running`。
+* `mail schedule` 欄位時間 `<=` 現在時間。
+* 該封信尚未寄送（可用 `info` 或額外欄位紀錄已寄送狀態）。
+* 完成寄送後，立即更新 `info` 與 `schedule` 欄位（加刪除線）。
+
+#### **【新增】Send Now 功能**
+
+* 在儲存格中提供復選框供用戶勾選。
+* 透過 `Add-on Menu > Send Now` 掃描所有勾選的復選框並立即寄出對應郵件。
+* 解決 `onEdit` 觸發器無法正常運作的技術問題。
+* 發送完成後自動取消勾選，當所有郵件發送完成時自動更新 `status` 為 `Done`。
+* 不影響共用 Time-based Trigger 的正常運行。
+
+---
+
+## 3. 產品規格與技術要求
+
+### 3.1 技術堆疊 (Tech Stack)
+
+* **前端/後端：** Google Sheet / Google Apps Script
+* **資料搜尋與補充：** Perplexity API（使用開發方 API，不向用戶要求 API Key）
+
+#### 資料儲存
+
+* **主要資料：** Google Sheet 儲存格 (潛客資料、郵件內容、排程時間、狀態追蹤)。
+* **輔助儲存：** PropertiesService (已發送郵件記錄、停止處理標記)。
+* **`User Info` 工作表：** 使用者個人資訊和自訂郵件簽名。
+
+#### 正式運行模式使用 雙 Time-based Trigger 系統
+
+* **郵件發送觸發器：** 每小時執行 `checkAndSendMails()`。
+* **回覆檢測觸發器：** 每小時執行 `checkAllRunningLeadsForReplies()`。
+* 避免 Google Apps Script 的每日觸發器數量上限問題（上限 20 個）。
+
+#### **【技術問題解決】** 解決 `onEdit` 觸發器無法正常運作的問題
+
+* 發現多人編輯環境下 `onEdit` 觸發器會因為觸發器衝突而無法正常運作。
+* 採用選單驅動 (`Menu-driven`) 的 `Send Now` 機制替代 `onEdit` 觸發器。
+* 透過 `Add-on Menu` 主動掃描勾選的復選框，確保功能可靠性。
+
+### 3.2 權限要求 (Required Permissions)
+
+* **Google Sheets 存取：** 讀寫權限。
+* **Gmail 存取：** 寄送郵件。
+* **外部 API 存取：** 允許連線至 Perplexity API。
+* **Google Apps Script 單次執行時間上限為 6 分鐘** → 共用 trigger 的批次寄送邏輯需控制單次處理筆數，若超過上限需分批處理。
+* **Gmail 每日寄送上限**（免費 Gmail：500 封 / Google Workspace：2,000 封）→ 若有大量寄送需求需控制節奏。
+* **Trigger 執行頻率**可調整（建議 5 分鐘一次）以平衡寄送延遲與 API quota 使用量。
+
+---
+
+## 4. 使用者介面與使用者體驗 (UI/UX)
+
+### 4.1 Add-on Menu
+
+* `Auto Lead Warmer > Run`：啟動自動化。
+* **【修改】** `Auto Lead Warmer > Initial Setup` (原 Setup Headers)：設定表頭和初始化工作表。
+* **【新增】** `Auto Lead Warmer > Stop New Processing`：停止系統處理新的潛客資料，但不影響已在 `Running` 狀態的流程。
+* **【修改】** `Auto Lead Warmer > Send Now`：掃描所有勾選的 `Send Now` 復選框，立即寄出對應的下一封待寄郵件。
+* **【新增】** `Auto Lead Warmer > Format All Rows`：手動格式化所有潛客行，設定固定 200px 行高和欄位寬度。
+* **【新增】** `Auto Lead Warmer > Debug Tools`：包含 API/Network 測試功能。
+
+### 4.2 表格欄位
+
+* `status` 欄位選單：`空白` / `Processing` / `Running` / `Done`。
+* `info` 欄位：顯示狀態與錯誤訊息。
+
+### 4.3 錯誤與進度提示
+
+* **【新增】API 錯誤：** 在 `info` 顯示 `[Error] 錯誤描述`。
+* **寄送完成：** 對應 `mail schedule` 加刪除線。
+* **【新增】手動停止：** `status` 改為 `Done`，`info` 顯示「`手動停止後續信件寄送`」。
+* **【新增】潛客回覆：** `status` 改為 `Done`，`info` 顯示「`潛客已回信`」。
+* **【新增】Stop New Processing 功能：**
+    * 透過 `PropertiesService` 標記停止新資料處理。
+    * 只影響新的潛客資料處理，不會中斷已在 `Running` 狀態的流程。
+    * 使用 `PropertiesService 'stop_processing'` 標記控制。
+    * 提供安全確認對話框，避免誤操作。
+* **【新增】UI 格式化系統：**
+    * 使用 `Sheets API updateDimensionProperties` 強制設定 200px 行高，避免被「根據資料內容調整大小」覆蓋。
+    * 自訂欄位寬度：`Email`(120px)、`First Name/Send Now/Status`(70px)、`Context/Leads Profile`(200px)、`Mail angles/follow up mails`(150px)、`Mail schedules`(75px)。
+    * 支援文字自動換行但維持固定高度。
+    * 透過 `Format All Rows` 按鈕手動觸發格式化。
+* **【新增】郵件內容解析功能：**
+    * 自動解析郵件中的「`主旨：`」和「`內容：`」標籤。
+    * 主旨部分只出現在郵件標題，內容部分只出現在郵件本文。
+    * 避免標籤在最終郵件中重複出現。
+* **【新增】用戶資訊管理：**
+    * `User Info` 工作表儲存使用者個人資訊。
+    * 自動添加個人化郵件簽名到所有發送郵件。
+    * 支援自訂簽名內容。
+* **【新增】PropertiesService 儲存管理：**
+    * 自動 30 天清理舊的發送記錄。
+    * 潛客回覆時立即清理相關記錄。
+    * 儲存限制：9KB 總容量，約 500-1000 個屬性。
+    * 記錄格式：`sent_email_{rowIndex}_{emailType}`。
+
+---
+
+## 5. 技術限制與挑戰 (Technical Limitations)
+
+### **【新增】Google Sheets/Apps Script 限制與解決方案**
+
+#### 日期時間選擇器限制
+
+* **問題：** Google Sheets 日期選擇器會自動剝離時間部分。
+* **解決方案：** 改用字串格式 ` "MM/DD HH:MM"` 儲存排程時間。
+
+#### 格式控制限制
+
+* **問題：**「`根據資料內容調整大小`」會覆蓋手動設定的行高。
+* **解決方案：** 使用 `Sheets API updateDimensionProperties` 強制設定固定高度。
+
+#### `PropertiesService` 儲存限制
+
+* **儲存限制：** 9KB 總容量，約 500-1000 個屬性。
+* **解決方案：** 實作 30 天自動清理 + 回覆時立即清理。
+
+#### 觸發器管理限制
+
+* **限制：** 每個專案最多 20 個觸發器。
+* **解決方案：** 檢查現有觸發器後再創建，避免重複。
+
+#### Gmail API 搜尋限制
+
+* **挑戰：** 準確檢測回覆 vs 新郵件。
+* **解決方案：** 追蹤已發送郵件主旨，比對時間戳記。
+
+#### 批量處理效能限制
+
+* **限制：** Apps Script 6 分鐘執行時間上限。
+* **解決方案：** 分批處理和狀態檢查機制。
