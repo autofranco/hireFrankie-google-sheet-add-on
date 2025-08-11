@@ -34,6 +34,48 @@ const Utils = {
   },
 
   /**
+   * 格式化排程時間為 MM/DD HH:00 格式（用於郵件排程顯示，易於解析）
+   */
+  formatScheduleTime(date) {
+    if (!date || !(date instanceof Date)) {
+      return '';
+    }
+    
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    
+    return `${month}/${day} ${hours}:00`;
+  },
+
+  /**
+   * 解析排程時間字串回 Date 物件
+   */
+  parseScheduleTime(scheduleText) {
+    if (!scheduleText || typeof scheduleText !== 'string') {
+      return null;
+    }
+    
+    try {
+      // 格式: "08/10 18:00"
+      const currentYear = new Date().getFullYear();
+      const fullDateString = `${currentYear}/${scheduleText}`;
+      const parsedDate = new Date(fullDateString);
+      
+      // 驗證解析結果
+      if (isNaN(parsedDate.getTime())) {
+        console.error(`無效的排程時間格式: ${scheduleText}`);
+        return null;
+      }
+      
+      return parsedDate;
+    } catch (error) {
+      console.error(`解析排程時間錯誤: ${scheduleText}`, error);
+      return null;
+    }
+  },
+
+  /**
    * 验证邮件地址格式
    */
   isValidEmail(email) {
@@ -56,12 +98,6 @@ const Utils = {
     return text.trim().replace(/\s+/g, ' ');
   },
 
-  /**
-   * 生成唯一ID
-   */
-  generateUniqueId() {
-    return `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  },
 
   /**
    * 延迟执行

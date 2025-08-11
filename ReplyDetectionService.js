@@ -11,36 +11,46 @@ const ReplyDetectionService = {
     try {
       console.log(`檢查 ${email} 的回覆，從 ${sinceDate} 開始`);
       
-      // 使用 Gmail API 搜尋來自該郵件地址的訊息
-      const query = `from:${email} after:${this.formatDateForGmail(sinceDate)}`;
-      const threads = GmailApp.search(query, 0, 50);
+      const myEmail = Session.getActiveUser().getEmail();
+      console.log(`我的郵件地址: ${myEmail}`);
       
+      // 使用更簡單的搜尋方式，搜尋該郵件地址的所有對話
+      const query = `from:${email}`;
+      console.log(`搜尋查詢: ${query}`);
+      
+      const threads = GmailApp.search(query, 0, 50);
       console.log(`找到 ${threads.length} 個對話串`);
       
       if (threads.length > 0) {
         // 檢查是否有新的回覆（不是我們發送的）
         for (const thread of threads) {
           const messages = thread.getMessages();
+          console.log(`對話串有 ${messages.length} 則訊息`);
           
           for (const message of messages) {
             const messageDate = message.getDate();
             const sender = message.getFrom();
-            const myEmail = Session.getActiveUser().getEmail();
+            const subject = message.getSubject();
             
-            // 如果訊息是在指定日期之後，且不是我們發送的
-            if (messageDate >= sinceDate && !sender.includes(myEmail)) {
-              console.log(`發現回覆: ${sender} 於 ${messageDate}`);
+            console.log(`訊息: ${subject} | 發送者: ${sender} | 時間: ${messageDate}`);
+            
+            // 如果訊息是在指定日期之後，且來自目標郵件地址（不是我們發送的）
+            if (messageDate >= sinceDate && 
+                (sender.includes(email) || sender.toLowerCase().includes(email.toLowerCase())) &&
+                !sender.includes(myEmail)) {
+              console.log(`✅ 發現回覆: ${sender} 於 ${messageDate}`);
               return {
                 hasReply: true,
                 replyDate: messageDate,
                 sender: sender,
-                subject: message.getSubject()
+                subject: subject
               };
             }
           }
         }
       }
       
+      console.log('沒有找到回覆');
       return { hasReply: false };
       
     } catch (error) {
@@ -101,7 +111,7 @@ const ReplyDetectionService = {
               SheetService.updateInfo(sheet, i, `潛客已回信 (${replyResult.replyDate.toLocaleString('zh-TW')})`);
               
               // 清理該潛客的排程資料
-              this.cleanupLeadScheduleData(email, i);
+              this.cleanupLeadScheduleData(email);
               
               console.log(`✅ 發現回覆: ${firstName} (${email}) - 已停止後續郵件`);
             }
@@ -123,7 +133,7 @@ const ReplyDetectionService = {
   /**
    * 清理已回覆潛客的排程資料
    */
-  cleanupLeadScheduleData(email, rowIndex) {
+  cleanupLeadScheduleData(email) {
     try {
       // 清理 PropertiesService 中的正式模式資料
       const properties = PropertiesService.getScriptProperties().getProperties();
@@ -135,13 +145,6 @@ const ReplyDetectionService = {
         }
       }
       
-      // 清理舊版本的個別觸發器資料
-      for (const key of Object.keys(properties)) {
-        if (key.startsWith('email_') && key.includes(email)) {
-          PropertiesService.getScriptProperties().deleteProperty(key);
-          console.log(`清理舊版排程資料: ${key}`);
-        }
-      }
       
     } catch (error) {
       console.error(`清理排程資料時發生錯誤 (${email}):`, error);

@@ -112,15 +112,15 @@ const SheetService = {
   updateSchedules(sheet, rowIndex, schedules) {
     // 設定排程時間並確保沒有刪除線格式
     const schedule1Cell = sheet.getRange(rowIndex, COLUMNS.SCHEDULE_1 + 1);
-    schedule1Cell.setValue(schedules.schedule1);
+    schedule1Cell.setValue(Utils.formatScheduleTime(schedules.schedule1));
     schedule1Cell.setFontLine('none');
     
     const schedule2Cell = sheet.getRange(rowIndex, COLUMNS.SCHEDULE_2 + 1);
-    schedule2Cell.setValue(schedules.schedule2);
+    schedule2Cell.setValue(Utils.formatScheduleTime(schedules.schedule2));
     schedule2Cell.setFontLine('none');
     
     const schedule3Cell = sheet.getRange(rowIndex, COLUMNS.SCHEDULE_3 + 1);
-    schedule3Cell.setValue(schedules.schedule3);
+    schedule3Cell.setValue(Utils.formatScheduleTime(schedules.schedule3));
     schedule3Cell.setFontLine('none');
   },
 

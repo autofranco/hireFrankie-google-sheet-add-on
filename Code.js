@@ -33,6 +33,7 @@ function onOpen() {
       .addSeparator()
       .addItem('🧪 Test Send Now Manually', 'testSendNowManually')
       .addSeparator()
+      .addItem('📬 Test Reply Detection', 'testReplyDetectionManually')
       .addItem('Show Trigger Stats', 'showTriggerStats')
       .addItem('🗑️ Delete All Triggers', 'deleteAllTriggersMenu'))
     .addToUi();
@@ -292,15 +293,15 @@ function processRow(sheet, row, rowIndex) {
     
     // 逐個填入排程時間，確保沒有刪除線
     const schedule1Cell = sheet.getRange(rowIndex, COLUMNS.SCHEDULE_1 + 1);
-    schedule1Cell.setValue(schedules.schedule1);
+    schedule1Cell.setValue(Utils.formatScheduleTime(schedules.schedule1));
     schedule1Cell.setFontLine('none'); // 確保沒有刪除線
     
     const schedule2Cell = sheet.getRange(rowIndex, COLUMNS.SCHEDULE_2 + 1);
-    schedule2Cell.setValue(schedules.schedule2);
+    schedule2Cell.setValue(Utils.formatScheduleTime(schedules.schedule2));
     schedule2Cell.setFontLine('none'); // 確保沒有刪除線
     
     const schedule3Cell = sheet.getRange(rowIndex, COLUMNS.SCHEDULE_3 + 1);
-    schedule3Cell.setValue(schedules.schedule3);
+    schedule3Cell.setValue(Utils.formatScheduleTime(schedules.schedule3));
     schedule3Cell.setFontLine('none'); // 確保沒有刪除線
     
     SheetService.updateInfo(sheet, rowIndex, '✅ 排程時間已設定');
@@ -533,9 +534,8 @@ function showTriggerStats() {
 總觸發器數量: ${stats.total}
 
 🚀 全域郵件觸發器: ${stats.globalTriggers}
-📧 回覆檢測觸發器: ${stats.others}
-🧹 清理觸發器: ${stats.cleanupTriggers}
-📨 舊版郵件觸發器: ${stats.emailTriggers}
+📧 回覆檢測觸發器: ${stats.replyTriggers}
+🔧 其他觸發器: ${stats.others}
 
 運行模式: 正式模式 (每小時檢查)`;
     
@@ -730,5 +730,56 @@ function deleteAllTriggersMenu() {
     } catch (error) {
       ui.alert('錯誤', `刪除觸發器失敗: ${error.message}`, ui.ButtonSet.OK);
     }
+  }
+}
+
+/**
+ * 手動測試回覆檢測功能（調試用）
+ */
+function testReplyDetectionManually() {
+  try {
+    const ui = SpreadsheetApp.getUi();
+    
+    console.log('=== 手動測試回覆檢測 ===');
+    
+    // 檢查觸發器是否存在
+    const triggers = ScriptApp.getProjectTriggers();
+    const replyTrigger = triggers.find(t => t.getHandlerFunction() === 'checkAllRunningLeadsForReplies');
+    
+    let triggerInfo = '';
+    if (replyTrigger) {
+      triggerInfo = `\n\n觸發器狀態：✅ 已存在\n觸發器 ID：${replyTrigger.getUniqueId()}`;
+    } else {
+      triggerInfo = `\n\n觸發器狀態：❌ 不存在`;
+    }
+    
+    // 執行回覆檢測
+    const result = ReplyDetectionService.checkAllRunningLeadsForReplies();
+    
+    let message = `📬 回覆檢測測試結果：\n\n`;
+    
+    if (result.error) {
+      message += `❌ 錯誤：${result.error}`;
+    } else {
+      message += `✅ 檢查了 ${result.checked} 個潛在客戶\n📧 發現 ${result.repliesFound} 個回覆`;
+    }
+    
+    message += triggerInfo;
+    
+    // 檢查 Gmail 權限
+    try {
+      const testThreads = GmailApp.search('is:unread', 0, 1);
+      message += `\n\n📮 Gmail 權限：✅ 正常 (找到 ${testThreads.length} 個未讀對話)`;
+    } catch (gmailError) {
+      message += `\n\n📮 Gmail 權限：❌ 錯誤 - ${gmailError.message}`;
+    }
+    
+    ui.alert('回覆檢測測試', message, ui.ButtonSet.OK);
+    
+    console.log('測試結果:', result);
+    
+  } catch (error) {
+    console.error('手動測試回覆檢測失敗:', error);
+    SpreadsheetApp.getUi().alert('測試失敗', `回覆檢測測試失敗: ${error.message}`, SpreadsheetApp.getUi().ButtonSet.OK);
   }
 }
