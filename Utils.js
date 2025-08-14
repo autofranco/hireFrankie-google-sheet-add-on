@@ -5,22 +5,46 @@
 const Utils = {
   
   /**
-   * 生成排程时间
+   * 生成排程时间 - 更新为工作日上午9点模式
    */
   generateScheduleTimes() {
     const now = new Date();
     
-    // 取得當前小時，設定為整點
-    const currentHour = new Date(now);
-    currentHour.setMinutes(0);
-    currentHour.setSeconds(0);
-    currentHour.setMilliseconds(0);
+    // 第一封邮件：下一个工作日上午9点
+    const schedule1 = this.getNextWeekdayAt9AM(now);
+    
+    // 第二封邮件：第一封邮件后7天（保持同一星期几）
+    const schedule2 = new Date(schedule1.getTime() + 7 * 24 * 60 * 60 * 1000);
+    
+    // 第三封邮件：第二封邮件后7天（保持同一星期几）
+    const schedule3 = new Date(schedule2.getTime() + 7 * 24 * 60 * 60 * 1000);
     
     return {
-      schedule1: new Date(currentHour.getTime()), // 這小時
-      schedule2: new Date(currentHour.getTime() + 60 * 60 * 1000), // 下小時
-      schedule3: new Date(currentHour.getTime() + 2 * 60 * 60 * 1000) // 後小時
+      schedule1: schedule1,
+      schedule2: schedule2,
+      schedule3: schedule3
     };
+  },
+
+  /**
+   * 获取下一个工作日上午9点的时间
+   */
+  getNextWeekdayAt9AM(fromDate) {
+    const date = new Date(fromDate);
+    date.setHours(9, 0, 0, 0); // 设置为上午9点
+    
+    // 如果是今天且还未到9点，就用今天
+    const now = new Date();
+    if (date.toDateString() === now.toDateString() && now.getHours() < 9) {
+      return date;
+    }
+    
+    // 否则找下一个工作日
+    do {
+      date.setDate(date.getDate() + 1);
+    } while (date.getDay() === 0 || date.getDay() === 6); // 0是周日，6是周六
+    
+    return date;
   },
 
   /**

@@ -53,6 +53,9 @@ const SheetService = {
     headerRange.setFontWeight('bold');
     headerRange.setBackground('#f0f0f0');
     
+    // 凍結第一行（標題行）
+    sheet.setFrozenRows(1);
+    
     // 設定列寬
     this.setupColumnWidths(sheet);
     
@@ -166,20 +169,20 @@ const SheetService = {
     try {
       console.log('設定列寬...');
       
-      // Email Address: 120px (column A)
-      sheet.setColumnWidth(1, 120);
+      // Email Address: 110px (column A)
+      sheet.setColumnWidth(1, 110);
       
-      // First Name: 70px (column B) 
-      sheet.setColumnWidth(2, 70);
+      // First Name: 80px (column B) 
+      sheet.setColumnWidth(2, 80);
       
-      // Company url: 70px (column C)
-      sheet.setColumnWidth(3, 70);
+      // Company url: 95px (column C)
+      sheet.setColumnWidth(3, 95);
       
       // Position: 70px (column D)
       sheet.setColumnWidth(4, 70);
       
-      // Resource url: 70px (column E)
-      sheet.setColumnWidth(5, 70);
+      // Resource url: 95px (column E)
+      sheet.setColumnWidth(5, 95);
       
       // Leads Profile: 200px (column F)
       sheet.setColumnWidth(6, 200);

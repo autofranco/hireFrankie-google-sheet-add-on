@@ -79,16 +79,21 @@
 
 #### 信件生成
 
-* 根據切入點與 `Leads Profile`，自動生成三封不同方向的追蹤信件，填入 `1st~3rd follow up mail`。
+* **【強化】** 根據切入點與 `Leads Profile`，自動生成三封不同方向的追蹤信件，填入 `1st~3rd follow up mail`。
+* **【更新】** 郵件內容要求：
+    * 必須融合客戶畫像和切入點資訊
+    * 展現對客戶公司和職位的深度了解
+    * 字數限制從200字擴增至300字
+    * 包含個人化開場和具體客戶畫像細節
 
 #### 信件排程設定
 
 * **【修改】** 系統自動設定寄送日期，使用字串格式避免 Google Sheets 日期選擇器剝離時間：
     * 格式：「MM/DD HH:MM」(例如：「08/10 18:00」)
-* **排程模式：**
-    * 第一封：執行時間 + 1 小時
-    * 第二封：執行時間 + 2 小時
-    * 第三封：執行時間 + 3 小時
+* **【更新】排程模式：**
+    * 第一封：下一個工作日上午9點
+    * 第二封：第一封郵件7天後（保持同一星期幾上午9點）
+    * 第三封：第二封郵件7天後（保持同一星期幾上午9點）
 * 若使用者手動修改 `mail schedule` 欄位，系統會更新排程時間。
 
 #### **【增強】智能回覆檢測系統**
@@ -200,8 +205,9 @@
     * 提供安全確認對話框，避免誤操作。
 * **【新增】UI 格式化系統：**
     * 使用 `Sheets API updateDimensionProperties` 強制設定 200px 行高，避免被「根據資料內容調整大小」覆蓋。
-    * 自訂欄位寬度：`Email`(120px)、`First Name/Send Now/Status`(70px)、`Context/Leads Profile`(200px)、`Mail angles/follow up mails`(150px)、`Mail schedules`(75px)。
+    * **【更新】** 自訂欄位寬度：`Email`(110px)、`First Name`(80px)、`Company url`(95px)、`Position`(70px)、`Resource url`(95px)、`Context/Leads Profile`(200px)、`Mail angles/follow up mails`(150px)、`Mail schedules`(75px)、`Send Now/Status`(70px)。
     * 支援文字自動換行但維持固定高度。
+    * **【新增】** 凍結標題行功能：第一行（標題行）在捲動時保持固定在頂部。
     * 透過 `Format All Rows` 按鈕手動觸發格式化。
 * **【新增】郵件內容解析功能：**
     * 自動解析郵件中的「`主旨：`」和「`內容：`」標籤。
