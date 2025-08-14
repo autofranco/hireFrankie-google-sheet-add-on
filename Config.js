@@ -8,22 +8,24 @@ const PERPLEXITY_API_URL = 'https://api.perplexity.ai/chat/completions';
 
 // Sheet 栏位对应
 const COLUMNS = {
-  EMAIL: 0,        // A: Email Address
-  FIRST_NAME: 1,   // B: First Name
-  CONTEXT: 2,      // C: Context
-  LEADS_PROFILE: 3, // D: Leads Profile
-  MAIL_ANGLE_1: 4, // E: 1st mail angle
-  FOLLOW_UP_1: 5,  // F: 1st follow up mail
-  SCHEDULE_1: 6,   // G: 1st mail schedule
-  MAIL_ANGLE_2: 7, // H: 2nd mail angle
-  FOLLOW_UP_2: 8,  // I: 2nd follow up mail
-  SCHEDULE_2: 9,   // J: 2nd mail schedule
-  MAIL_ANGLE_3: 10, // K: 3rd mail angle
-  FOLLOW_UP_3: 11,  // L: 3rd follow up mail
-  SCHEDULE_3: 12,   // M: 3rd mail schedule
-  SEND_NOW: 13,     // N: send now 按鈕
-  STATUS: 14,       // O: status 狀態
-  INFO: 15          // P: info 詳細訊息 (原 Processed)
+  EMAIL: 0,         // A: Email Address*
+  FIRST_NAME: 1,    // B: First Name*
+  COMPANY_URL: 2,   // C: Company url*
+  POSITION: 3,      // D: Position*
+  RESOURCE_URL: 4,  // E: Resource url*
+  LEADS_PROFILE: 5, // F: Leads Profile
+  MAIL_ANGLE_1: 6,  // G: 1st mail angle
+  FOLLOW_UP_1: 7,   // H: 1st follow up mail
+  SCHEDULE_1: 8,    // I: 1st mail schedule
+  MAIL_ANGLE_2: 9,  // J: 2nd mail angle
+  FOLLOW_UP_2: 10,  // K: 2nd follow up mail
+  SCHEDULE_2: 11,   // L: 2nd mail schedule
+  MAIL_ANGLE_3: 12, // M: 3rd mail angle
+  FOLLOW_UP_3: 13,  // N: 3rd follow up mail
+  SCHEDULE_3: 14,   // O: 3rd mail schedule
+  SEND_NOW: 15,     // P: send now 按鈕
+  STATUS: 16,       // Q: status 狀態
+  INFO: 17          // R: info 詳細訊息 (原 Processed)
 };
 
 // 其他配置常量

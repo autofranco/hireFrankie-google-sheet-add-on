@@ -5,8 +5,8 @@
 ## 1. 產品概述 (Product Overview)
 
 * **1.1 產品名稱：** Auto Lead Warmer
-* **1.2 產品目標：** 開發一個 MVP 產品，在 Google Sheet 中自動化潛在客戶資料的蒐集、分析、信件撰寫與寄送，以提升業務追蹤效率。
-* **1.3 目標使用者：** 有大量冷客需要追蹤的業務員。
+* **1.2 產品目標：** 開發一個 MVP 產品，在 Google Sheet 中自動化研習活動參與者的後續追蹤，包括客戶分析、個人化信件撰寫與寄送，以提升轉換效率。
+* **1.3 目標使用者：** 舉辦網路研習會（Webinar）、實體研習會（Seminar）或其他教育活動的講師與業務人員。
 
 ---
 
@@ -23,9 +23,11 @@
 
 #### Google Sheet 欄位
 
-* `Email Address`：手動輸入潛在客戶信箱。
-* `First Name`：手動輸入潛在客戶名稱。
-* `Context`：手動輸入客戶背景資訊。
+* `Email Address*`：手動輸入潛在客戶信箱。
+* `First Name*`：手動輸入潛在客戶名稱。
+* `Company url*`：手動輸入客戶公司網站，用於研究公司背景資訊。
+* `Position*`：手動輸入客戶職位，用於判斷客戶關注重點。
+* `Resource url*`：手動輸入研習活動或資源網站連結。
 * `Leads Profile`：自動生成的潛在客戶畫像。
 * `1st mail angle`：第一封追蹤信件切入點與內容大綱。
 * `1st follow up mail`：第一封追蹤信件內容。
@@ -54,7 +56,7 @@
 
 #### 使用者輸入
 
-* 用戶手動輸入 `Email Address`、`First Name`、`Context`。
+* 用戶手動輸入 `Email Address*`、`First Name*`、`Company url*`、`Position*`、`Resource url*`。
 
 #### 執行與停止
 
@@ -66,7 +68,8 @@
 
 #### 潛在客戶畫像生成
 
-* 系統根據 `Context` 欄位訊息，利用 Perplexity API 搜尋相關訊息後推測並補全用戶畫像。
+* 系統根據 `Company url*`、`Position*`、`Resource url*` 欄位訊息，利用 Perplexity API 搜尋相關訊息後推測並補全用戶畫像。
+* 分析公司規模、行業背景、職位決策權力、參與研習活動動機等面向。
 * 根據搜尋結果自動生成並填入 `Leads Profile`。
 
 #### 生成信件切入點與內容大綱

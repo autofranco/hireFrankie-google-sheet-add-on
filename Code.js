@@ -186,7 +186,7 @@ ${errorCount > 0 ? '\n请检查错误行的详细信息。' : ''}`;
  */
 function processRow(sheet, row, rowIndex) {
   // 检查必要栏位
-  if (!row[COLUMNS.EMAIL] || !row[COLUMNS.FIRST_NAME] || !row[COLUMNS.CONTEXT]) {
+  if (!row[COLUMNS.EMAIL] || !row[COLUMNS.FIRST_NAME] || !row[COLUMNS.COMPANY_URL] || !row[COLUMNS.POSITION] || !row[COLUMNS.RESOURCE_URL]) {
     console.log(`第 ${rowIndex} 行跳过：缺少必要字段`);
     return false;
   }
@@ -203,7 +203,9 @@ function processRow(sheet, row, rowIndex) {
     SpreadsheetApp.flush(); // 立即顯示更新
     
     const leadsProfile = ContentGenerator.generateLeadsProfile(
-      row[COLUMNS.CONTEXT], 
+      row[COLUMNS.COMPANY_URL], 
+      row[COLUMNS.POSITION],
+      row[COLUMNS.RESOURCE_URL],
       row[COLUMNS.FIRST_NAME]
     );
     

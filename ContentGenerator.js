@@ -7,20 +7,22 @@ const ContentGenerator = {
   /**
    * 生成潜在客户画像
    */
-  generateLeadsProfile(context, firstName) {
-    const prompt = `基于以下客户背景资讯，请协助分析并生成详细的潜在客户画像。请用繁体中文回答。
+  generateLeadsProfile(companyUrl, position, resourceUrl, firstName) {
+    const prompt = `基於以下客戶資訊，請協助分析並生成詳細的潛在客戶畫像。請用繁體中文回答。
 
-客户名称：${firstName}
-背景资讯：${context}
+客戶名稱：${firstName}
+公司網站：${companyUrl}
+職位：${position}
+資源/研習活動網站：${resourceUrl}
 
-请分析以下面向：
-1. 客户的行业背景和职位
-2. 可能的痛点和挑战
-3. 决策影响因素
-4. 溝通偏好
-5. 潛在需求
+請分析以下面向：
+1. 根據公司網站分析公司規模、行業背景、業務特色與近期新聞
+2. 根據職位分析決策權力和關注重點
+3. 參與研習活動的可能動機和需求
+4. 針對此職位可能面臨的痛點和挑戰
+5. 最適合的溝通方式和價值主張
 
-請提供具體且實用的分析，幫助業務人員更好地了解這位潛在客戶。
+請提供具體且實用的分析，幫助進行精準的後續追蹤。
 
 注意：請不要使用任何 Markdown 格式（如 **粗體** 或 *斜體*），請使用純文字格式，可以用「」符號來強調重點內容。`;
 
@@ -65,21 +67,21 @@ const ContentGenerator = {
 客户名称：${firstName}
 客户画像：${leadsProfile}
 
-请严格按照以下格式回答，每个切入点独立成段：
+請嚴格按照以下格式回答，每個切入點獨立成段：
 
-切入点1
-主题：[简短描述主题]
-内容大纲：[100字内，包括价值主张、行动呼籲]
+切入點1
+主題：[簡短描述主題]
+內容大綱：[100字內，包括價值主張、行動呼籲]
 
-切入点2
-主题：[简短描述主题]
-内容大纲：[100字内，包括价值主张、行动呼籲]
+切入點2
+主題：[簡短描述主題]
+內容大綱：[100字內，包括價值主張、行動呼籲]
 
-切入点3
-主题：[简短描述主题]
-内容大纲：[100字内，包括价值主张、行动呼籲]
+切入點3
+主題：[簡短描述主題]
+內容大綱：[100字內，包括價值主張、行動呼籲]
 
-三个切入点应该根據客戶畫像選擇他們最在意的痛點與對他們影響最大的地方。`;
+三個切入點應該根據客戶畫像選擇他們最在意的痛點與對他們影響最大的地方。`;
 
     try {
       console.log('开始生成邮件切入点...');
@@ -108,19 +110,19 @@ const ContentGenerator = {
    */
   parseMailAngles(response) {
     try {
-      // 方法1: 使用正则表达式匹配
-      const angle1Match = response.match(/切入点1[\s\S]*?(?=切入点2|$)/);
-      const angle2Match = response.match(/切入点2[\s\S]*?(?=切入点3|$)/);
-      const angle3Match = response.match(/切入点3[\s\S]*?$/);
+      // 使用繁體中文關鍵字匹配
+      const angle1Match = response.match(/切入點1[\s\S]*?(?=切入點2|$)/);
+      const angle2Match = response.match(/切入點2[\s\S]*?(?=切入點3|$)/);
+      const angle3Match = response.match(/切入點3[\s\S]*?$/);
 
-      let angle1 = angle1Match ? angle1Match[0].replace('切入点1', '').trim() : '';
-      let angle2 = angle2Match ? angle2Match[0].replace('切入点2', '').trim() : '';
-      let angle3 = angle3Match ? angle3Match[0].replace('切入点3', '').trim() : '';
+      let angle1 = angle1Match ? angle1Match[0].replace('切入點1', '').trim() : '';
+      let angle2 = angle2Match ? angle2Match[0].replace('切入點2', '').trim() : '';
+      let angle3 = angle3Match ? angle3Match[0].replace('切入點3', '').trim() : '';
 
-      // 方法2: 如果正则匹配失败，尝试简单分割
+      // 如果繁體匹配失败，尝试简体中文
       if (!angle1 || !angle2 || !angle3) {
-        console.log('正则匹配失败，尝试简单分割...');
-        const sections = response.split(/切入点[123]/);
+        console.log('繁體匹配失败，尝试简体中文...');
+        const sections = response.split(/切入[点點][123]/);
         
         if (sections.length >= 4) {
           angle1 = sections[1]?.trim() || '';
@@ -129,7 +131,7 @@ const ContentGenerator = {
         }
       }
 
-      // 方法3: 如果还是失败，尝试按行解析
+      // 如果还是失败，尝试按行解析（支援繁簡體）
       if (!angle1 || !angle2 || !angle3) {
         console.log('分割方法失败，尝试按行解析...');
         const lines = response.split('\n');
@@ -137,13 +139,13 @@ const ContentGenerator = {
         let tempAngles = { angle1: '', angle2: '', angle3: '' };
         
         for (const line of lines) {
-          if (line.includes('切入点1')) {
+          if (line.includes('切入點1') || line.includes('切入点1')) {
             currentAngle = 'angle1';
             continue;
-          } else if (line.includes('切入点2')) {
+          } else if (line.includes('切入點2') || line.includes('切入点2')) {
             currentAngle = 'angle2';
             continue;
-          } else if (line.includes('切入点3')) {
+          } else if (line.includes('切入點3') || line.includes('切入点3')) {
             currentAngle = 'angle3';
             continue;
           }
@@ -319,8 +321,8 @@ const ContentGenerator = {
 };
 
 // 全局函数包装器
-function generateLeadsProfile(context, firstName) {
-  return ContentGenerator.generateLeadsProfile(context, firstName);
+function generateLeadsProfile(companyUrl, position, resourceUrl, firstName) {
+  return ContentGenerator.generateLeadsProfile(companyUrl, position, resourceUrl, firstName);
 }
 
 function generateMailAngles(leadsProfile, firstName) {
