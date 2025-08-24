@@ -38,7 +38,42 @@ const USER_INFO_FIELDS = {
   NAME: { row: 3, col: 2, label: 'Name' },
   COMPANY: { row: 4, col: 2, label: 'Company' },
   TITLE: { row: 5, col: 2, label: 'Title' },
-  CONTACT: { row: 6, col: 2, label: 'Contact' }
+  CONTACT: { row: 6, col: 2, label: 'Contact' },
+  EMAIL1_PROMPT: { row: 8, col: 2, label: 'Email 1 Prompt', default: `請根據以下資訊撰寫一封專業的追蹤信件。請用繁體中文撰寫。
+
+內容動機：
+• 開場要個人化，要提到具體的Leads Profile細節來建立連結
+• 內容要簡潔有力，必須融合Leads Profile和mail angle
+• 展現對客戶公司和職位的了解
+• 包含明確的行動呼籲，目標是邀約客戶進行線上產品演示說明或是線上諮詢
+
+寫作風格：
+• 主旨要吸引人
+• 語調要專業但友善
+• 長度控制在300字以內` },
+  EMAIL2_PROMPT: { row: 9, col: 2, label: 'Email 2 Prompt', default: `請根據以下資訊撰寫第二封追蹤信件。請用繁體中文撰寫。
+
+內容動機：
+• 這是第二次接觸，必須融合Leads Profile和mail angle，展現對客戶業務的深度了解
+• 強調價值和機會
+• 包含社會證明或案例
+• 明確的行動呼籲，目標是邀約客戶進行線上產品演示說明或是線上諮詢
+
+寫作風格：
+• 語調可以更直接一些
+• 長度控制在300字以內` },
+  EMAIL3_PROMPT: { row: 10, col: 2, label: 'Email 3 Prompt', default: `請根據以下資訊撰寫第三封追蹤信件。請用繁體中文撰寫。
+
+內容動機：
+• 這是最後一次追蹤，必須融合Leads Profile和mail angle，回顧之前提到的客戶需求和挑戰
+• 強調錯過的成本
+• 提供最後的價值
+• 包含明確的行動呼籲，目標是邀約客戶進行線上產品演示說明或是線上諮詢
+• 留下好印象，為未來合作鋪路
+
+寫作風格：
+• 要有緊迫感
+• 長度控制在300字以內` }
 };
 const EMAIL_SCHEDULE_INTERVALS = {
   FIRST: 0,   // 這小時（立即）
@@ -53,3 +88,10 @@ const RUN_MODE = {
 
 // 固定使用正式模式
 const CURRENT_MODE = RUN_MODE.PRODUCTION;
+
+// Google Analytics 配置
+const GOOGLE_ANALYTICS = {
+  MEASUREMENT_ID: 'G-E5PQ3Y1VTJ', // 請替換為您的 GA4 Measurement ID
+  API_SECRET: 'uZ3RebtcSeuyplgDzQTAIw',   // 請替換為您的 API Secret
+  ENDPOINT: 'https://www.google-analytics.com/mp/collect'
+};

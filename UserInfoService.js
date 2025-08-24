@@ -53,9 +53,14 @@ const UserInfoService = {
     sheet.setColumnWidth(2, 300); // 輸入列
     
     // 添加說明
-    sheet.getRange(8, 1, 1, 2).merge();
-    sheet.getRange(8, 1).setValue('💡 This information will be automatically added to the end of all generated emails as your signature.');
-    sheet.getRange(8, 1).setFontStyle('italic').setFontColor('#666666');
+    sheet.getRange(7, 1, 1, 2).merge();
+    sheet.getRange(7, 1).setValue('💡 This information will be automatically added to the end of all generated emails as your signature.');
+    sheet.getRange(7, 1).setFontStyle('italic').setFontColor('#666666');
+    
+    // 添加提示欄位的說明
+    sheet.getRange(11, 1, 1, 2).merge();
+    sheet.getRange(11, 1).setValue('✏️ Customize email generation prompts below. Leave blank to use default prompts.');
+    sheet.getRange(11, 1).setFontStyle('italic').setFontColor('#666666');
     
     console.log('用戶資訊工作表設定完成');
   },
@@ -72,14 +77,17 @@ const UserInfoService = {
         name: sheet.getRange(USER_INFO_FIELDS.NAME.row, USER_INFO_FIELDS.NAME.col).getValue() || '',
         company: sheet.getRange(USER_INFO_FIELDS.COMPANY.row, USER_INFO_FIELDS.COMPANY.col).getValue() || '',
         title: sheet.getRange(USER_INFO_FIELDS.TITLE.row, USER_INFO_FIELDS.TITLE.col).getValue() || '',
-        contact: sheet.getRange(USER_INFO_FIELDS.CONTACT.row, USER_INFO_FIELDS.CONTACT.col).getValue() || ''
+        contact: sheet.getRange(USER_INFO_FIELDS.CONTACT.row, USER_INFO_FIELDS.CONTACT.col).getValue() || '',
+        email1Prompt: sheet.getRange(USER_INFO_FIELDS.EMAIL1_PROMPT.row, USER_INFO_FIELDS.EMAIL1_PROMPT.col).getValue() || '',
+        email2Prompt: sheet.getRange(USER_INFO_FIELDS.EMAIL2_PROMPT.row, USER_INFO_FIELDS.EMAIL2_PROMPT.col).getValue() || '',
+        email3Prompt: sheet.getRange(USER_INFO_FIELDS.EMAIL3_PROMPT.row, USER_INFO_FIELDS.EMAIL3_PROMPT.col).getValue() || ''
       };
       
       console.log('已獲取用戶資訊:', userInfo);
       return userInfo;
     } catch (error) {
       console.error('獲取用戶資訊時發生錯誤:', error);
-      return { greeting: '順頌商祺', name: '', company: '', title: '', contact: '' };
+      return { greeting: '順頌商祺', name: '', company: '', title: '', contact: '', email1Prompt: '', email2Prompt: '', email3Prompt: '' };
     }
   },
 
@@ -128,6 +136,7 @@ const UserInfoService = {
 function setupUserInfoSheet() {
   const sheet = UserInfoService.getUserInfoSheet();
   if (sheet) {
+    
     SpreadsheetApp.getUi().alert('用戶資訊工作表已準備就緒！', '請在 "User Info" 工作表中填入您的個人資訊，這些資訊會自動添加到所有郵件的簽名中。', SpreadsheetApp.getUi().ButtonSet.OK);
   }
 }

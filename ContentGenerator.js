@@ -25,17 +25,22 @@ const ContentGenerator = {
 
 請提供具體且實用的分析，幫助進行精準的後續追蹤。
 
-注意：請不要使用任何 Markdown 格式（如 **粗體** 或 *斜體*），請使用純文字格式，可以用「」符號來強調重點內容。`;
+注意：
+- 嚴禁生成不存在的資訊或案例，只能使用公司網站、資源/研習活動網站與搜尋結果的資訊。
+- 請不要使用任何 Markdown 格式（如 **粗體** 或 *斜體*），請使用純文字格式，可以用「」符號來強調重點內容。`;
 
     try {
       const response = APIService.callPerplexityAPI(prompt);
       console.log('生成客户画像成功:', response.substring(0, 100) + '...');
+      
       
       // 清理 Markdown 格式，使其適合 Google Sheets 顯示
       const cleanedResponse = this.cleanMarkdownForSheets(response);
       return cleanedResponse;
     } catch (error) {
       console.error('生成客户画像失败:', error);
+      
+      
       throw new Error(`生成客户画像失败: ${error.message}`);
     }
   },
@@ -83,7 +88,11 @@ const ContentGenerator = {
 主題：[簡短描述主題]
 內容大綱：[100字內，包括價值主張、行動呼籲]
 
-三個切入點應該根據客戶畫像選擇他們最在意的痛點與對他們影響最大的地方。`;
+三個切入點應該根據客戶畫像選擇他們最在意的痛點與對他們影響最大的地方。
+
+注意：
+- 嚴禁生成不存在的資訊或案例，只能使用公司網站、資源/研習活動網站與搜尋結果的資訊。
+- 請不要使用任何 Markdown 格式（如 **粗體** 或 *斜體*），請使用純文字格式，可以用「」符號來強調重點內容。`;
 
     try {
       console.log('开始生成邮件切入点...');
@@ -94,10 +103,13 @@ const ContentGenerator = {
       const angles = this.parseMailAngles(response);
       console.log('解析后的切入点:', angles);
       
+      
       return angles;
       
     } catch (error) {
       console.error('生成邮件切入点失败:', error);
+      
+      
       // 返回错误信息而不是默认值，这样更容易发现问题
       return {
         angle1: `错误：${error.message}`,
@@ -198,26 +210,25 @@ const ContentGenerator = {
     const results = {};
     
     try {
+      // 獲取用戶提示詞
+      const userInfo = UserInfoService.getUserInfo();
+      
       // 生成第一封信件
-      const prompt1 = `請根據以下資訊撰寫一封專業的追蹤信件。請用繁體中文撰寫。
+      const prompt1 = `${userInfo.email1Prompt}
 
 收件人：${firstName}
-客户画像：${leadsProfile}
-信件切入點：${mailAngles.angle1}
-
-信件要求：
-	•	主旨要吸引人
-	•	開場要個人化，要提到具體的客戶畫像細節來建立連結
-	•	內容要簡潔有力，必須融合客戶畫像和切入點資訊
-	•	展現對客戶公司和職位的了解
-	•	包含明確的行動呼籲，目標是邀約客戶進行線上產品演示說明或是線上諮詢
-	•	語調要專業但友善
-	•	長度控制在300字以內
-	•	重要：不要包含任何簽名、敬祝商祺或聯絡方式，只寫郵件正文內容
+Leads Profile：${leadsProfile}
+Mail Angle：${mailAngles.angle1}
 
 請按照以下格式提供：
 主旨：[郵件主旨]
-內容：[郵件正文]`;
+內容：[郵件正文]
+
+注意：
+- 嚴禁生成不存在的資訊或案例，只能使用公司網站、資源/研習活動網站與搜尋結果的資訊。
+- 不要在信中提及客戶以外的個人姓名，只能提到公司名
+- 請不要使用任何 Markdown 格式（如 **粗體** 或 *斜體*），請使用純文字格式，可以用「」符號來強調重點內容。
+- 重要：不要包含任何簽名、敬祝商祺或聯絡方式，只寫郵件正文內容`;
 
       console.log('生成第一封邮件...');
       results.mail1 = APIService.callPerplexityAPI(prompt1);
@@ -229,24 +240,21 @@ const ContentGenerator = {
       }
 
       // 生成第二封信件
-      const prompt2 = `请根据以下资讯撰写第二封追踪信件。请用繁体中文撰写。
+      const prompt2 = `${userInfo.email2Prompt}
 
 收件人：${firstName}
-客户画像：${leadsProfile}
-信件切入点：${mailAngles.angle2}
+Leads Profile：${leadsProfile}
+Mail Angle：${mailAngles.angle2}
 
-信件要求：
-- 这是第二次接触，語调可以更直接一些
-- 必須融合客戶畫像和切入點資訊，展現對客戶業務的深度了解
-- 强调价值和机会
-- 包含社会证明或案例
-- 明确的行动呼籲，目標是邀約客戶進行線上產品演示說明或是線上諮詢
-- 长度控制在300字以内
-- 重要：不要包含任何签名、敬祝商祺或联系方式，只写邮件正文内容
+請按照以下格式提供：
+主旨：[郵件主旨]
+內容：[郵件正文]
 
-请按照以下格式提供：
-主旨：[邮件主旨]
-内容：[邮件正文]`;
+注意：
+- 嚴禁生成不存在的資訊或案例，只能使用公司網站、資源/研習活動網站與搜尋結果的資訊。
+- 不要在信中提及客戶以外的個人姓名，只能提到公司名
+- 請不要使用任何 Markdown 格式（如 **粗體** 或 *斜體*），請使用純文字格式，可以用「」符號來強調重點內容。
+- 重要：不要包含任何簽名、敬祝商祺或聯絡方式，只寫郵件正文內容`;
 
       console.log('生成第二封邮件...');
       results.mail2 = APIService.callPerplexityAPI(prompt2);
@@ -257,25 +265,21 @@ const ContentGenerator = {
       }
 
       // 生成第三封信件
-      const prompt3 = `请根据以下资讯撰写第三封追踪信件。请用繁体中文撰写。
+      const prompt3 = `${userInfo.email3Prompt}
 
 收件人：${firstName}
-客户画像：${leadsProfile}
-信件切入点：${mailAngles.angle3}
+Leads Profile：${leadsProfile}
+Mail Angle：${mailAngles.angle3}
 
-信件要求：
-- 这是最后一次追踪，要有紧迫感
-- 必須融合客戶畫像和切入點資訊，回顧之前提到的客戶需求和挑戰
-- 包含明確的行動呼籲，目標是邀約客戶進行線上產品演示說明或是線上諮詢
-- 强调错过的成本
-- 提供最后的价值
-- 留下好印象，为未来合作铺路
-- 长度控制在300字以内
-- 重要：不要包含任何签名、敬祝商祺或联系方式，只写邮件正文内容
+請按照以下格式提供：
+主旨：[郵件主旨]
+內容：[郵件正文]
 
-请按照以下格式提供：
-主旨：[邮件主旨]
-内容：[邮件正文]`;
+注意：
+- 嚴禁生成不存在的資訊或案例，只能使用公司網站、資源/研習活動網站與搜尋結果的資訊。
+- 不要在信中提及客戶以外的個人姓名，只能提到公司名
+- 請不要使用任何 Markdown 格式（如 **粗體** 或 *斜體*），請使用純文字格式，可以用「」符號來強調重點內容。
+- 重要：不要包含任何簽名、敬祝商祺或聯絡方式，只寫郵件正文內容`;
 
       console.log('生成第三封邮件...');
       results.mail3 = APIService.callPerplexityAPI(prompt3);
@@ -286,10 +290,25 @@ const ContentGenerator = {
       }
 
       console.log('所有邮件生成完成');
+      
+      // 追蹤成功的郵件生成（整個流程完成）
+      AnalyticsService.trackEvent('generate_mail', {
+        success: true,
+        email_count: 3,
+        content_type: 'ai_generated'
+      });
+      
       return results;
 
     } catch (error) {
       console.error('生成追踪邮件失败:', error);
+      
+      // 追蹤失敗的郵件生成
+      AnalyticsService.trackEvent('generate_mail', {
+        success: false,
+        email_count: 0,
+        error_message: error.message.substring(0, 100)
+      });
       
       // 确保返回的对象包含错误信息
       return {

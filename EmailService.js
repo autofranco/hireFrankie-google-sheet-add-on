@@ -51,6 +51,13 @@ const EmailService = {
     // 發送郵件
     GmailApp.sendEmail(email, finalSubject, finalBody);
     
+    // 追蹤郵件發送
+    try {
+      AnalyticsService.trackEmailSent(emailType || 'follow_up');
+    } catch (error) {
+      console.error('追蹤郵件發送事件失敗:', error);
+    }
+    
     // 記錄發送的郵件信息用於回復檢測
     if (rowIndex && emailType) {
       this.recordSentEmail(email, finalSubject, rowIndex, emailType);
