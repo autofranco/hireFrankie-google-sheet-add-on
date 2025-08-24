@@ -30,41 +30,6 @@ function onOpen() {
       .addItem('Show Trigger Stats', 'showTriggerStats')
       .addItem('🗑️ Delete All Triggers', 'deleteAllTriggersMenu'))
     .addToUi();
-  
-  // onOpen中暫時不追蹤，避免權限錯誤
-  // 主要功能使用時會正常追蹤
-}
-
-/**
- * 授權外部請求權限並設定Analytics追蹤（用於Google Analytics）
- */
-function authorizeExternalRequests() {
-  try {
-    // 這個函數會觸發權限授權
-    UrlFetchApp.fetch('https://www.google.com');
-    console.log('外部請求權限授權成功');
-    
-    // 測試GA追蹤
-    AnalyticsService.trackEvent('permission_test', {
-      test_type: 'authorization'
-    });
-    
-    // 設定可安裝的開啟觸發器
-    setupAnalyticsTriggers();
-    
-    return '權限授權成功！GA追蹤已啟用';
-  } catch (error) {
-    console.error('權限授權失敗:', error);
-    return `權限授權失敗: ${error.message}`;
-  }
-}
-
-/**
- * 設定Analytics追蹤觸發器
- */
-function setupAnalyticsTriggers() {
-  // 簡化版本：只在主要功能中追蹤，不設定額外觸發器
-  console.log('Analytics追蹤已準備就緒');
 }
 
 /**

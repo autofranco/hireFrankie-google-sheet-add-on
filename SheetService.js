@@ -399,18 +399,7 @@ const SheetService = {
 
 // 全局函数包装器
 function setupHeaders() {
-  try {
-    const result = SheetService.setupHeaders();
-    
-    // 首次設定時自動啟用Analytics追蹤
-    setupAnalyticsTriggers();
-    AnalyticsService.trackInstall();
-    
-    return result;
-  } catch (error) {
-    console.error('設定工作表時發生錯誤:', error);
-    throw error;
-  }
+  return SheetService.setupHeaders();
 }
 
 /**
