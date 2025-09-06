@@ -27,7 +27,7 @@
 * `First Name*`：手動輸入潛在客戶名稱。
 * `Company url*`：手動輸入客戶公司網站，用於研究公司背景資訊。
 * `Position*`：手動輸入客戶職位，用於判斷客戶關注重點。
-* `Resource url*`：手動輸入研習活動或資源網站連結。
+* 不再需要 `Resource url` 欄位，改用 `User Info` 工作表中的 `Seminar Brief` 統一管理研習活動資訊。
 * `Leads Profile`：自動生成的潛在客戶畫像。
 * `1st mail angle`：第一封追蹤信件切入點與內容大綱。
 * `1st follow up mail`：第一封追蹤信件內容。
@@ -56,7 +56,8 @@
 
 #### 使用者輸入
 
-* 用戶手動輸入 `Email Address*`、`First Name*`、`Company url*`、`Position*`、`Resource url*`。
+* 用戶手動輸入 `Email Address*`、`First Name*`、`Company url*`、`Position*`。
+* 研習活動資訊統一在 `User Info` 工作表中的 `Seminar Info` 和 `Seminar Brief` 管理。
 
 #### 執行與停止
 
@@ -68,7 +69,7 @@
 
 #### 潛在客戶畫像生成
 
-* 系統根據 `Company url*`、`Position*`、`Resource url*` 欄位訊息，利用 Perplexity API 搜尋相關訊息後推測並補全用戶畫像。
+* 系統根據 `Company url*`、`Position*` 欄位訊息和 `User Info` 工作表中的 `Seminar Brief`，利用 Perplexity API 搜尋相關訊息後推測並補全用戶畫像。
 * 分析公司規模、行業背景、職位決策權力、參與研習活動動機等面向。
 * 根據搜尋結果自動生成並填入 `Leads Profile`。
 
@@ -79,18 +80,18 @@
 
 #### 信件生成
 
-* **【強化】** 根據切入點與 `Leads Profile`，自動生成三封不同方向的追蹤信件，填入 `1st~3rd follow up mail`。
-* **【更新】** 郵件內容要求：
+* 根據切入點與 `Leads Profile`，自動生成三封不同方向的追蹤信件，填入 `1st~3rd follow up mail`。
+* 郵件內容要求：
     * 必須融合客戶畫像和切入點資訊
     * 展現對客戶公司和職位的深度了解
-    * 字數限制從200字擴增至300字
+    * 字數限制 300 字
     * 包含個人化開場和具體客戶畫像細節
 
 #### 信件排程設定
 
 * 系統自動設定寄送日期，使用字串格式避免 Google Sheets 日期選擇器剝離時間：
     * 格式：「MM/DD HH:MM」(例如：「08/10 18:00」)
-* **【更新】排程模式：**
+* 排程模式：
     * 第一封：下一個工作日上午9點
     * 第二封：第一封郵件7天後（保持同一星期幾上午9點）
     * 第三封：第二封郵件7天後（保持同一星期幾上午9點）
@@ -104,7 +105,7 @@
 * 透過 Gmail API 搜尋功能精確匹配回覆郵件。
 * 每小時執行回覆檢測，及時停止後續郵件發送。
 
-#### **生成速度優化**
+#### 生成速度優化
 
 * 採「分步即時寫入」策略：
     * `Leads Profile` 生成後立即寫入。
@@ -117,7 +118,7 @@
 * 系統於 `mail schedule` 指定時間透過使用者 Gmail 寄出信件。
 * **測試模式：** 每封信獨立使用 `Utilities.sleep` / 直接 `setTimeout` 類流程進行寄送，不需要 `trigger` 優化。
 
-#### **Sheet-only 架構**
+#### Sheet-only 架構
 
 * 系統採用 Sheet 單一資料源設計，支援使用者即時編輯郵件內容和排程時間。
 * 建立全域 Time-based Trigger 每小時執行 `checkAndSendMails()`。
@@ -130,7 +131,7 @@
 * 該封信尚未寄送（可用 `info` 或額外欄位紀錄已寄送狀態）。
 * 完成寄送後，立即更新 `info` 與 `schedule` 欄位（加刪除線）。
 
-#### **Send Now 功能**
+#### Send Now 功能
 
 * 在儲存格中提供復選框供用戶勾選。
 * 透過 `Add-on Menu > Send Now` 掃描所有勾選的復選框並立即寄出對應郵件。
@@ -147,6 +148,38 @@
 * **前端/後端：** Google Sheet / Google Apps Script
 * **資料搜尋與補充：** Perplexity API（使用開發方 API，不向用戶要求 API Key）
 
+#### 程式碼架構 (Code Architecture)
+
+* **模組化設計：** 採用服務導向架構，將功能拆分為專業化服務模組：
+
+**核心服務模組：**
+  * **Code.js** (42 lines)：主要入口點，包含 onOpen() 選單設定和 onEdit() 包裝器
+  * **ProcessingService.js** (204 lines)：主要流程控制和協調，包含 runAutoLeadWarmer() 入口函數
+  * **RowProcessor.js** (249 lines)：單行資料處理核心邏輯，包含客戶畫像生成、郵件切入點生成、行格式設定
+  * **MenuService.js** (251 lines)：選單和用戶界面功能，包含統計資訊、Send Now、調試工具
+  * **SendNowHandler.js** (176 lines)：立即發送郵件功能，處理 Send Now 點擊和狀態更新
+  * **EditHandler.js** (80 lines)：工作表編輯事件處理，包含狀態變更和按鈕更新
+
+**基礎服務模組：**
+  * **SheetService.js** (410 lines)：Google Sheet 操作服務，包含資料讀寫、格式設定、UI 元件
+  * **EmailService.js** (304 lines)：郵件發送和管理服務，包含排程檢查、批次發送
+  * **ContentGenerator.js** (307 lines)：內容生成服務，使用 Perplexity API 生成客戶畫像和郵件內容
+  * **ReplyDetectionService.js** (310 lines)：回覆檢測服務，監控潛客回信並自動停止後續郵件
+  * **UserInfoService.js** (251 lines)：用戶資訊管理，包含個人資訊和研習活動資訊處理
+
+**工具和配置模組：**
+  * **APIService.js** (210 lines)：API 通訊服務，包含 Perplexity API 呼叫和錯誤處理
+  * **Utils.js** (240 lines)：通用工具函數，包含日期處理、格式化等
+  * **TriggerManager.js** (198 lines)：觸發器管理服務，創建和清理 Google Apps Script 觸發器
+  * **Config.js** (90 lines)：系統配置和常數定義
+  * **DebugTools.js** (7 lines)：調試工具，用於開發和測試
+
+* **設計原則：**
+  * 單一職責原則：每個服務模組專注於特定功能領域
+  * 全域函數包裝器：保持向後兼容性，提供全域函數接口
+  * 服務層分離：核心業務邏輯、基礎服務、工具配置分層管理
+  * **自動格式化系統：** 新處理行自動套用 200px 行高和 mail angle 欄位文字換行
+
 #### 資料儲存
 
 * **主要資料：** Google Sheet 儲存格 (潛客資料、郵件內容、排程時間、狀態追蹤)。
@@ -159,7 +192,7 @@
 * **回覆檢測觸發器：** 每小時執行 `checkAllRunningLeadsForReplies()`。
 * 避免 Google Apps Script 的每日觸發器數量上限問題（上限 20 個）。
 
-#### **【技術問題解決】** 解決 `onEdit` 觸發器無法正常運作的問題
+#### 技術問題解決 - onEdit 觸發器處理
 
 * 發現多人編輯環境下 `onEdit` 觸發器會因為觸發器衝突而無法正常運作。
 * 採用選單驅動 (`Menu-driven`) 的 `Send Now` 機制替代 `onEdit` 觸發器。
@@ -205,8 +238,8 @@
     * 提供安全確認對話框，避免誤操作。
 * **UI 格式化系統：**
     * 使用 `Sheets API updateDimensionProperties` 強制設定 200px 行高，避免被「根據資料內容調整大小」覆蓋。
-    * **【更新】** 自訂欄位寬度：`Email`(110px)、`First Name`(80px)、`Company url`(95px)、`Position`(70px)、`Resource url`(95px)、`Context/Leads Profile`(200px)、`Mail angles/follow up mails`(150px)、`Mail schedules`(75px)、`Send Now/Status`(70px)。
-    * 支援文字自動換行但維持固定高度。
+    * 自訂欄位寬度：`Email`(110px)、`First Name`(80px)、`Company url`(95px)、`Position`(70px)、`Context/Leads Profile`(200px)、`Mail angles/follow up mails`(150px)、`Mail schedules`(75px)、`Send Now/Status`(70px)。
+    * 支援文字自動換行但維持固定高度，mail angle 欄位自動套用文字換行。
     * 凍結標題行功能：第一行（標題行）在捲動時保持固定在頂部。
     * 透過 `Format All Rows` 按鈕手動觸發格式化。
 * **郵件內容解析功能：**
@@ -227,7 +260,7 @@
 
 ## 5. 技術限制與挑戰 (Technical Limitations)
 
-### **Google Sheets/Apps Script 限制與解決方案**
+### Google Sheets/Apps Script 限制與解決方案
 
 #### 日期時間選擇器限制
 
