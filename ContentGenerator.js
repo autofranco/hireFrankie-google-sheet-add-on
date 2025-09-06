@@ -8,28 +8,32 @@ const ContentGenerator = {
    * 生成潜在客户画像
    */
   generateLeadsProfile(companyUrl, position, resourceUrl, firstName) {
-    const prompt = `基於以下客戶資訊，請協助分析並生成詳細的潛在客戶畫像。請用繁體中文回答。
+    // 獲取研習活動簡介資訊
+    const userInfo = UserInfoService.getUserInfo();
+    const seminarBrief = userInfo.seminarBrief || '';
+    
+    const prompt = `基於以下客戶資訊，請協助分析並生成簡潔的潛在客戶畫像。請用繁體中文回答，總字數控制在500字內。
 
 客戶名稱：${firstName}
-公司網站：${companyUrl}
-職位：${position}
-資源/研習活動網站：${resourceUrl}
+客戶公司網站：${companyUrl}
+客戶職位：${position}
+研習活動資訊：${seminarBrief}
 
-請先詳閱資源/研習活動網站，再分析以下面向：
-1. 資源/研習活動網站的內容是什麼？請包涵具體的活動與產品名稱
-* 注意：要擷取的內容是活動本身的資訊，而不是網站平台的資訊
-2. 根據公司網站分析公司規模、行業背景、業務特色與近期新聞
-3. 根據職位分析決策權力和關注重點
-4. 客戶參與研習活動的可能動機和需求
-4. 針對此職位可能面臨的痛點和挑戰
-5. 最適合的溝通方式和價值主張
+請簡潔分析以下五個面向（每個面向約80-100字）：
+1. 公司背景：規模、行業、業務特色
+2. 職位權力：決策權力和關注重點
+3. 參與動機：參加研習活動的可能需求
+4. 面臨挑戰：此職位常見的痛點
+5. 溝通策略：最適合的接觸方式和價值主張
 
-請提供具體且實用的分析，幫助進行精準的後續追蹤。
-
-注意：請不要使用任何 Markdown 格式（如 **粗體** 或 *斜體*），請使用純文字格式，可以用「」符號來強調重點內容。`;
+格式要求：
+- 每個面向用簡潔的段落表達，避免冗長描述
+- 嚴禁生成不存在的資訊，只使用搜尋結果的資訊
+- 不使用 Markdown 格式，用「」符號強調重點
+- 確保五個面向都完整呈現`;
 
     try {
-      const response = APIService.callPerplexityAPI(prompt);
+      const response = APIService.callPerplexityAPIWithSonarPro(prompt);
       console.log('生成客户画像成功:', response.substring(0, 100) + '...');
       
       // 清理 Markdown 格式，使其適合 Google Sheets 顯示
@@ -37,7 +41,9 @@ const ContentGenerator = {
       return cleanedResponse;
     } catch (error) {
       console.error('生成客户画像失败:', error);
-      throw new Error(`生成客户画像失败: ${error.message}`);
+      
+      
+      throw new Error(`生成客戶畫像失敗: ${error.message}`);
     }
   },
 
@@ -69,22 +75,26 @@ const ContentGenerator = {
 客戶名稱：${firstName}
 客戶畫像：${leadsProfile}
 
-三個切入點都要包含資源/研習活動網站的內容和具體的活動與產品名稱，目的是讓參加過活動的客人知道這則追蹤信件的來源
+三個切入點都要包含研習活動的內容和具體的活動與產品名稱，目的是讓參加過活動的客人知道這則追蹤信件的來源
 請嚴格按照以下格式回答，每個切入點獨立成段：
 
 切入點1
 主題：[簡短描述主題]
-內容大綱：[100字內，包括價值主張、行動呼籲]
+內容大綱：[50字內，包括價值主張、行動呼籲]
 
 切入點2
 主題：[簡短描述主題]
-內容大綱：[100字內，包括價值主張、行動呼籲]
+內容大綱：[50字內，包括價值主張、行動呼籲]
 
 切入點3
 主題：[簡短描述主題]
-內容大綱：[100字內，包括價值主張、行動呼籲]
+內容大綱：[50字內，包括價值主張、行動呼籲]
 
-三個切入點應該根據客戶畫像選擇他們最在意的痛點與對他們影響最大的地方。`;
+三個切入點應該根據客戶畫像選擇他們最在意的痛點與對他們影響最大的地方。
+
+注意：
+- 嚴禁生成不存在的資訊或案例，只能使用公司網站與搜尋結果的資訊。
+- 請不要使用任何 Markdown 格式（如 **粗體** 或 *斜體*），請使用純文字格式，可以用「」符號來強調重點內容。`;
 
     try {
       console.log('开始生成邮件切入点...');
@@ -101,9 +111,9 @@ const ContentGenerator = {
       console.error('生成邮件切入点失败:', error);
       // 返回错误信息而不是默认值，这样更容易发现问题
       return {
-        angle1: `错误：${error.message}`,
-        angle2: `错误：${error.message}`,
-        angle3: `错误：${error.message}`
+        angle1: `錯誤：${error.message}`,
+        angle2: `錯誤：${error.message}`,
+        angle3: `錯誤：${error.message}`
       };
     }
   },
@@ -170,134 +180,86 @@ const ContentGenerator = {
         const third = Math.floor(responseLength / 3);
         
         return {
-          angle1: response.substring(0, third) || '解析失败，请检查API回应格式',
-          angle2: response.substring(third, third * 2) || '解析失败，请检查API回应格式',
-          angle3: response.substring(third * 2) || '解析失败，请检查API回应格式'
+          angle1: response.substring(0, third) || '解析失敗，請檢查API回應格式',
+          angle2: response.substring(third, third * 2) || '解析失敗，請檢查API回應格式',
+          angle3: response.substring(third * 2) || '解析失敗，請檢查API回應格式'
         };
       }
 
       return {
-        angle1: angle1 || '切入点1解析失败',
-        angle2: angle2 || '切入点2解析失败',
-        angle3: angle3 || '切入点3解析失败'
+        angle1: angle1 || '切入點1解析失敗',
+        angle2: angle2 || '切入點2解析失敗',
+        angle3: angle3 || '切入點3解析失敗'
       };
 
     } catch (error) {
       console.error('解析邮件切入点时发生错误:', error);
       return {
-        angle1: `解析错误: ${error.message}`,
-        angle2: `解析错误: ${error.message}`,
-        angle3: `解析错误: ${error.message}`
+        angle1: `解析錯誤: ${error.message}`,
+        angle2: `解析錯誤: ${error.message}`,
+        angle3: `解析錯誤: ${error.message}`
       };
     }
   },
 
+
   /**
-   * 生成三封追踪信件 - 改进版本
+   * 生成單封追蹤信件
    */
-  generateFollowUpMails(leadsProfile, mailAngles, firstName) {
-    const results = {};
-    
+  generateSingleFollowUpMail(leadsProfile, mailAngle, firstName, emailNumber) {
     try {
-      // 生成第一封信件
-      const prompt1 = `請根據以下資訊撰寫一封專業的追蹤信件。請用繁體中文撰寫。
+      const userInfo = UserInfoService.getUserInfo();
+      let promptField, emailPrompt;
+      
+      // 根據郵件編號選擇對應的提示詞
+      switch(emailNumber) {
+        case 1:
+          promptField = 'email1Prompt';
+          emailPrompt = userInfo.email1Prompt;
+          break;
+        case 2:
+          promptField = 'email2Prompt';  
+          emailPrompt = userInfo.email2Prompt;
+          break;
+        case 3:
+          promptField = 'email3Prompt';
+          emailPrompt = userInfo.email3Prompt;
+          break;
+        default:
+          throw new Error(`無效的郵件編號: ${emailNumber}`);
+      }
+      
+      const prompt = `${emailPrompt}
 
 收件人：${firstName}
-客户画像：${leadsProfile}
-信件切入點：${mailAngles.angle1}
-
-信件要求：
-	•	主旨要吸引人
-	•	開場要個人化，要提到具體的客戶畫像細節來建立連結
-	•	內容要簡潔有力，必須融合客戶畫像和切入點資訊
-	•	展現對客戶公司和職位的了解
-	•	包含明確的行動呼籲，目標是邀約客戶進行線上產品演示說明或是線上諮詢
-	•	語調要專業但友善
-	•	長度控制在300字以內
-	•	重要：不要包含任何簽名、敬祝商祺或聯絡方式，只寫郵件正文內容
+Leads Profile：${leadsProfile}
+Mail Angle：${mailAngle}
 
 請按照以下格式提供：
 主旨：[郵件主旨]
-內容：[郵件正文]`;
+內容：[郵件正文]
 
-      console.log('生成第一封邮件...');
-      results.mail1 = APIService.callPerplexityAPI(prompt1);
+注意：
+- 嚴禁生成不存在的資訊或案例，只能使用公司網站與搜尋結果的資訊。
+- 不要在信中提及客戶以外的個人姓名，只能提到公司名
+- 請不要使用任何 Markdown 格式（如 **粗體** 或 *斜體*），請使用純文字格式，可以用「」符號來強調重點內容。
+- 重要：不要包含任何簽名、敬祝商祺或聯絡方式，只寫郵件正文內容`;
+
+      console.log(`生成第${emailNumber}封郵件...`);
+      let mailContent = APIService.callPerplexityAPI(prompt);
       
       // 添加用戶簽名
       const signature = UserInfoService.generateEmailSignature();
       if (signature) {
-        results.mail1 += signature;
+        mailContent += signature;
       }
-
-      // 生成第二封信件
-      const prompt2 = `请根据以下资讯撰写第二封追踪信件。请用繁体中文撰写。
-
-收件人：${firstName}
-客户画像：${leadsProfile}
-信件切入点：${mailAngles.angle2}
-
-信件要求：
-- 这是第二次接触，語调可以更直接一些
-- 必須融合客戶畫像和切入點資訊，展現對客戶業務的深度了解
-- 强调价值和机会
-- 包含社会证明或案例
-- 明确的行动呼籲，目標是邀約客戶進行線上產品演示說明或是線上諮詢
-- 长度控制在300字以内
-- 重要：不要包含任何签名、敬祝商祺或联系方式，只写邮件正文内容
-
-请按照以下格式提供：
-主旨：[邮件主旨]
-内容：[邮件正文]`;
-
-      console.log('生成第二封邮件...');
-      results.mail2 = APIService.callPerplexityAPI(prompt2);
       
-      // 添加用戶簽名
-      if (signature) {
-        results.mail2 += signature;
-      }
-
-      // 生成第三封信件
-      const prompt3 = `请根据以下资讯撰写第三封追踪信件。请用繁体中文撰写。
-
-收件人：${firstName}
-客户画像：${leadsProfile}
-信件切入点：${mailAngles.angle3}
-
-信件要求：
-- 这是最后一次追踪，要有紧迫感
-- 必須融合客戶畫像和切入點資訊，回顧之前提到的客戶需求和挑戰
-- 包含明確的行動呼籲，目標是邀約客戶進行線上產品演示說明或是線上諮詢
-- 强调错过的成本
-- 提供最后的价值
-- 留下好印象，为未来合作铺路
-- 长度控制在300字以内
-- 重要：不要包含任何签名、敬祝商祺或联系方式，只写邮件正文内容
-
-请按照以下格式提供：
-主旨：[邮件主旨]
-内容：[邮件正文]`;
-
-      console.log('生成第三封邮件...');
-      results.mail3 = APIService.callPerplexityAPI(prompt3);
+      console.log(`第${emailNumber}封郵件生成成功`);
+      return mailContent;
       
-      // 添加用戶簽名
-      if (signature) {
-        results.mail3 += signature;
-      }
-
-      console.log('所有邮件生成完成');
-      return results;
-
     } catch (error) {
-      console.error('生成追踪邮件失败:', error);
-      
-      // 确保返回的对象包含错误信息
-      return {
-        mail1: results.mail1 || `生成第一封邮件失败: ${error.message}`,
-        mail2: results.mail2 || `生成第二封邮件失败: ${error.message}`,
-        mail3: results.mail3 || `生成第三封邮件失败: ${error.message}`
-      };
+      console.error(`生成第${emailNumber}封郵件失敗:`, error);
+      throw new Error(`生成第${emailNumber}封郵件失敗: ${error.message}`);
     }
   },
 
@@ -336,8 +298,8 @@ function generateMailAngles(leadsProfile, firstName) {
   return ContentGenerator.generateMailAngles(leadsProfile, firstName);
 }
 
-function generateFollowUpMails(leadsProfile, mailAngles, firstName) {
-  return ContentGenerator.generateFollowUpMails(leadsProfile, mailAngles, firstName);
+function generateSingleFollowUpMail(leadsProfile, mailAngle, firstName, emailNumber) {
+  return ContentGenerator.generateSingleFollowUpMail(leadsProfile, mailAngle, firstName, emailNumber);
 }
 
 // 添加测试函数

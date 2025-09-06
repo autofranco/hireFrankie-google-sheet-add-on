@@ -12,20 +12,19 @@ const COLUMNS = {
   FIRST_NAME: 1,    // B: First Name*
   COMPANY_URL: 2,   // C: Company url*
   POSITION: 3,      // D: Position*
-  RESOURCE_URL: 4,  // E: Resource url*
-  LEADS_PROFILE: 5, // F: Leads Profile
-  MAIL_ANGLE_1: 6,  // G: 1st mail angle
-  FOLLOW_UP_1: 7,   // H: 1st follow up mail
-  SCHEDULE_1: 8,    // I: 1st mail schedule
-  MAIL_ANGLE_2: 9,  // J: 2nd mail angle
-  FOLLOW_UP_2: 10,  // K: 2nd follow up mail
-  SCHEDULE_2: 11,   // L: 2nd mail schedule
-  MAIL_ANGLE_3: 12, // M: 3rd mail angle
-  FOLLOW_UP_3: 13,  // N: 3rd follow up mail
-  SCHEDULE_3: 14,   // O: 3rd mail schedule
-  SEND_NOW: 15,     // P: send now 按鈕
-  STATUS: 16,       // Q: status 狀態
-  INFO: 17          // R: info 詳細訊息 (原 Processed)
+  LEADS_PROFILE: 4, // E: Leads Profile
+  MAIL_ANGLE_1: 5,  // F: 1st mail angle
+  FOLLOW_UP_1: 6,   // G: 1st follow up mail
+  SCHEDULE_1: 7,    // H: 1st mail schedule
+  MAIL_ANGLE_2: 8,  // I: 2nd mail angle
+  FOLLOW_UP_2: 9,   // J: 2nd follow up mail
+  SCHEDULE_2: 10,   // K: 2nd mail schedule
+  MAIL_ANGLE_3: 11, // L: 3rd mail angle
+  FOLLOW_UP_3: 12,  // M: 3rd follow up mail
+  SCHEDULE_3: 13,   // N: 3rd mail schedule
+  SEND_NOW: 14,     // O: send now 按鈕
+  STATUS: 15,       // P: status 狀態
+  INFO: 16          // Q: info 詳細訊息 (原 Processed)
 };
 
 // 其他配置常量
@@ -38,7 +37,44 @@ const USER_INFO_FIELDS = {
   NAME: { row: 3, col: 2, label: 'Name' },
   COMPANY: { row: 4, col: 2, label: 'Company' },
   TITLE: { row: 5, col: 2, label: 'Title' },
-  CONTACT: { row: 6, col: 2, label: 'Contact' }
+  CONTACT: { row: 6, col: 2, label: 'Contact' },
+  SEMINAR_INFO: { row: 7, col: 2, label: 'Seminar Info' },
+  SEMINAR_BRIEF: { row: 8, col: 2, label: 'Seminar Brief' },
+  EMAIL1_PROMPT: { row: 9, col: 2, label: 'Email 1 Prompt', default: `請根據以下資訊撰寫一封專業的追蹤信件。請用繁體中文撰寫。
+
+內容動機：
+• 開場要個人化，要提到具體的Leads Profile細節來建立連結
+• 內容要簡潔有力，必須融合Leads Profile和mail angle
+• 展現對客戶公司和職位的了解
+• 包含明確的行動呼籲，目標是邀約客戶進行線上產品演示說明或是線上諮詢
+
+寫作風格：
+• 主旨要吸引人
+• 語調要專業但友善
+• 長度控制在300字以內` },
+  EMAIL2_PROMPT: { row: 10, col: 2, label: 'Email 2 Prompt', default: `請根據以下資訊撰寫第二封追蹤信件。請用繁體中文撰寫。
+
+內容動機：
+• 這是第二次接觸，必須融合Leads Profile和mail angle，展現對客戶業務的深度了解
+• 強調價值和機會
+• 包含社會證明或案例
+• 明確的行動呼籲，目標是邀約客戶進行線上產品演示說明或是線上諮詢
+
+寫作風格：
+• 語調可以更直接一些
+• 長度控制在300字以內` },
+  EMAIL3_PROMPT: { row: 11, col: 2, label: 'Email 3 Prompt', default: `請根據以下資訊撰寫第三封追蹤信件。請用繁體中文撰寫。
+
+內容動機：
+• 這是最後一次追蹤，必須融合Leads Profile和mail angle，回顧之前提到的客戶需求和挑戰
+• 強調錯過的成本
+• 提供最後的價值
+• 包含明確的行動呼籲，目標是邀約客戶進行線上產品演示說明或是線上諮詢
+• 留下好印象，為未來合作鋪路
+
+寫作風格：
+• 要有緊迫感
+• 長度控制在300字以內` }
 };
 const EMAIL_SCHEDULE_INTERVALS = {
   FIRST: 0,   // 這小時（立即）

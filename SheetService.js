@@ -10,7 +10,7 @@ const SheetService = {
   getMainSheet() {
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
     if (!sheet) {
-      throw new Error(`找不到 ${SHEET_NAME}，请确认工作表名称正确。`);
+      throw new Error(`找不到 ${SHEET_NAME}，請確認工作表名稱正確。`);
     }
     return sheet;
   },
@@ -31,7 +31,6 @@ const SheetService = {
       'First Name*', 
       'Company url*',
       'Position*',
-      'Resource url*',
       'Leads Profile',
       '1st mail angle',
       '1st follow up mail',
@@ -62,7 +61,7 @@ const SheetService = {
     // 同時設置用戶資訊工作表
     UserInfoService.getUserInfoSheet();
     
-    SpreadsheetApp.getUi().alert(`設定完成！\n\n✅ 工作表已重新命名為: ${title}\n✅ User Info 工作表已創建\n✅ 列寬已設定\n\n💡 請到 "User Info" 工作表填入您的個人資訊，這會自動添加到所有郵件簽名中。`);
+    SpreadsheetApp.getUi().alert(`設定完成！\n\n✅ 工作表已重新命名為: ${title}\n✅ User Info 工作表已創建\n✅ 列寬已設定\n\n💡 重要提醒：\n• 請到 "User Info" 工作表填入您的個人資訊\n• 請在 "Seminar Info" 欄位填寫研習活動資訊\n• 系統會自動生成 "Seminar Brief" 供所有潛客分析使用\n• 個人資訊會自動添加到所有郵件簽名中`);
   },
 
   /**
@@ -86,8 +85,7 @@ const SheetService = {
           row[COLUMNS.EMAIL] && 
           row[COLUMNS.FIRST_NAME] && 
           row[COLUMNS.COMPANY_URL] &&
-          row[COLUMNS.POSITION] &&
-          row[COLUMNS.RESOURCE_URL]) {
+          row[COLUMNS.POSITION]) {
         unprocessedRows.push(row);
         unprocessedRowIndexes.push(index + 2); // +2 因為從第2行開始且index從0開始
       }
@@ -181,44 +179,44 @@ const SheetService = {
       // Position: 70px (column D)
       sheet.setColumnWidth(4, 70);
       
-      // Resource url: 95px (column E)
-      sheet.setColumnWidth(5, 95);
+      // Leads Profile: 200px (column E)
+      sheet.setColumnWidth(5, 200);
       
-      // Leads Profile: 200px (column F)
-      sheet.setColumnWidth(6, 200);
+      // 1st mail angle: 150px (column F)
+      sheet.setColumnWidth(6, 150);
       
-      // 1st mail angle: 150px (column G)
+      // 1st follow up mail: 150px (column G)
       sheet.setColumnWidth(7, 150);
       
-      // 1st follow up mail: 150px (column H)
-      sheet.setColumnWidth(8, 150);
+      // 1st mail schedule: 75px (column H)
+      sheet.setColumnWidth(8, 75);
       
-      // 1st mail schedule: 75px (column I)
-      sheet.setColumnWidth(9, 75);
+      // 2nd mail angle: 150px (column I)
+      sheet.setColumnWidth(9, 150);
       
-      // 2nd mail angle: 150px (column J)
+      // 2nd follow up mail: 150px (column J)
       sheet.setColumnWidth(10, 150);
       
-      // 2nd follow up mail: 150px (column K)
-      sheet.setColumnWidth(11, 150);
+      // 2nd mail schedule: 75px (column K)
+      sheet.setColumnWidth(11, 75);
       
-      // 2nd mail schedule: 75px (column L)
-      sheet.setColumnWidth(12, 75);
+      // 3rd mail angle: 150px (column L)
+      sheet.setColumnWidth(12, 150);
       
-      // 3rd mail angle: 150px (column M)
+      // 3rd follow up mail: 150px (column M)
       sheet.setColumnWidth(13, 150);
       
-      // 3rd follow up mail: 150px (column N)
-      sheet.setColumnWidth(14, 150);
+      // 3rd mail schedule: 75px (column N)
+      sheet.setColumnWidth(14, 75);
       
-      // 3rd mail schedule: 75px (column O)
-      sheet.setColumnWidth(15, 75);
+      // send now: 70px (column O)
+      sheet.setColumnWidth(15, 70);
       
-      // send now: 70px (column P)
+      // status: 70px (column P)
       sheet.setColumnWidth(16, 70);
       
-      // status: 70px (column Q)
-      sheet.setColumnWidth(17, 70);
+      // info: 200px (column Q)  
+      sheet.setColumnWidth(17, 200);
       
       // 強制刷新以確保更改立即生效
       SpreadsheetApp.flush();

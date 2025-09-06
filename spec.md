@@ -19,7 +19,7 @@
 
 #### Sheet 規則
 
-* **【新增】** Sheet 標題為必填，且由系統自動產生。
+* Sheet 標題為必填，且由系統自動產生。
 
 #### Google Sheet 欄位
 
@@ -38,17 +38,17 @@
 * `3rd mail angle`：第三封追蹤信件切入點與內容大綱。
 * `3rd follow up mail`：第三封追蹤信件內容。
 * `3rd mail schedule`：第三封信件排程時間。
-* **【修改】** `send now 復選框`：
+* `send now 復選框`：
     * 狀態為 `Running` 時出現復選框。
     * 使用者勾選後透過 `Add-on Menu > Send Now` 立即發送下一封待寄郵件。
     * 發送完成後復選框自動重置為未勾選。
     * 當所有三封郵件都透過 `Send Now` 發送完成後，系統自動將 `status` 改為 `Done`。
-* **【新增】** `status`：潛客資料處理的狀態（下拉選單）。
+* `status`：潛客資料處理的狀態（下拉選單）。
     * `空白`（預設：未處理）
     * `Processing`（`Add-on Menu` 的 `Run` 按鈕執行後立即變為此狀態）
     * `Running`（`Lead Profile`、三封 `Email` 都生成完成，且排程設定完成）
     * `Done`（流程完成、用戶手動停止、或潛客已回信）
-* **【修改】** `info` (原 Processed)：顯示該筆資料處理狀態的詳細訊息。
+* `info` (原 Processed)：顯示該筆資料處理狀態的詳細訊息。
     * 錯誤訊息
     * 狀態說明：`潛客已回信`、`用戶手動停止`、`等待排程寄送`、`全部寄送完成`
 
@@ -88,7 +88,7 @@
 
 #### 信件排程設定
 
-* **【修改】** 系統自動設定寄送日期，使用字串格式避免 Google Sheets 日期選擇器剝離時間：
+* 系統自動設定寄送日期，使用字串格式避免 Google Sheets 日期選擇器剝離時間：
     * 格式：「MM/DD HH:MM」(例如：「08/10 18:00」)
 * **【更新】排程模式：**
     * 第一封：下一個工作日上午9點
@@ -96,7 +96,7 @@
     * 第三封：第二封郵件7天後（保持同一星期幾上午9點）
 * 若使用者手動修改 `mail schedule` 欄位，系統會更新排程時間。
 
-#### **【增強】智能回覆檢測系統**
+#### **智能回覆檢測系統**
 
 * 只檢測對特定已發送郵件的回覆，避免誤判任何來信。
 * 自動將 `status` 改成 `Done`，並在 `info` 標註「潛客已回信」。
@@ -104,7 +104,7 @@
 * 透過 Gmail API 搜尋功能精確匹配回覆郵件。
 * 每小時執行回覆檢測，及時停止後續郵件發送。
 
-#### **【新增】生成速度優化**
+#### **生成速度優化**
 
 * 採「分步即時寫入」策略：
     * `Leads Profile` 生成後立即寫入。
@@ -115,9 +115,9 @@
 #### 自動寄送
 
 * 系統於 `mail schedule` 指定時間透過使用者 Gmail 寄出信件。
-* **【新增】測試模式：** 每封信獨立使用 `Utilities.sleep` / 直接 `setTimeout` 類流程進行寄送，不需要 `trigger` 優化。
+* **測試模式：** 每封信獨立使用 `Utilities.sleep` / 直接 `setTimeout` 類流程進行寄送，不需要 `trigger` 優化。
 
-#### **【升級】Sheet-only 架構**
+#### **Sheet-only 架構**
 
 * 系統採用 Sheet 單一資料源設計，支援使用者即時編輯郵件內容和排程時間。
 * 建立全域 Time-based Trigger 每小時執行 `checkAndSendMails()`。
@@ -130,7 +130,7 @@
 * 該封信尚未寄送（可用 `info` 或額外欄位紀錄已寄送狀態）。
 * 完成寄送後，立即更新 `info` 與 `schedule` 欄位（加刪除線）。
 
-#### **【新增】Send Now 功能**
+#### **Send Now 功能**
 
 * 在儲存格中提供復選框供用戶勾選。
 * 透過 `Add-on Menu > Send Now` 掃描所有勾選的復選框並立即寄出對應郵件。
@@ -181,11 +181,11 @@
 ### 4.1 Add-on Menu
 
 * `Auto Lead Warmer > Run`：啟動自動化。
-* **【修改】** `Auto Lead Warmer > Initial Setup` (原 Setup Headers)：設定表頭和初始化工作表。
-* **【新增】** `Auto Lead Warmer > Stop New Processing`：停止系統處理新的潛客資料，但不影響已在 `Running` 狀態的流程。
-* **【修改】** `Auto Lead Warmer > Send Now`：掃描所有勾選的 `Send Now` 復選框，立即寄出對應的下一封待寄郵件。
-* **【新增】** `Auto Lead Warmer > Format All Rows`：手動格式化所有潛客行，設定固定 200px 行高和欄位寬度。
-* **【新增】** `Auto Lead Warmer > Debug Tools`：包含 API/Network 測試功能。
+* `Auto Lead Warmer > Initial Setup` (原 Setup Headers)：設定表頭和初始化工作表。
+* `Auto Lead Warmer > Stop New Processing`：停止系統處理新的潛客資料，但不影響已在 `Running` 狀態的流程。
+* `Auto Lead Warmer > Send Now`：掃描所有勾選的 `Send Now` 復選框，立即寄出對應的下一封待寄郵件。
+* `Auto Lead Warmer > Format All Rows`：手動格式化所有潛客行，設定固定 200px 行高和欄位寬度。
+* `Auto Lead Warmer > Debug Tools`：包含 API/Network 測試功能。
 
 ### 4.2 表格欄位
 
@@ -194,30 +194,30 @@
 
 ### 4.3 錯誤與進度提示
 
-* **【新增】API 錯誤：** 在 `info` 顯示 `[Error] 錯誤描述`。
+* **API 錯誤：** 在 `info` 顯示 `[Error] 錯誤描述`。
 * **寄送完成：** 對應 `mail schedule` 加刪除線。
-* **【新增】手動停止：** `status` 改為 `Done`，`info` 顯示「`手動停止後續信件寄送`」。
-* **【新增】潛客回覆：** `status` 改為 `Done`，`info` 顯示「`潛客已回信`」。
-* **【新增】Stop New Processing 功能：**
+* **手動停止：** `status` 改為 `Done`，`info` 顯示「`手動停止後續信件寄送`」。
+* **潛客回覆：** `status` 改為 `Done`，`info` 顯示「`潛客已回信`」。
+* **Stop New Processing 功能：**
     * 透過 `PropertiesService` 標記停止新資料處理。
     * 只影響新的潛客資料處理，不會中斷已在 `Running` 狀態的流程。
     * 使用 `PropertiesService 'stop_processing'` 標記控制。
     * 提供安全確認對話框，避免誤操作。
-* **【新增】UI 格式化系統：**
+* **UI 格式化系統：**
     * 使用 `Sheets API updateDimensionProperties` 強制設定 200px 行高，避免被「根據資料內容調整大小」覆蓋。
     * **【更新】** 自訂欄位寬度：`Email`(110px)、`First Name`(80px)、`Company url`(95px)、`Position`(70px)、`Resource url`(95px)、`Context/Leads Profile`(200px)、`Mail angles/follow up mails`(150px)、`Mail schedules`(75px)、`Send Now/Status`(70px)。
     * 支援文字自動換行但維持固定高度。
-    * **【新增】** 凍結標題行功能：第一行（標題行）在捲動時保持固定在頂部。
+    * 凍結標題行功能：第一行（標題行）在捲動時保持固定在頂部。
     * 透過 `Format All Rows` 按鈕手動觸發格式化。
-* **【新增】郵件內容解析功能：**
+* **郵件內容解析功能：**
     * 自動解析郵件中的「`主旨：`」和「`內容：`」標籤。
     * 主旨部分只出現在郵件標題，內容部分只出現在郵件本文。
     * 避免標籤在最終郵件中重複出現。
-* **【新增】用戶資訊管理：**
+* **用戶資訊管理：**
     * `User Info` 工作表儲存使用者個人資訊。
     * 自動添加個人化郵件簽名到所有發送郵件。
     * 支援自訂簽名內容。
-* **【新增】PropertiesService 儲存管理：**
+* **PropertiesService 儲存管理：**
     * 自動 30 天清理舊的發送記錄。
     * 潛客回覆時立即清理相關記錄。
     * 儲存限制：9KB 總容量，約 500-1000 個屬性。
@@ -227,7 +227,7 @@
 
 ## 5. 技術限制與挑戰 (Technical Limitations)
 
-### **【新增】Google Sheets/Apps Script 限制與解決方案**
+### **Google Sheets/Apps Script 限制與解決方案**
 
 #### 日期時間選擇器限制
 

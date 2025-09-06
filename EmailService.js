@@ -182,6 +182,9 @@ const EmailService = {
               // 標記為已發送（加刪除線）
               scheduleCell.setFontLine('line-through');
               
+              // 發送成功後，檢查是否需要生成下一封郵件
+              this.generateNextMailIfNeeded(rowIndex, emailInfo.type, firstName);
+              
               emailsSentThisRound++;
               totalEmailsSent++;
               sentCount++;
@@ -219,47 +222,75 @@ const EmailService = {
     }
   },
 
+
   /**
-   * 发送排程邮件（由触发器呼叫 - 舊版本，保留相容性）
+   * 發送郵件後檢查是否需要生成下一封郵件
    */
-  sendScheduledEmail() {
+  generateNextMailIfNeeded(rowIndex, currentMailType, firstName) {
     try {
-      const now = new Date().getTime();
-      const properties = PropertiesService.getScriptProperties().getProperties();
+      const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
       
-      // 寻找应该在此时发送的邮件
-      for (const [key, value] of Object.entries(properties)) {
-        if (key.startsWith('email_')) {
-          const scheduleTime = parseInt(key.split('_')[1]);
-          
-          // 检查是否到了发送时间（允许5分钟的误差）
-          if (Math.abs(now - scheduleTime) <= 5 * 60 * 1000) {
-            const emailData = JSON.parse(value);
-            
-            // 使用 Utils 函數解析郵件內容
-            const parsed = Utils.parseEmailContent(emailData.content);
-            const subject = parsed.subject || `来自业务团队的讯息 - ${emailData.firstName}`;
-            const body = parsed.body || emailData.content;
-            
-            // 发送邮件
-            GmailApp.sendEmail(
-              emailData.email,
-              subject,
-              body
-            );
-            
-            // 更新 Sheet 中的排程状态
-            SheetService.updateScheduleStatus(emailData.rowIndex, emailData.scheduleType);
-            
-            // 删除已处理的属性
-            PropertiesService.getScriptProperties().deleteProperty(key);
-            
-            console.log(`邮件已发送给 ${emailData.email}: ${subject}`);
-          }
-        }
+      // 判斷需要生成哪一封郵件
+      let nextMailNumber, nextContentColumn, nextMailAngleColumn;
+      
+      if (currentMailType === 'mail1') {
+        nextMailNumber = 2;
+        nextContentColumn = COLUMNS.FOLLOW_UP_2 + 1;
+        nextMailAngleColumn = COLUMNS.MAIL_ANGLE_2 + 1;
+      } else if (currentMailType === 'mail2') {
+        nextMailNumber = 3;
+        nextContentColumn = COLUMNS.FOLLOW_UP_3 + 1;
+        nextMailAngleColumn = COLUMNS.MAIL_ANGLE_3 + 1;
+      } else {
+        // mail3 已經是最後一封
+        console.log(`第 ${rowIndex} 行: 已發送最後一封郵件 (mail3)`);
+        return;
       }
+      
+      // 檢查下一封郵件是否已經有內容
+      const nextContent = sheet.getRange(rowIndex, nextContentColumn).getValue();
+      if (nextContent && nextContent.trim() !== '') {
+        console.log(`第 ${rowIndex} 行: 第${nextMailNumber}封郵件內容已存在，跳過生成`);
+        return;
+      }
+      
+      console.log(`第 ${rowIndex} 行: 開始生成第${nextMailNumber}封郵件...`);
+      
+      // 讀取需要的資料
+      const leadsProfile = sheet.getRange(rowIndex, COLUMNS.LEADS_PROFILE + 1).getValue();
+      const nextMailAngle = sheet.getRange(rowIndex, nextMailAngleColumn).getValue();
+      
+      if (!leadsProfile || !nextMailAngle) {
+        console.log(`第 ${rowIndex} 行: 缺少 Leads Profile 或 Mail Angle，無法生成第${nextMailNumber}封郵件`);
+        return;
+      }
+      
+      // 生成下一封郵件
+      const nextMailContent = ContentGenerator.generateSingleFollowUpMail(
+        leadsProfile,
+        nextMailAngle,
+        firstName,
+        nextMailNumber
+      );
+      
+      // 寫入生成的內容
+      sheet.getRange(rowIndex, nextContentColumn).setValue(nextMailContent);
+      
+      console.log(`✅ 第 ${rowIndex} 行: 第${nextMailNumber}封郵件生成成功`);
+      
+      // 更新 info 欄位
+      SheetService.updateInfo(sheet, rowIndex, `自動生成第${nextMailNumber}封郵件完成`);
+      
     } catch (error) {
-      console.error('发送排程邮件时发生错误:', error);
+      console.error(`生成下一封郵件時發生錯誤 (第 ${rowIndex} 行):`, error);
+      
+      // 在 info 欄位記錄錯誤
+      try {
+        const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+        SheetService.updateInfo(sheet, rowIndex, `[Error] 自動生成郵件失敗: ${error.message}`);
+      } catch (updateError) {
+        console.error('更新錯誤資訊失敗:', updateError);
+      }
     }
   }
 };
@@ -267,10 +298,6 @@ const EmailService = {
 // 全局函数包装器
 function scheduleEmails(email, firstName, followUpMails, schedules, rowIndex) {
   return EmailService.scheduleEmails(email, firstName, followUpMails, schedules, rowIndex);
-}
-
-function sendScheduledEmail() {
-  return EmailService.sendScheduledEmail();
 }
 
 function checkAndSendMails() {

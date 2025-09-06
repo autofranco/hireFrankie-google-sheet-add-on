@@ -84,6 +84,43 @@ function runAutoLeadWarmer() {
       console.log('已清除先前的停止標記，重新開始處理');
     }
     
+    // 檢查並自動生成研習活動簡介
+    console.log('檢查研習活動資訊...');
+    try {
+      const seminarResult = UserInfoService.checkAndGenerateSeminarBrief();
+      
+      if (!seminarResult.success) {
+        if (seminarResult.needsUserInput) {
+          // Seminar Info 為空，提醒用戶填寫
+          SpreadsheetApp.getUi().alert(
+            '⚠️ 缺少研習活動資訊', 
+            `${seminarResult.message}\n\n請到 "User Info" 工作表的 "Seminar Info" 欄位填寫研習活動資訊（如活動名稱、網址等）。\n\n系統將根據此資訊自動生成 "Seminar Brief"，用於所有潛在客戶的分析。`, 
+            SpreadsheetApp.getUi().ButtonSet.OK
+          );
+          return; // 停止執行，等用戶填寫資訊
+        } else {
+          // 生成失敗，但不阻止流程繼續
+          console.error('研習活動簡介生成失敗，但繼續執行:', seminarResult.message);
+          SpreadsheetApp.getUi().alert(
+            '⚠️ 研習活動簡介生成失敗', 
+            `${seminarResult.message}\n\n將使用現有的 Seminar Brief 繼續執行。`, 
+            SpreadsheetApp.getUi().ButtonSet.OK
+          );
+        }
+      } else {
+        // 成功生成，提供用戶反饋
+        console.log('研習活動簡介自動生成成功');
+        SpreadsheetApp.getUi().alert(
+          '✅ 研習活動簡介已更新', 
+          `${seminarResult.message}\n\n已根據 Seminar Info 重新生成 Seminar Brief，將用於所有潛在客戶的分析。`, 
+          SpreadsheetApp.getUi().ButtonSet.OK
+        );
+      }
+    } catch (error) {
+      console.error('檢查研習活動資訊時發生錯誤:', error);
+      // 不阻止主流程繼續執行
+    }
+
     // 清理舊的多餘觸發器，避免觸發器過多錯誤
     const deletedTriggerCount = TriggerManager.cleanupOldTriggers();
     
@@ -100,15 +137,11 @@ function runAutoLeadWarmer() {
       // 觸發器創建失敗不應該阻止主流程繼續
     }
     
-    Utilities.sleep(1000); // 等待1秒避免衝突
-    
     try {
       TriggerManager.createReplyDetectionTrigger();
     } catch (error) {
       console.error('回覆檢測觸發器創建失敗，但繼續執行:', error);
     }
-    
-    Utilities.sleep(1000); // 等待1秒避免衝突
     
     // onEdit 是 Google Sheets 內建的 simple trigger，無需手動創建
     
@@ -116,7 +149,7 @@ function runAutoLeadWarmer() {
     const data = SheetService.getUnprocessedData(sheet);
     
     if (data.rows.length === 0) {
-      SpreadsheetApp.getUi().alert('没有数据需要处理。\n\n请确保：\n1. 已设置表头\n2. 已填入客户数据\n3. 数据未被标记为已处理');
+      SpreadsheetApp.getUi().alert('沒有資料需要處理。\n\n請確保：\n1. 已設置表頭\n2. 已填入客戶資料\n3. 資料未被標記為已處理');
       return;
     }
     
@@ -165,19 +198,19 @@ function runAutoLeadWarmer() {
       }
     }
     
-    const message = `处理完成！
+    const message = `處理完成！
     
-✅ 成功处理: ${processedCount} 笔
-❌ 处理失败: ${errorCount} 笔
-📧 已设置 ${processedCount * 3} 个邮件发送排程
+✅ 成功處理: ${processedCount} 筆
+❌ 處理失敗: ${errorCount} 筆
+📧 已設置 ${processedCount * 3} 個郵件發送排程（Mail 2、3 將在前一封發送後自動生成內容）
 
-${errorCount > 0 ? '\n请检查错误行的详细信息。' : ''}`;
+${errorCount > 0 ? '\n請檢查錯誤行詳細訊息。' : ''}`;
     
-    SpreadsheetApp.getUi().alert('执行完成', message, SpreadsheetApp.getUi().ButtonSet.OK);
+    SpreadsheetApp.getUi().alert('執行完成', message, SpreadsheetApp.getUi().ButtonSet.OK);
     
   } catch (error) {
-    console.error('执行错误:', error);
-    SpreadsheetApp.getUi().alert('执行错误', `发生未预期的错误: ${error.message}\n\n请检查：\n1. API Key是否正确\n2. 网络连接是否正常\n3. 工作表格式是否正确`, SpreadsheetApp.getUi().ButtonSet.OK);
+    console.error('執行錯誤:', error);
+    SpreadsheetApp.getUi().alert('執行錯誤', `發生未預期的錯誤: ${error.message}\n\n請檢查：\n1. API Key是否正確\n2. 網路連接是否正常\n3. 工作表格式是否正確`, SpreadsheetApp.getUi().ButtonSet.OK);
   }
 }
 
@@ -186,7 +219,7 @@ ${errorCount > 0 ? '\n请检查错误行的详细信息。' : ''}`;
  */
 function processRow(sheet, row, rowIndex) {
   // 检查必要栏位
-  if (!row[COLUMNS.EMAIL] || !row[COLUMNS.FIRST_NAME] || !row[COLUMNS.COMPANY_URL] || !row[COLUMNS.POSITION] || !row[COLUMNS.RESOURCE_URL]) {
+  if (!row[COLUMNS.EMAIL] || !row[COLUMNS.FIRST_NAME] || !row[COLUMNS.COMPANY_URL] || !row[COLUMNS.POSITION]) {
     console.log(`第 ${rowIndex} 行跳过：缺少必要字段`);
     return false;
   }
@@ -197,7 +230,20 @@ function processRow(sheet, row, rowIndex) {
     // 設置狀態下拉選單
     SheetService.setupStatusDropdown(sheet, rowIndex);
     
-    // 1. 生成潜在客户画像 - 逐步填入
+    // 0. 檢查並生成研習活動簡介 (如果需要)
+    console.log('步骤0: 檢查研習活動簡介...');
+    SheetService.updateInfo(sheet, rowIndex, '檢查研習活動簡介...');
+    SpreadsheetApp.flush();
+    
+    const seminarResult = UserInfoService.checkAndGenerateSeminarBrief();
+    if (!seminarResult.success && seminarResult.needsUserInput) {
+      throw new Error('請先在 User Info 工作表填寫 Seminar Info');
+    } else if (!seminarResult.success) {
+      throw new Error(seminarResult.message);
+    }
+    console.log('研習活動簡介檢查完成');
+    
+    // 1. 生成潜在客户画像
     console.log('步骤1: 生成客户画像...');
     SheetService.updateInfo(sheet, rowIndex, '正在生成客戶畫像...');
     SpreadsheetApp.flush(); // 立即顯示更新
@@ -205,12 +251,12 @@ function processRow(sheet, row, rowIndex) {
     const leadsProfile = ContentGenerator.generateLeadsProfile(
       row[COLUMNS.COMPANY_URL], 
       row[COLUMNS.POSITION],
-      row[COLUMNS.RESOURCE_URL],
+      null, // resourceUrl 不再使用，改用 seminar brief
       row[COLUMNS.FIRST_NAME]
     );
     
     if (!leadsProfile || leadsProfile.length < 50) {
-      throw new Error('客户画像生成失败或内容过短');
+      throw new Error('客戶畫像生成失敗或內容過短');
     }
     
     // 立即填入客戶畫像
@@ -219,9 +265,9 @@ function processRow(sheet, row, rowIndex) {
     SpreadsheetApp.flush();
     console.log(`客户画像生成成功 (${leadsProfile.length} 字符)`);
     
-    // 2. 生成第1個信件切入点
-    console.log('步骤2: 生成第1個邮件切入点...');
-    SheetService.updateInfo(sheet, rowIndex, '正在生成第1個郵件切入點...');
+    // 2. 生成邮件切入点
+    console.log('步骤2: 生成邮件切入点...');
+    SheetService.updateInfo(sheet, rowIndex, '正在生成郵件切入點...');
     SpreadsheetApp.flush();
     
     const mailAngles = ContentGenerator.generateMailAngles(
@@ -233,7 +279,7 @@ function processRow(sheet, row, rowIndex) {
     if (mailAngles.angle1.includes('切入点1：解决客户痛点的方案') ||
         mailAngles.angle2.includes('切入点2：展示获利机会') ||
         mailAngles.angle3.includes('切入点3：建立信任关系')) {
-      throw new Error('邮件切入点生成失败，返回了默认值');
+      throw new Error('郵件切入點生成失敗，返回了預設值');
     }
     
     // 逐個填入切入點
@@ -241,63 +287,35 @@ function processRow(sheet, row, rowIndex) {
     SheetService.updateInfo(sheet, rowIndex, '✅ 第1個郵件切入點已生成');
     SpreadsheetApp.flush();
     
-    console.log('步骤3: 生成第2個邮件切入点...');
-    SheetService.updateInfo(sheet, rowIndex, '正在生成第2個郵件切入點...');
-    SpreadsheetApp.flush();
-    
     sheet.getRange(rowIndex, COLUMNS.MAIL_ANGLE_2 + 1).setValue(mailAngles.angle2);
-    SheetService.updateInfo(sheet, rowIndex, '✅ 第2個郵件切入點已生成');
-    SpreadsheetApp.flush();
-    
-    console.log('步骤4: 生成第3個邮件切入点...');
-    SheetService.updateInfo(sheet, rowIndex, '正在生成第3個郵件切入點...');
-    SpreadsheetApp.flush();
-    
     sheet.getRange(rowIndex, COLUMNS.MAIL_ANGLE_3 + 1).setValue(mailAngles.angle3);
     SheetService.updateInfo(sheet, rowIndex, '✅ 所有郵件切入點已生成');
     SpreadsheetApp.flush();
     
-    // 3. 生成第1封追踪信件
-    console.log('步骤5: 生成第1封追踪邮件...');
+    // 3. 生成第一封追蹤郵件
+    console.log('步骤3: 生成第1封追蹤郵件...');
     SheetService.updateInfo(sheet, rowIndex, '正在生成第1封追蹤郵件...');
     SpreadsheetApp.flush();
     
-    const followUpMails = ContentGenerator.generateFollowUpMails(
+    const firstMail = ContentGenerator.generateSingleFollowUpMail(
       leadsProfile, 
-      mailAngles, 
-      row[COLUMNS.FIRST_NAME]
+      mailAngles.angle1, 
+      row[COLUMNS.FIRST_NAME],
+      1
     );
     
     // 验证邮件是否成功生成
-    if (followUpMails.mail1.includes('生成第一封邮件失败') ||
-        followUpMails.mail2.includes('生成第二封邮件失败') ||
-        followUpMails.mail3.includes('生成第三封邮件失败')) {
-      throw new Error('追踪邮件生成失败');
+    if (firstMail.includes('生成第1封郵件失敗')) {
+      throw new Error('第1封追蹤郵件生成失敗');
     }
     
-    // 逐封填入郵件內容
-    sheet.getRange(rowIndex, COLUMNS.FOLLOW_UP_1 + 1).setValue(followUpMails.mail1);
+    // 填入第一封郵件內容
+    sheet.getRange(rowIndex, COLUMNS.FOLLOW_UP_1 + 1).setValue(firstMail);
     SheetService.updateInfo(sheet, rowIndex, '✅ 第1封追蹤郵件已生成');
     SpreadsheetApp.flush();
     
-    console.log('步骤6: 生成第2封追踪邮件...');
-    SheetService.updateInfo(sheet, rowIndex, '正在生成第2封追蹤郵件...');
-    SpreadsheetApp.flush();
-    
-    sheet.getRange(rowIndex, COLUMNS.FOLLOW_UP_2 + 1).setValue(followUpMails.mail2);
-    SheetService.updateInfo(sheet, rowIndex, '✅ 第2封追蹤郵件已生成');
-    SpreadsheetApp.flush();
-    
-    console.log('步骤7: 生成第3封追踪邮件...');
-    SheetService.updateInfo(sheet, rowIndex, '正在生成第3封追蹤郵件...');
-    SpreadsheetApp.flush();
-    
-    sheet.getRange(rowIndex, COLUMNS.FOLLOW_UP_3 + 1).setValue(followUpMails.mail3);
-    SheetService.updateInfo(sheet, rowIndex, '✅ 第3封追蹤郵件已生成');
-    SpreadsheetApp.flush();
-    
     // 4. 设定排程时间
-    console.log('步骤8: 设定排程时间...');
+    console.log('步骤4: 设定排程时间...');
     SheetService.updateInfo(sheet, rowIndex, '正在設定郵件排程時間...');
     SpreadsheetApp.flush();
     
@@ -323,15 +341,15 @@ function processRow(sheet, row, rowIndex) {
     SpreadsheetApp.flush();
     console.log('排程时间设定成功');
     
-    // 5. 设定邮件发送触发器
-    console.log('步骤9: 设定邮件发送触发器...');
+    // 5. 設定郵件發送觸發器
+    console.log('步骤5: 設定郵件發送觸發器...');
     SheetService.updateInfo(sheet, rowIndex, '正在設定郵件發送排程...');
     SpreadsheetApp.flush();
     
     EmailService.scheduleEmails(
       row[COLUMNS.EMAIL], 
       row[COLUMNS.FIRST_NAME], 
-      followUpMails, 
+      { mail1: firstMail, mail2: null, mail3: null }, 
       schedules, 
       rowIndex
     );
@@ -348,57 +366,6 @@ function processRow(sheet, row, rowIndex) {
   } catch (error) {
     console.error(`处理第 ${rowIndex} 行失败:`, error);
     throw error;
-  }
-}
-
-/**
- * 批量处理模式（可选）
- */
-function runAutoLeadWarmerBatch() {
-  try {
-    const sheet = SheetService.getMainSheet();
-    const data = SheetService.getUnprocessedData(sheet);
-    
-    if (data.rows.length === 0) {
-      SpreadsheetApp.getUi().alert('没有数据需要处理。');
-      return;
-    }
-    
-    // 分批处理，每批5行
-    const batchSize = 5;
-    let totalProcessed = 0;
-    
-    for (let start = 0; start < data.rows.length; start += batchSize) {
-      const end = Math.min(start + batchSize, data.rows.length);
-      const batch = data.rows.slice(start, end);
-      
-      console.log(`处理批次 ${Math.floor(start/batchSize) + 1}: 第 ${start + 1}-${end} 行`);
-      
-      for (let i = 0; i < batch.length; i++) {
-        const row = batch[i];
-        const rowIndex = data.startRow + start + i;
-        
-        try {
-          const success = processRow(sheet, row, rowIndex);
-          if (success) totalProcessed++;
-        } catch (error) {
-          console.error(`批次处理中第 ${rowIndex} 行失败:`, error);
-          SheetService.markRowError(sheet, rowIndex, error.message);
-        }
-      }
-      
-      // 批次间休息
-      if (end < data.rows.length) {
-        console.log('批次间休息5秒...');
-        Utilities.sleep(5000);
-      }
-    }
-    
-    SpreadsheetApp.getUi().alert(`批量处理完成！共处理了 ${totalProcessed} 笔数据。`);
-    
-  } catch (error) {
-    console.error('批量处理错误:', error);
-    SpreadsheetApp.getUi().alert(`批量处理错误: ${error.message}`);
   }
 }
 

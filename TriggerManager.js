@@ -22,14 +22,7 @@ const TriggerManager = {
   /**
    * 删除所有邮件相关触发器
    */
-  deleteAllEmailTriggers() {
-    const triggers = this.getAllTriggers();
-    triggers.forEach(trigger => {
-      if (trigger.getHandlerFunction() === 'sendScheduledEmail') {
-        this.deleteTrigger(trigger);
-      }
-    });
-  },
+  // deleteAllEmailTriggers 已廢棄，現在使用 checkAndSendMails 機制
 
 
   /**

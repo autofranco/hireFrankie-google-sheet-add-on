@@ -52,10 +52,25 @@ const UserInfoService = {
     sheet.setColumnWidth(1, 120); // 標籤列
     sheet.setColumnWidth(2, 300); // 輸入列
     
-    // 添加說明
-    sheet.getRange(8, 1, 1, 2).merge();
-    sheet.getRange(8, 1).setValue('💡 This information will be automatically added to the end of all generated emails as your signature.');
-    sheet.getRange(8, 1).setFontStyle('italic').setFontColor('#666666');
+    // 動態計算說明文字的位置
+    const maxFieldRow = Math.max(...fields.map(f => f.row));
+    const signatureHelpRow = maxFieldRow + 1;
+    const promptHelpRow = maxFieldRow + 3;
+    
+    // 添加簽名說明
+    sheet.getRange(signatureHelpRow, 1, 1, 2).merge();
+    sheet.getRange(signatureHelpRow, 1).setValue('💡 Personal information above will be automatically added to all generated emails as your signature.');
+    sheet.getRange(signatureHelpRow, 1).setFontStyle('italic').setFontColor('#666666');
+    
+    // 添加研習活動說明
+    sheet.getRange(signatureHelpRow + 1, 1, 1, 2).merge();
+    sheet.getRange(signatureHelpRow + 1, 1).setValue('🎯 Seminar Info will be used to auto-generate Seminar Brief for all leads analysis.');
+    sheet.getRange(signatureHelpRow + 1, 1).setFontStyle('italic').setFontColor('#666666');
+    
+    // 添加提示欄位的說明
+    sheet.getRange(promptHelpRow, 1, 1, 2).merge();
+    sheet.getRange(promptHelpRow, 1).setValue('✏️ Customize email generation prompts below. Leave blank to use default prompts.');
+    sheet.getRange(promptHelpRow, 1).setFontStyle('italic').setFontColor('#666666');
     
     console.log('用戶資訊工作表設定完成');
   },
@@ -72,14 +87,19 @@ const UserInfoService = {
         name: sheet.getRange(USER_INFO_FIELDS.NAME.row, USER_INFO_FIELDS.NAME.col).getValue() || '',
         company: sheet.getRange(USER_INFO_FIELDS.COMPANY.row, USER_INFO_FIELDS.COMPANY.col).getValue() || '',
         title: sheet.getRange(USER_INFO_FIELDS.TITLE.row, USER_INFO_FIELDS.TITLE.col).getValue() || '',
-        contact: sheet.getRange(USER_INFO_FIELDS.CONTACT.row, USER_INFO_FIELDS.CONTACT.col).getValue() || ''
+        contact: sheet.getRange(USER_INFO_FIELDS.CONTACT.row, USER_INFO_FIELDS.CONTACT.col).getValue() || '',
+        seminarInfo: sheet.getRange(USER_INFO_FIELDS.SEMINAR_INFO.row, USER_INFO_FIELDS.SEMINAR_INFO.col).getValue() || '',
+        seminarBrief: sheet.getRange(USER_INFO_FIELDS.SEMINAR_BRIEF.row, USER_INFO_FIELDS.SEMINAR_BRIEF.col).getValue() || '',
+        email1Prompt: sheet.getRange(USER_INFO_FIELDS.EMAIL1_PROMPT.row, USER_INFO_FIELDS.EMAIL1_PROMPT.col).getValue() || '',
+        email2Prompt: sheet.getRange(USER_INFO_FIELDS.EMAIL2_PROMPT.row, USER_INFO_FIELDS.EMAIL2_PROMPT.col).getValue() || '',
+        email3Prompt: sheet.getRange(USER_INFO_FIELDS.EMAIL3_PROMPT.row, USER_INFO_FIELDS.EMAIL3_PROMPT.col).getValue() || ''
       };
       
       console.log('已獲取用戶資訊:', userInfo);
       return userInfo;
     } catch (error) {
       console.error('獲取用戶資訊時發生錯誤:', error);
-      return { greeting: '順頌商祺', name: '', company: '', title: '', contact: '' };
+      return { greeting: '順頌商祺', name: '', company: '', title: '', contact: '', seminarInfo: '', seminarBrief: '', email1Prompt: '', email2Prompt: '', email3Prompt: '' };
     }
   },
 
@@ -121,6 +141,97 @@ const UserInfoService = {
   hasUserInfo() {
     const userInfo = this.getUserInfo();
     return userInfo.name || userInfo.company || userInfo.title || userInfo.contact;
+  },
+
+  /**
+   * 生成研習活動簡介 (Seminar Brief)
+   */
+  generateSeminarBrief(seminarInfo) {
+    const prompt = `請根據以下研習活動資訊，搜索相關資料並整理出簡潔的活動簡介。請用繁體中文回答，總字數控制在400字內。
+
+研習活動資訊：${seminarInfo}
+
+請簡潔分析以下五個面向（每個面向約80-100字）：
+1. 活動概要：名稱、主辦單位、基本資訊
+2. 主題重點：活動核心內容和學習要點  
+3. 目標族群：參加者職業背景和特質
+4. 學習價值：參與者可獲得的具體收穫
+5. 行業趨勢：相關領域的發展背景
+
+格式要求：
+- 每個面向用簡潔段落表達，避免冗長描述
+- 基於搜索結果提供準確資訊，不生成虛假內容
+- 不使用 Markdown 格式，用「」符號強調重點
+- 確保五個面向都完整呈現，有助後續潛客分析`;
+
+    try {
+      console.log('開始生成研習活動簡介...');
+      const response = APIService.callPerplexityAPIWithSonarPro(prompt);
+      console.log('研習活動簡介生成成功:', response.substring(0, 100) + '...');
+      
+      // 清理 Markdown 格式
+      const cleanedResponse = ContentGenerator.cleanMarkdownForSheets(response);
+      
+      // 立即儲存到工作表
+      this.updateSeminarBrief(cleanedResponse);
+      
+      return cleanedResponse;
+    } catch (error) {
+      console.error('生成研習活動簡介失敗:', error);
+      throw new Error(`生成研習活動簡介失敗: ${error.message}`);
+    }
+  },
+
+  /**
+   * 更新研習活動簡介到工作表
+   */
+  updateSeminarBrief(seminarBrief) {
+    try {
+      const sheet = this.getUserInfoSheet();
+      sheet.getRange(USER_INFO_FIELDS.SEMINAR_BRIEF.row, USER_INFO_FIELDS.SEMINAR_BRIEF.col).setValue(seminarBrief);
+      console.log('研習活動簡介已更新到工作表');
+    } catch (error) {
+      console.error('更新研習活動簡介到工作表失敗:', error);
+    }
+  },
+
+  /**
+   * 檢查並自動生成研習活動簡介（如果需要）
+   */
+  checkAndGenerateSeminarBrief() {
+    try {
+      const userInfo = this.getUserInfo();
+      
+      // 檢查 seminar info 是否為空
+      if (!userInfo.seminarInfo || userInfo.seminarInfo.trim() === '') {
+        console.log('Seminar Info 為空，需要用戶填寫');
+        return {
+          success: false,
+          message: 'Seminar Info 欄位為空，請先填寫研習活動資訊',
+          needsUserInput: true
+        };
+      }
+
+      // 檢查是否需要重新生成 seminar brief
+      console.log('檢測到 Seminar Info，準備重新生成 Seminar Brief...');
+      
+      // 重新生成 seminar brief
+      const seminarBrief = this.generateSeminarBrief(userInfo.seminarInfo);
+      
+      return {
+        success: true,
+        message: '研習活動簡介已自動生成並更新',
+        seminarBrief: seminarBrief
+      };
+
+    } catch (error) {
+      console.error('檢查並生成研習活動簡介時發生錯誤:', error);
+      return {
+        success: false,
+        message: `生成研習活動簡介失敗: ${error.message}`,
+        error: error.message
+      };
+    }
   }
 };
 
@@ -130,4 +241,12 @@ function setupUserInfoSheet() {
   if (sheet) {
     SpreadsheetApp.getUi().alert('用戶資訊工作表已準備就緒！', '請在 "User Info" 工作表中填入您的個人資訊，這些資訊會自動添加到所有郵件的簽名中。', SpreadsheetApp.getUi().ButtonSet.OK);
   }
+}
+
+function checkAndGenerateSeminarBrief() {
+  return UserInfoService.checkAndGenerateSeminarBrief();
+}
+
+function generateSeminarBrief(seminarInfo) {
+  return UserInfoService.generateSeminarBrief(seminarInfo);
 }
