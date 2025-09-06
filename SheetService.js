@@ -267,9 +267,12 @@ const SheetService = {
             }
           });
           
-          // 啟用文字換行（但維持固定200px高度）
-          const range = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn());
-          range.setWrap(true);
+          // 只為 mail angle 欄位設置文字換行（但維持固定200px高度）
+          const mailAngleColumns = [COLUMNS.MAIL_ANGLE_1 + 1, COLUMNS.MAIL_ANGLE_2 + 1, COLUMNS.MAIL_ANGLE_3 + 1];
+          mailAngleColumns.forEach(col => {
+            const cell = sheet.getRange(rowIndex, col);
+            cell.setWrap(true);
+          });
           
           formattedCount++;
         }
@@ -288,7 +291,7 @@ const SheetService = {
       // 強制刷新
       SpreadsheetApp.flush();
       
-      const message = `✅ 格式化完成！\n\n已格式化 ${formattedCount} 行潛在客戶資料\n• 使用 Sheets API 設定行高為 200px\n• 列寬已調整\n• 啟用文字換行（固定高度）`;
+      const message = `✅ 格式化完成！\n\n已格式化 ${formattedCount} 行潛在客戶資料\n• 使用 Sheets API 設定行高為 200px\n• 列寬已調整\n• Mail Angle 欄位已啟用文字換行（固定高度）`;
       SpreadsheetApp.getUi().alert('格式化完成', message, SpreadsheetApp.getUi().ButtonSet.OK);
       
       console.log(`格式化完成: ${formattedCount} 行`);
