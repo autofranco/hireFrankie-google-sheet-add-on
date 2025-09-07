@@ -187,8 +187,9 @@ const TokenTracker = {
     console.log('💰 總結:');
     if (this.stepStats.leads.length > 0) {
       console.log(`- 處理 Lead 數量: ${this.stepStats.leads.length}筆`);
-      const avgCost = costs.grandTotal / Math.max(this.stepStats.leads.length, 1);
-      const avgTime = totalTime / Math.max(this.stepStats.leads.length, 1);
+      // 修正：平均成本應該是總成本除以 lead 數量（包含分攤的 seminar brief 成本）
+      const avgCost = costs.grandTotal / this.stepStats.leads.length;
+      const avgTime = totalTime / this.stepStats.leads.length;
       console.log(`- 平均每筆 Lead: NT$${avgCost.toFixed(2)} (${avgTime.toFixed(1)}秒)`);
     }
     console.log(`- 總執行時間: ${totalTime.toFixed(1)}秒`);

@@ -61,6 +61,30 @@ const SheetService = {
     headerRange.setFontWeight('bold');
     headerRange.setBackground('#f0f0f0');
     
+    // 設定特定表頭的字體顏色為灰色 #949494
+    const grayHeaders = [
+      'Leads Profile',     // column 5 (E)
+      '1st mail angle',    // column 6 (F) 
+      '1st follow up mail', // column 7 (G)
+      '1st mail schedule', // column 8 (H)
+      '2nd mail angle',    // column 9 (I)
+      '2nd follow up mail', // column 10 (J)
+      '2nd mail schedule', // column 11 (K)
+      '3rd mail angle',    // column 12 (L)
+      '3rd follow up mail', // column 13 (M)
+      '3rd mail schedule', // column 14 (N)
+      'send now',          // column 15 (O)
+      'status',            // column 16 (P)
+      'info'               // column 17 (Q)
+    ];
+    
+    grayHeaders.forEach((headerText) => {
+      const columnIndex = headers.indexOf(headerText) + 1;
+      if (columnIndex > 0) {
+        sheet.getRange(1, columnIndex).setFontColor('#949494');
+      }
+    });
+    
     // 凍結第一行（標題行）
     sheet.setFrozenRows(1);
     
