@@ -22,8 +22,7 @@ const RowProcessor = {
       // 初始化該 Lead 的統計追蹤
       TokenTracker.startLead(rowIndex);
       
-      // 執行所有處理步驟
-      this.checkSeminarBrief(sheet, rowIndex);
+      // 執行所有處理步驟（Seminar Brief 已在全域預處理中檢查，此處不重複檢查）
       this.generateLeadsProfile(sheet, row, rowIndex);
       this.generateMailAngles(sheet, row, rowIndex);
       this.generateFirstMail(sheet, row, rowIndex);

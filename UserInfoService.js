@@ -216,11 +216,29 @@ const UserInfoService = {
         };
       }
 
-      // 檢查是否需要重新生成 seminar brief
-      console.log('檢測到 Seminar Info，準備重新生成 Seminar Brief...');
+      // 智能檢查是否需要重新生成 seminar brief
+      const currentInfo = userInfo.seminarInfo;
+      const currentBrief = userInfo.seminarBrief;
+      const lastInfo = PropertiesService.getScriptProperties().getProperty('lastSeminarInfo');
+      
+      // 如果 info 沒變更且 brief 已存在，直接使用現有 brief
+      if (lastInfo === currentInfo && currentBrief && currentBrief.trim() !== '') {
+        console.log('Seminar Info 沒有變更且 Brief 已存在，使用現有簡介');
+        return {
+          success: true,
+          message: '使用現有研習活動簡介',
+          seminarBrief: currentBrief
+        };
+      }
+      
+      // 需要重新生成（info 變更或 brief 為空）
+      console.log('檢測到 Seminar Info 變更或 Brief 為空，準備重新生成 Seminar Brief...');
       
       // 重新生成 seminar brief
       const seminarBrief = this.generateSeminarBrief(userInfo.seminarInfo);
+      
+      // 存儲當前 info 到 PropertiesService
+      PropertiesService.getScriptProperties().setProperty('lastSeminarInfo', currentInfo);
       
       return {
         success: true,
