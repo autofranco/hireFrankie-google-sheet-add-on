@@ -16,6 +16,16 @@ const EmailService = {
 
   /**
    * 立即發送郵件（Send Now 功能）
+   * 立即發送指定內容的郵件，繞過觸發器排程
+   * 
+   * @function sendImmediateEmail
+   * @param {string} email - 收件人郵件地址
+   * @param {string} firstName - 收件人姓名
+   * @param {string} subject - 郵件主旨
+   * @param {string} content - 郵件內容
+   * @param {number} rowIndex - 行索引
+   * @param {string} emailType - 郵件類型
+   * @returns {void}
    */
   sendImmediateEmail(email, firstName, subject, content, rowIndex, emailType) {
     try {
