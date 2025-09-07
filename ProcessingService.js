@@ -79,12 +79,12 @@ const ProcessingService = {
           );
         }
       } else {
-        // 成功生成，提供用戶反饋
+        // 成功生成，提供用戶反饋但不停止執行
         console.log('研習活動簡介自動生成成功');
-        SpreadsheetApp.getUi().alert(
-          '✅ 研習活動簡介已更新', 
-          `${seminarResult.message}\n\n已根據 Seminar Info 重新生成 Seminar Brief，將用於所有潛在客戶的分析。`, 
-          SpreadsheetApp.getUi().ButtonSet.OK
+        SpreadsheetApp.getActiveSpreadsheet().toast(
+          '✅ 研習活動簡介已更新，將用於所有潛在客戶分析', 
+          '研習活動簡介生成完成', 
+          3
         );
       }
     } catch (error) {
