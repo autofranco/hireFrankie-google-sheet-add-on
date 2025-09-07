@@ -19,6 +19,9 @@ const RowProcessor = {
       // 設置狀態下拉選單
       SheetService.setupStatusDropdown(sheet, rowIndex);
       
+      // 初始化該 Lead 的統計追蹤
+      TokenTracker.startLead(rowIndex);
+      
       // 執行所有處理步驟
       this.checkSeminarBrief(sheet, rowIndex);
       this.generateLeadsProfile(sheet, row, rowIndex);
@@ -80,6 +83,9 @@ const RowProcessor = {
     SheetService.updateInfo(sheet, rowIndex, '正在生成客戶畫像...');
     SpreadsheetApp.flush();
     
+    // 開始統計 Lead Profile 生成
+    TokenTracker.startStep(rowIndex, 'leadProfile');
+    
     const leadsProfile = ContentGenerator.generateLeadsProfile(
       row[COLUMNS.COMPANY_URL], 
       row[COLUMNS.POSITION],
@@ -107,6 +113,9 @@ const RowProcessor = {
     console.log('步骤2: 生成邮件切入点...');
     SheetService.updateInfo(sheet, rowIndex, '正在生成郵件切入點...');
     SpreadsheetApp.flush();
+    
+    // 開始統計 Mail Angle 生成
+    TokenTracker.startStep(rowIndex, 'mailAngle');
     
     const leadsProfile = sheet.getRange(rowIndex, COLUMNS.LEADS_PROFILE + 1).getValue();
     
@@ -142,6 +151,9 @@ const RowProcessor = {
     console.log('步骤3: 生成第1封追蹤郵件...');
     SheetService.updateInfo(sheet, rowIndex, '正在生成第1封追蹤郵件...');
     SpreadsheetApp.flush();
+    
+    // 開始統計 First Mail 生成
+    TokenTracker.startStep(rowIndex, 'firstMail');
     
     const leadsProfile = sheet.getRange(rowIndex, COLUMNS.LEADS_PROFILE + 1).getValue();
     const mailAngle1 = sheet.getRange(rowIndex, COLUMNS.MAIL_ANGLE_1 + 1).getValue();

@@ -166,6 +166,10 @@ const UserInfoService = {
 
     try {
       console.log('開始生成研習活動簡介...');
+      
+      // 開始統計
+      TokenTracker.startSeminarBrief();
+      
       const response = APIService.callPerplexityAPIWithSonarPro(prompt);
       console.log('研習活動簡介生成成功:', response.substring(0, 100) + '...');
       

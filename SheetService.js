@@ -21,10 +21,19 @@ const SheetService = {
   setupHeaders() {
     const sheet = this.getMainSheet();
     
-    // 自動生成 Sheet 標題
-    const timestamp = new Date();
-    const title = `Auto Lead Warmer - ${timestamp.toLocaleDateString('zh-TW')} ${timestamp.toLocaleTimeString('zh-TW', {hour12: false})}`;
-    SpreadsheetApp.getActiveSpreadsheet().rename(title);
+    // 在現有名稱後面加上 Auto Lead Warmer 標識和時間戳（避免覆蓋原名稱）
+    const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    const currentTitle = spreadsheet.getName();
+    
+    // 只有在尚未包含 Auto Lead Warmer 時才添加
+    let finalTitle = currentTitle;
+    if (!currentTitle.includes('Auto Lead Warmer')) {
+      const timestamp = new Date();
+      const dateStr = `${(timestamp.getMonth() + 1).toString().padStart(2, '0')}/${timestamp.getDate().toString().padStart(2, '0')}`;
+      const timeStr = timestamp.toLocaleTimeString('zh-TW', {hour12: false, hour: '2-digit', minute: '2-digit'});
+      finalTitle = `${currentTitle} - Auto Lead Warmer (${dateStr} ${timeStr})`;
+      spreadsheet.rename(finalTitle);
+    }
     
     const headers = [
       'Email Address*',
@@ -61,7 +70,7 @@ const SheetService = {
     // 同時設置用戶資訊工作表
     UserInfoService.getUserInfoSheet();
     
-    SpreadsheetApp.getUi().alert(`設定完成！\n\n✅ 工作表已重新命名為: ${title}\n✅ User Info 工作表已創建\n✅ 列寬已設定\n\n💡 重要提醒：\n• 請到 "User Info" 工作表填入您的個人資訊\n• 請在 "Seminar Info" 欄位填寫研習活動資訊\n• 系統會自動生成 "Seminar Brief" 供所有潛客分析使用\n• 個人資訊會自動添加到所有郵件簽名中`);
+    SpreadsheetApp.getUi().alert(`設定完成！\n\n✅ 工作表已重新命名為: ${finalTitle}\n✅ User Info 工作表已創建\n✅ 列寬已設定\n\n💡 重要提醒：\n• 請到 "User Info" 工作表填入您的個人資訊\n• 請在 "Seminar Info" 欄位填寫研習活動資訊\n• 系統會自動生成 "Seminar Brief" 供所有潛客分析使用\n• 個人資訊會自動添加到所有郵件簽名中`);
   },
 
   /**

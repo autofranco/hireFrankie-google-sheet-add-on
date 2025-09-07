@@ -10,6 +10,15 @@ const TokenTracker = {
     sonarPro: { inputTokens: 0, outputTokens: 0 }
   },
   
+  // 詳細步驟統計
+  stepStats: {
+    seminarBrief: { cost: 0, time: 0, startTime: null },
+    leads: [] // 每筆 lead 的詳細統計
+  },
+  
+  // 總執行時間
+  totalStartTime: null,
+  
   // 價格 (美金/百萬tokens)
   pricing: {
     sonar: { input: 1, output: 1 },
@@ -25,7 +34,76 @@ const TokenTracker = {
   reset() {
     this.stats.sonar = { inputTokens: 0, outputTokens: 0 };
     this.stats.sonarPro = { inputTokens: 0, outputTokens: 0 };
+    this.stepStats.seminarBrief = { cost: 0, time: 0, startTime: null };
+    this.stepStats.leads = [];
+    this.totalStartTime = Date.now();
     console.log('=== Token 使用量統計已重置 ===');
+  },
+
+  /**
+   * 計算成本 (通用函數)
+   */
+  calculateStepCost(inputTokens, outputTokens, model = 'sonar-pro') {
+    const modelKey = model === 'sonar-pro' ? 'sonarPro' : 'sonar';
+    const inputCost = (inputTokens / 1000000) * this.pricing[modelKey].input * this.exchangeRate;
+    const outputCost = (outputTokens / 1000000) * this.pricing[modelKey].output * this.exchangeRate;
+    return inputCost + outputCost;
+  },
+
+  /**
+   * 開始 Seminar Brief 統計
+   */
+  startSeminarBrief() {
+    this.stepStats.seminarBrief.startTime = Date.now();
+  },
+
+  /**
+   * 結束 Seminar Brief 統計
+   */
+  endSeminarBrief(inputTokens, outputTokens, model = 'sonar-pro') {
+    const endTime = Date.now();
+    const duration = (endTime - this.stepStats.seminarBrief.startTime) / 1000;
+    
+    this.stepStats.seminarBrief.time = duration;
+    this.stepStats.seminarBrief.cost = this.calculateStepCost(inputTokens, outputTokens, model);
+  },
+
+  /**
+   * 開始處理 Lead 統計
+   */
+  startLead(leadIndex) {
+    const leadStat = {
+      index: leadIndex,
+      leadProfile: { cost: 0, time: 0, startTime: null },
+      mailAngle: { cost: 0, time: 0, startTime: null },
+      firstMail: { cost: 0, time: 0, startTime: null }
+    };
+    this.stepStats.leads.push(leadStat);
+    return leadStat;
+  },
+
+  /**
+   * 開始步驟統計
+   */
+  startStep(leadIndex, stepName) {
+    const lead = this.stepStats.leads.find(l => l.index === leadIndex);
+    if (lead && lead[stepName]) {
+      lead[stepName].startTime = Date.now();
+    }
+  },
+
+  /**
+   * 結束步驟統計
+   */
+  endStep(leadIndex, stepName, inputTokens, outputTokens, model = 'sonar-pro') {
+    const lead = this.stepStats.leads.find(l => l.index === leadIndex);
+    if (!lead || !lead[stepName]) return;
+
+    const endTime = Date.now();
+    const duration = (endTime - lead[stepName].startTime) / 1000;
+    
+    lead[stepName].time = duration;
+    lead[stepName].cost = this.calculateStepCost(inputTokens, outputTokens, model);
   },
   
   /**
@@ -75,28 +153,60 @@ const TokenTracker = {
   },
   
   /**
-   * 顯示成本總結
+   * 顯示詳細統計總結
    */
   showSummary() {
     const costs = this.calculateCosts();
+    const totalTime = this.totalStartTime ? (Date.now() - this.totalStartTime) / 1000 : 0;
     
-    console.log('\n=== 🤖 API Token 使用量與成本總結 ===');
+    console.log('\n=== 📊 詳細執行統計 ===');
     
-    if (costs.sonar.inputTokens > 0 || costs.sonar.outputTokens > 0) {
-      console.log(`📊 Sonar 模型:`);
-      console.log(`   Input tokens: ${costs.sonar.inputTokens.toLocaleString()} (NT$${costs.sonar.inputCost.toFixed(2)})`);
-      console.log(`   Output tokens: ${costs.sonar.outputTokens.toLocaleString()} (NT$${costs.sonar.outputCost.toFixed(2)})`);
-      console.log(`   Sonar 總計: NT$${costs.sonar.totalCost.toFixed(2)}`);
+    // Seminar Brief 統計
+    if (this.stepStats.seminarBrief.cost > 0) {
+      console.log(`🎯 Seminar Brief 生成: NT$${this.stepStats.seminarBrief.cost.toFixed(2)} (${this.stepStats.seminarBrief.time.toFixed(1)}秒)`);
+      console.log('');
     }
     
-    if (costs.sonarPro.inputTokens > 0 || costs.sonarPro.outputTokens > 0) {
-      console.log(`📊 Sonar Pro 模型:`);
-      console.log(`   Input tokens: ${costs.sonarPro.inputTokens.toLocaleString()} (NT$${costs.sonarPro.inputCost.toFixed(2)})`);
-      console.log(`   Output tokens: ${costs.sonarPro.outputTokens.toLocaleString()} (NT$${costs.sonarPro.outputCost.toFixed(2)})`);
-      console.log(`   Sonar Pro 總計: NT$${costs.sonarPro.totalCost.toFixed(2)}`);
+    // Lead 處理統計
+    if (this.stepStats.leads.length > 0) {
+      console.log(`📋 處理 ${this.stepStats.leads.length} 筆 Lead:`);
+      this.stepStats.leads.forEach(lead => {
+        const leadProfileText = lead.leadProfile.cost > 0 ? `Lead Profile NT$${lead.leadProfile.cost.toFixed(2)} (${lead.leadProfile.time.toFixed(1)}秒)` : '';
+        const mailAngleText = lead.mailAngle.cost > 0 ? `Mail Angle NT$${lead.mailAngle.cost.toFixed(2)} (${lead.mailAngle.time.toFixed(1)}秒)` : '';
+        const firstMailText = lead.firstMail.cost > 0 ? `1st Mail NT$${lead.firstMail.cost.toFixed(2)} (${lead.firstMail.time.toFixed(1)}秒)` : '';
+        
+        const parts = [leadProfileText, mailAngleText, firstMailText].filter(p => p);
+        if (parts.length > 0) {
+          console.log(`Lead ${lead.index}: ${parts.join(', ')}`);
+        }
+      });
+      console.log('');
     }
     
-    console.log(`💰 本次執行總成本: NT$${costs.grandTotal.toFixed(2)}`);
+    // 總結統計
+    console.log('💰 總結:');
+    if (this.stepStats.leads.length > 0) {
+      console.log(`- 處理 Lead 數量: ${this.stepStats.leads.length}筆`);
+      const avgCost = costs.grandTotal / Math.max(this.stepStats.leads.length, 1);
+      const avgTime = totalTime / Math.max(this.stepStats.leads.length, 1);
+      console.log(`- 平均每筆 Lead: NT$${avgCost.toFixed(2)} (${avgTime.toFixed(1)}秒)`);
+    }
+    console.log(`- 總執行時間: ${totalTime.toFixed(1)}秒`);
+    console.log(`- 總成本: NT$${costs.grandTotal.toFixed(2)}`);
+    
+    // 原有的模型統計（簡化版）
+    if (costs.sonar.inputTokens > 0 || costs.sonar.outputTokens > 0 || 
+        costs.sonarPro.inputTokens > 0 || costs.sonarPro.outputTokens > 0) {
+      console.log('');
+      console.log('📊 模型使用統計:');
+      if (costs.sonar.totalCost > 0) {
+        console.log(`- Sonar: ${costs.sonar.inputTokens + costs.sonar.outputTokens} tokens, NT$${costs.sonar.totalCost.toFixed(2)}`);
+      }
+      if (costs.sonarPro.totalCost > 0) {
+        console.log(`- Sonar Pro: ${costs.sonarPro.inputTokens + costs.sonarPro.outputTokens} tokens, NT$${costs.sonarPro.totalCost.toFixed(2)}`);
+      }
+    }
+    
     console.log('=====================================\n');
     
     return costs;
@@ -223,6 +333,17 @@ const APIService = {
       const inputTokens = responseData.usage.prompt_tokens || 0;
       const outputTokens = responseData.usage.completion_tokens || 0;
       TokenTracker.recordUsage('sonar', inputTokens, outputTokens);
+      
+      // 檢查是否有進行中的 lead 步驟統計 (sonar 主要用於 mailAngle 和 firstMail)
+      for (const lead of TokenTracker.stepStats.leads) {
+        if (lead.mailAngle.startTime && !lead.mailAngle.time) {
+          TokenTracker.endStep(lead.index, 'mailAngle', inputTokens, outputTokens, 'sonar');
+          break;
+        } else if (lead.firstMail.startTime && !lead.firstMail.time) {
+          TokenTracker.endStep(lead.index, 'firstMail', inputTokens, outputTokens, 'sonar');
+          break;
+        }
+      }
     }
     
     return responseData.choices[0].message.content;
@@ -302,6 +423,25 @@ const APIService = {
       const inputTokens = responseData.usage.prompt_tokens || 0;
       const outputTokens = responseData.usage.completion_tokens || 0;
       TokenTracker.recordUsage('sonar-pro', inputTokens, outputTokens);
+      
+      // 檢查是否有進行中的 seminar brief 統計
+      if (TokenTracker.stepStats.seminarBrief.startTime) {
+        TokenTracker.endSeminarBrief(inputTokens, outputTokens, 'sonar-pro');
+      }
+      
+      // 檢查是否有進行中的 lead 步驟統計
+      for (const lead of TokenTracker.stepStats.leads) {
+        if (lead.leadProfile.startTime && !lead.leadProfile.time) {
+          TokenTracker.endStep(lead.index, 'leadProfile', inputTokens, outputTokens, 'sonar-pro');
+          break;
+        } else if (lead.mailAngle.startTime && !lead.mailAngle.time) {
+          TokenTracker.endStep(lead.index, 'mailAngle', inputTokens, outputTokens, 'sonar-pro');
+          break;
+        } else if (lead.firstMail.startTime && !lead.firstMail.time) {
+          TokenTracker.endStep(lead.index, 'firstMail', inputTokens, outputTokens, 'sonar-pro');
+          break;
+        }
+      }
     }
     
     return responseData.choices[0].message.content;
