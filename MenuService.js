@@ -54,7 +54,7 @@ const MenuService = {
         if (status === 'Running' && isChecked) {
           try {
             console.log(`處理第 ${i} 行的 Send Now 請求`);
-            ProcessingService.handleSendNowClick(sheet, i);
+            SendNowHandler.handleSendNowClick(sheet, i);
             
             // 取消勾選復選框（表示已處理）
             sendNowCell.setValue(false);
