@@ -5,7 +5,12 @@
 const SheetService = {
   
   /**
-   * 获取主要工作表
+   * 獲取主要工作表
+   * 獲取指定名稱的主要 Google Sheets 工作表
+   * 
+   * @function getMainSheet
+   * @returns {GoogleAppsScript.Spreadsheet.Sheet} 主要工作表物件
+   * @throws {Error} 當找不到指定名稱的工作表時
    */
   getMainSheet() {
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
@@ -16,7 +21,11 @@ const SheetService = {
   },
 
   /**
-   * 设定表头
+   * 設定表頭
+   * 初始化工作表的標題行、格式和欄寶
+   * 
+   * @function setupHeaders
+   * @returns {void}
    */
   setupHeaders() {
     const sheet = this.getMainSheet();

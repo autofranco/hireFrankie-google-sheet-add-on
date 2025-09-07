@@ -42,6 +42,13 @@ const TokenTracker = {
 
   /**
    * 計算成本 (通用函數)
+   * 根據輸入輸出 token 數量和模型類型計算台幣成本
+   * 
+   * @function calculateStepCost
+   * @param {number} inputTokens - 輸入 token 數量
+   * @param {number} outputTokens - 輸出 token 數量  
+   * @param {string} model - 模型類型 ('sonar' 或 'sonar-pro')
+   * @returns {number} 計算出的台幣成本
    */
   calculateStepCost(inputTokens, outputTokens, model = 'sonar-pro') {
     const modelKey = model === 'sonar-pro' ? 'sonarPro' : 'sonar';
@@ -52,6 +59,10 @@ const TokenTracker = {
 
   /**
    * 開始 Seminar Brief 統計
+   * 初始化研習活動簡介生成的統計追蹤
+   * 
+   * @function startSeminarBrief
+   * @returns {void}
    */
   startSeminarBrief() {
     this.stepStats.seminarBrief.startTime = Date.now();
@@ -59,6 +70,13 @@ const TokenTracker = {
 
   /**
    * 結束 Seminar Brief 統計
+   * 記錄研習活動簡介生成的 token 使用量和成本
+   * 
+   * @function endSeminarBrief
+   * @param {number} inputTokens - 輸入 token 數量
+   * @param {number} outputTokens - 輸出 token 數量
+   * @param {string} model - 使用的模型類型
+   * @returns {void}
    */
   endSeminarBrief(inputTokens, outputTokens, model = 'sonar-pro') {
     const endTime = Date.now();
@@ -70,6 +88,11 @@ const TokenTracker = {
 
   /**
    * 開始處理 Lead 統計
+   * 初始化特定潛在客戶的處理統計追蹤
+   * 
+   * @function startLead
+   * @param {number} leadIndex - 潛在客戶的行索引
+   * @returns {void}
    */
   startLead(leadIndex) {
     const leadStat = {
@@ -84,6 +107,12 @@ const TokenTracker = {
 
   /**
    * 開始步驟統計
+   * 開始追蹤特定 Lead 的特定處理步驟時間
+   * 
+   * @function startStep
+   * @param {number} leadIndex - 潛在客戶的行索引
+   * @param {string} stepName - 步驟名稱 ('leadProfile', 'mailAngle', 'firstMail')
+   * @returns {void}
    */
   startStep(leadIndex, stepName) {
     const lead = this.stepStats.leads.find(l => l.index === leadIndex);
@@ -94,6 +123,15 @@ const TokenTracker = {
 
   /**
    * 結束步驟統計
+   * 記錄特定 Lead 特定步驟的時間和成本統計
+   * 
+   * @function endStep
+   * @param {number} leadIndex - 潛在客戶的行索引
+   * @param {string} stepName - 步驟名稱
+   * @param {number} inputTokens - 輸入 token 數量
+   * @param {number} outputTokens - 輸出 token 數量
+   * @param {string} model - 使用的模型類型
+   * @returns {void}
    */
   endStep(leadIndex, stepName, inputTokens, outputTokens, model = 'sonar-pro') {
     const lead = this.stepStats.leads.find(l => l.index === leadIndex);
@@ -450,27 +488,65 @@ const APIService = {
 };
 
 // 全局函数包装器（为了向后兼容）
+/**
+ * 測試網路連線 - 全域函數包裝器
+ * 
+ * @function testNetworkConnection
+ * @returns {void}
+ */
 function testNetworkConnection() {
   return APIService.testNetworkConnection();
 }
 
+/**
+ * 測試 API 連線 - 全域函數包裝器
+ * 
+ * @function testAPIConnection
+ * @returns {void}
+ */
 function testAPIConnection() {
   return APIService.testAPIConnection();
 }
 
+/**
+ * 呼叫 Perplexity API (Sonar 模型) - 全域函數包裝器
+ * 
+ * @function callPerplexityAPI
+ * @param {string} prompt - API 請求的提示詞
+ * @returns {string} API 回應內容
+ */
 function callPerplexityAPI(prompt) {
   return APIService.callPerplexityAPI(prompt);
 }
 
+/**
+ * 呼叫 Perplexity API (Sonar Pro 模型) - 全域函數包裝器
+ * 
+ * @function callPerplexityAPIWithSonarPro
+ * @param {string} prompt - API 請求的提示詞
+ * @returns {string} API 回應內容
+ */
 function callPerplexityAPIWithSonarPro(prompt) {
   return APIService.callPerplexityAPIWithSonarPro(prompt);
 }
 
 // TokenTracker 全域函數包裝器
+/**
+ * 重置 token 統計 - 全域函數包裝器
+ * 
+ * @function resetTokenStats
+ * @returns {void}
+ */
 function resetTokenStats() {
   return TokenTracker.reset();
 }
 
+/**
+ * 顯示 token 使用統計總結 - 全域函數包裝器
+ * 
+ * @function showTokenSummary
+ * @returns {void}
+ */
 function showTokenSummary() {
   return TokenTracker.showSummary();
 }

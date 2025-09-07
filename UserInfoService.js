@@ -6,6 +6,10 @@ const UserInfoService = {
   
   /**
    * 獲取或創建用戶資訊工作表
+   * 檢查並返回 User Info 工作表，如果不存在則創建新的
+   * 
+   * @function getUserInfoSheet
+   * @returns {GoogleAppsScript.Spreadsheet.Sheet} User Info 工作表物件
    */
   getUserInfoSheet() {
     const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
@@ -22,6 +26,11 @@ const UserInfoService = {
 
   /**
    * 設定用戶資訊工作表的格式和標題
+   * 初始化工作表的欄位標籤、格式和說明文字
+   * 
+   * @function setupUserInfoSheet
+   * @param {GoogleAppsScript.Spreadsheet.Sheet} sheet - 要設定的工作表物件
+   * @returns {void}
    */
   setupUserInfoSheet(sheet) {
     // 設定標題
@@ -77,6 +86,17 @@ const UserInfoService = {
 
   /**
    * 獲取用戶資訊
+   * 從 User Info 工作表讀取所有用戶資訊欄位
+   * 
+   * @function getUserInfo
+   * @returns {Object} 包含所有用戶資訊的物件
+   * @returns {string} returns.greeting - 問候語
+   * @returns {string} returns.name - 用戶姓名
+   * @returns {string} returns.company - 公司名稱
+   * @returns {string} returns.title - 職稱
+   * @returns {string} returns.contact - 聯絡資訊
+   * @returns {string} returns.seminarInfo - 研習活動資訊
+   * @returns {string} returns.seminarBrief - 研習活動簡介
    */
   getUserInfo() {
     try {
@@ -105,6 +125,10 @@ const UserInfoService = {
 
   /**
    * 生成郵件簽名
+   * 根據用戶資訊生成格式化的郵件簽名
+   * 
+   * @function generateEmailSignature
+   * @returns {string} 格式化的郵件簽名字串
    */
   generateEmailSignature() {
     const userInfo = this.getUserInfo();
@@ -137,6 +161,10 @@ const UserInfoService = {
 
   /**
    * 檢查用戶資訊是否已設定
+   * 檢查是否至少有一個用戶資訊欄位有內容
+   * 
+   * @function hasUserInfo
+   * @returns {boolean} 如果有用戶資訊則返回 true
    */
   hasUserInfo() {
     const userInfo = this.getUserInfo();
@@ -188,6 +216,11 @@ const UserInfoService = {
 
   /**
    * 更新研習活動簡介到工作表
+   * 將生成的研習活動簡介寫入到專用欄位
+   * 
+   * @function updateSeminarBrief
+   * @param {string} seminarBrief - 要儲存的研習活動簡介內容
+   * @returns {void}
    */
   updateSeminarBrief(seminarBrief) {
     try {
@@ -258,6 +291,12 @@ const UserInfoService = {
 };
 
 // 全局函數包裝器
+/**
+ * 設定用戶資訊工作表 - 全域函數包裝器
+ * 
+ * @function setupUserInfoSheet
+ * @returns {void}
+ */
 function setupUserInfoSheet() {
   const sheet = UserInfoService.getUserInfoSheet();
   if (sheet) {
@@ -265,10 +304,23 @@ function setupUserInfoSheet() {
   }
 }
 
+/**
+ * 檢查並生成研習活動簡介 - 全域函數包裝器
+ * 
+ * @function checkAndGenerateSeminarBrief
+ * @returns {Object} 結果物件，包含 success 狀態和 message
+ */
 function checkAndGenerateSeminarBrief() {
   return UserInfoService.checkAndGenerateSeminarBrief();
 }
 
+/**
+ * 生成研習活動簡介 - 全域函數包裝器
+ * 
+ * @function generateSeminarBrief
+ * @param {string} seminarInfo - 研習活動資訊
+ * @returns {string} 生成的研習活動簡介
+ */
 function generateSeminarBrief(seminarInfo) {
   return UserInfoService.generateSeminarBrief(seminarInfo);
 }

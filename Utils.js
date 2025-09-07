@@ -5,7 +5,15 @@
 const Utils = {
   
   /**
-   * 生成排程时间 - 更新为工作日上午9点模式
+   * 生成排程時間 - 更新為工作日上午9點模式
+   * 產生三個排程時間：下一個工作日，以及後續兩個星期的同一天
+   * 
+   * @function generateScheduleTimes
+   * @description 計算三封郵件的發送排程時間，都安排在工作日上午9點
+   * @returns {Object} 包含三個排程時間的物件
+   * @returns {Date} returns.schedule1 - 第一封郵件的排程時間（下一個工作日上午9點）
+   * @returns {Date} returns.schedule2 - 第二封郵件的排程時間（第一封後7天）
+   * @returns {Date} returns.schedule3 - 第三封郵件的排程時間（第二封後7天）
    */
   generateScheduleTimes() {
     const now = new Date();
