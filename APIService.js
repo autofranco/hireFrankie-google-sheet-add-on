@@ -2,6 +2,107 @@
  * API 服务 - 处理所有外部 API 调用
  */
 
+// Token 使用量追蹤器
+const TokenTracker = {
+  // 統計資料
+  stats: {
+    sonar: { inputTokens: 0, outputTokens: 0 },
+    sonarPro: { inputTokens: 0, outputTokens: 0 }
+  },
+  
+  // 價格 (美金/百萬tokens)
+  pricing: {
+    sonar: { input: 1, output: 1 },
+    sonarPro: { input: 3, output: 15 }
+  },
+  
+  // 匯率
+  exchangeRate: 30, // 1美金 = 30台幣
+  
+  /**
+   * 重置統計
+   */
+  reset() {
+    this.stats.sonar = { inputTokens: 0, outputTokens: 0 };
+    this.stats.sonarPro = { inputTokens: 0, outputTokens: 0 };
+    console.log('=== Token 使用量統計已重置 ===');
+  },
+  
+  /**
+   * 記錄 token 使用量
+   */
+  recordUsage(model, inputTokens, outputTokens) {
+    if (model === 'sonar') {
+      this.stats.sonar.inputTokens += inputTokens;
+      this.stats.sonar.outputTokens += outputTokens;
+    } else if (model === 'sonar-pro') {
+      this.stats.sonarPro.inputTokens += inputTokens;
+      this.stats.sonarPro.outputTokens += outputTokens;
+    }
+    
+    console.log(`記錄 ${model} 使用: input=${inputTokens}, output=${outputTokens} tokens`);
+  },
+  
+  /**
+   * 計算成本 (台幣)
+   */
+  calculateCosts() {
+    const sonarInputCost = (this.stats.sonar.inputTokens / 1000000) * this.pricing.sonar.input * this.exchangeRate;
+    const sonarOutputCost = (this.stats.sonar.outputTokens / 1000000) * this.pricing.sonar.output * this.exchangeRate;
+    const sonarTotalCost = sonarInputCost + sonarOutputCost;
+    
+    const sonarProInputCost = (this.stats.sonarPro.inputTokens / 1000000) * this.pricing.sonarPro.input * this.exchangeRate;
+    const sonarProOutputCost = (this.stats.sonarPro.outputTokens / 1000000) * this.pricing.sonarPro.output * this.exchangeRate;
+    const sonarProTotalCost = sonarProInputCost + sonarProOutputCost;
+    
+    return {
+      sonar: {
+        inputTokens: this.stats.sonar.inputTokens,
+        outputTokens: this.stats.sonar.outputTokens,
+        inputCost: sonarInputCost,
+        outputCost: sonarOutputCost,
+        totalCost: sonarTotalCost
+      },
+      sonarPro: {
+        inputTokens: this.stats.sonarPro.inputTokens,
+        outputTokens: this.stats.sonarPro.outputTokens,
+        inputCost: sonarProInputCost,
+        outputCost: sonarProOutputCost,
+        totalCost: sonarProTotalCost
+      },
+      grandTotal: sonarTotalCost + sonarProTotalCost
+    };
+  },
+  
+  /**
+   * 顯示成本總結
+   */
+  showSummary() {
+    const costs = this.calculateCosts();
+    
+    console.log('\n=== 🤖 API Token 使用量與成本總結 ===');
+    
+    if (costs.sonar.inputTokens > 0 || costs.sonar.outputTokens > 0) {
+      console.log(`📊 Sonar 模型:`);
+      console.log(`   Input tokens: ${costs.sonar.inputTokens.toLocaleString()} (NT$${costs.sonar.inputCost.toFixed(2)})`);
+      console.log(`   Output tokens: ${costs.sonar.outputTokens.toLocaleString()} (NT$${costs.sonar.outputCost.toFixed(2)})`);
+      console.log(`   Sonar 總計: NT$${costs.sonar.totalCost.toFixed(2)}`);
+    }
+    
+    if (costs.sonarPro.inputTokens > 0 || costs.sonarPro.outputTokens > 0) {
+      console.log(`📊 Sonar Pro 模型:`);
+      console.log(`   Input tokens: ${costs.sonarPro.inputTokens.toLocaleString()} (NT$${costs.sonarPro.inputCost.toFixed(2)})`);
+      console.log(`   Output tokens: ${costs.sonarPro.outputTokens.toLocaleString()} (NT$${costs.sonarPro.outputCost.toFixed(2)})`);
+      console.log(`   Sonar Pro 總計: NT$${costs.sonarPro.totalCost.toFixed(2)}`);
+    }
+    
+    console.log(`💰 本次執行總成本: NT$${costs.grandTotal.toFixed(2)}`);
+    console.log('=====================================\n');
+    
+    return costs;
+  }
+};
+
 const APIService = {
   
   /**
@@ -117,6 +218,13 @@ const APIService = {
       throw new Error('API 回應格式異常: ' + responseText);
     }
     
+    // 追蹤 token 使用量
+    if (responseData.usage) {
+      const inputTokens = responseData.usage.prompt_tokens || 0;
+      const outputTokens = responseData.usage.completion_tokens || 0;
+      TokenTracker.recordUsage('sonar', inputTokens, outputTokens);
+    }
+    
     return responseData.choices[0].message.content;
   },
 
@@ -189,6 +297,13 @@ const APIService = {
       throw new Error('API 回應格式異常: ' + responseText);
     }
     
+    // 追蹤 token 使用量
+    if (responseData.usage) {
+      const inputTokens = responseData.usage.prompt_tokens || 0;
+      const outputTokens = responseData.usage.completion_tokens || 0;
+      TokenTracker.recordUsage('sonar-pro', inputTokens, outputTokens);
+    }
+    
     return responseData.choices[0].message.content;
   }
 };
@@ -208,4 +323,13 @@ function callPerplexityAPI(prompt) {
 
 function callPerplexityAPIWithSonarPro(prompt) {
   return APIService.callPerplexityAPIWithSonarPro(prompt);
+}
+
+// TokenTracker 全域函數包裝器
+function resetTokenStats() {
+  return TokenTracker.reset();
+}
+
+function showTokenSummary() {
+  return TokenTracker.showSummary();
 }
