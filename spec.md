@@ -113,6 +113,25 @@
     * `Emails` 生成後立即寫入。
 * 避免整批處理完成後才一次寫入，減少等待時間。
 
+#### API Token 使用追蹤與成本優化
+
+* **詳細成本追蹤系統：**
+    * 追蹤 Sonar ($1 input/$1 output per 1M tokens) 和 Sonar Pro ($3 input/$15 output per 1M tokens) 使用量
+    * 自動計算台幣成本 (1 USD = 30 TWD)
+    * 分步驟追蹤：研習活動簡介生成、Lead Profile、Mail Angle、第一封郵件生成
+    * 顯示每筆 Lead 平均成本、總執行時間、詳細統計摘要
+
+* **智能生成優化：**
+    * 使用 PropertiesService 追蹤 Seminar Info 變更，避免重複生成 Seminar Brief
+    * 只在 Seminar Info 變更或 Seminar Brief 為空時才重新生成
+    * 消除重複的 API 調用，節省 50-80% token 使用量
+    * 自動檢測並跳過不必要的 API 請求
+
+* **用戶體驗改進：**
+    * 研習活動簡介生成成功時使用 Toast 通知（右下角黑色條狀提醒框3秒）
+    * 不再阻斷執行流程，提升操作流暢度
+    * 保持對用戶透明的成本和時間統計
+
 #### 自動寄送
 
 * 系統於 `mail schedule` 指定時間透過使用者 Gmail 寄出信件。
@@ -168,8 +187,8 @@
   * **UserInfoService.js** (251 lines)：用戶資訊管理，包含個人資訊和研習活動資訊處理
 
 **工具和配置模組：**
-  * **APIService.js** (210 lines)：API 通訊服務，包含 Perplexity API 呼叫和錯誤處理
-  * **Utils.js** (240 lines)：通用工具函數，包含日期處理、格式化等
+  * **APIService.js** (552 lines)：API 通訊服務和 Token 追蹤系統，包含 Perplexity API 呼叫、詳細成本計算、使用量統計和錯誤處理
+  * **Utils.js** (274 lines)：通用工具函數，包含日期處理、格式化、郵件驗證等
   * **TriggerManager.js** (198 lines)：觸發器管理服務，創建和清理 Google Apps Script 觸發器
   * **Config.js** (90 lines)：系統配置和常數定義
   * **DebugTools.js** (7 lines)：調試工具，用於開發和測試
@@ -178,6 +197,7 @@
   * 單一職責原則：每個服務模組專注於特定功能領域
   * 全域函數包裝器：保持向後兼容性，提供全域函數接口
   * 服務層分離：核心業務邏輯、基礎服務、工具配置分層管理
+  * **完整 JSDoc 文檔：** 所有函數配備專業級 JSDoc 註釋，包含 @param、@returns 和詳細描述
   * **自動格式化系統：** 新處理行自動套用 200px 行高和 mail angle 欄位文字換行
 
 #### 資料儲存
@@ -228,6 +248,8 @@
 ### 4.3 錯誤與進度提示
 
 * **API 錯誤：** 在 `info` 顯示 `[Error] 錯誤描述`。
+* **Send Now 錯誤修復：** 修正函數調用引用錯誤，確保 Send Now 功能正常運作
+* **成本計算修正：** 修復平均每筆 Lead 成本計算邏輯，正確包含 seminar brief 分攤成本
 * **寄送完成：** 對應 `mail schedule` 加刪除線。
 * **手動停止：** `status` 改為 `Done`，`info` 顯示「`手動停止後續信件寄送`」。
 * **潛客回覆：** `status` 改為 `Done`，`info` 顯示「`潛客已回信`」。
@@ -239,6 +261,7 @@
 * **UI 格式化系統：**
     * 使用 `Sheets API updateDimensionProperties` 強制設定 200px 行高，避免被「根據資料內容調整大小」覆蓋。
     * 自訂欄位寬度：`Email`(110px)、`First Name`(80px)、`Company url`(95px)、`Position`(70px)、`Context/Leads Profile`(200px)、`Mail angles/follow up mails`(150px)、`Mail schedules`(75px)、`Send Now/Status`(70px)。
+    * **表頭視覺層次優化：** 自動生成欄位（Leads Profile、mail angles、follow up mails、schedules、send now、status、info）使用灰色字體 (#949494) 以區分用戶輸入欄位
     * 支援文字自動換行但維持固定高度，mail angle 欄位自動套用文字換行。
     * 凍結標題行功能：第一行（標題行）在捲動時保持固定在頂部。
     * 透過 `Format All Rows` 按鈕手動觸發格式化。
