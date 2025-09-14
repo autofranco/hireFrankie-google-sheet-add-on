@@ -1,0 +1,135 @@
+/**
+ * HireFrankie Firebase Cloud Functions
+ * 
+ * 提供 AI 驅動的潛在客戶開發和電子郵件生成服務。
+ * 包含用戶管理、Perplexity API 集成和付費狀態驗證。
+ * 
+ * @fileoverview Firebase Cloud Functions for HireFrankie Auto Lead Warmer
+ * @version 1.0.0
+ * @author HireFrankie Team
+ */
+
+const {onCall, onRequest, HttpsError} = require('firebase-functions/v2/https');
+const {setGlobalOptions} = require('firebase-functions/v2');
+const admin = require('firebase-admin');
+
+// 初始化 Firebase Admin SDK
+admin.initializeApp();
+
+// 設定全域選項 - 使用亞洲東部區域（較接近台灣）
+setGlobalOptions({
+  region: 'asia-east1'
+});
+
+// 匯入服務模組
+const {callPerplexityAPI, callPerplexityAPIPro} = require('./src/perplexity-service');
+const {createUser, updateUserUsage, getUserInfo} = require('./src/user-service');
+
+/**
+ * === Perplexity AI API Functions ===
+ * 
+ * 提供 Sonar 和 Sonar Pro 模型的 AI 推理服務
+ * 用於生成 Lead Profile、Mail Angle 和 First Mail 內容
+ */
+
+/**
+ * 呼叫 Perplexity Sonar API
+ * @see ./src/perplexity-service.js#callPerplexityAPI
+ */
+exports.callPerplexityAPI = callPerplexityAPI;
+
+/**
+ * 呼叫 Perplexity Sonar Pro API  
+ * @see ./src/perplexity-service.js#callPerplexityAPIPro
+ */
+exports.callPerplexityAPIPro = callPerplexityAPIPro;
+
+/**
+ * === User Management Functions ===
+ * 
+ * 處理用戶註冊、認證、付費狀態和使用量統計
+ */
+
+/**
+ * 創建或更新用戶資料
+ * @see ./src/user-service.js#createUser
+ */
+exports.createUser = createUser;
+
+/**
+ * 更新用戶 Token 使用量
+ * @see ./src/user-service.js#updateUserUsage
+ */
+exports.updateUserUsage = updateUserUsage;
+
+/**
+ * 獲取用戶資訊和使用統計
+ * @see ./src/user-service.js#getUserInfo
+ */
+exports.getUserInfo = getUserInfo;
+
+/**
+ * === System Health Check Function ===
+ * 
+ * 系統健康狀態檢查端點，用於監控服務可用性
+ * 
+ * @function healthCheck
+ * @async
+ * @param {Object} req - Express 請求物件
+ * @param {Object} res - Express 回應物件
+ * 
+ * @returns {Object} 健康狀態資訊
+ * @returns {string} returns.status - 服務狀態 ('ok')
+ * @returns {string} returns.timestamp - 當前 ISO 時間戳
+ * @returns {string} returns.version - 服務版本號
+ * @returns {string} returns.project - Firebase 專案 ID
+ * @returns {string} returns.region - 部署區域
+ * 
+ * @example
+ * // HTTP GET 請求
+ * curl https://asia-east1-auto-lead-warmer-mvp.cloudfunctions.net/healthCheck
+ * 
+ * // 回應範例
+ * {
+ *   "status": "ok",
+ *   "timestamp": "2024-09-14T07:15:30.123Z",
+ *   "version": "1.0.0",
+ *   "project": "auto-lead-warmer-mvp",
+ *   "region": "asia-east1"
+ * }
+ */
+exports.healthCheck = onRequest(async (req, res) => {
+  try {
+    // 設定 CORS 標頭
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+    // 處理 preflight 請求
+    if (req.method === 'OPTIONS') {
+      res.status(204).send('');
+      return;
+    }
+
+    // 回傳健康狀態資訊
+    res.status(200).json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      version: '1.0.0',
+      project: 'auto-lead-warmer-mvp',
+      region: 'asia-east1',
+      services: {
+        perplexityAPI: 'active',
+        userManagement: 'active',
+        firestore: 'active'
+      }
+    });
+  } catch (error) {
+    console.error('Health check 錯誤:', error);
+    res.status(500).json({
+      status: 'error',
+      timestamp: new Date().toISOString(),
+      error: 'Health check failed'
+    });
+  }
+});

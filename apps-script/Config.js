@@ -2,9 +2,10 @@
  * 配置文件 - 存放所有配置项和常量
  */
 
-// Perplexity API 设定
-const PERPLEXITY_API_KEY = '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';
-const PERPLEXITY_API_URL = 'https://api.perplexity.ai/chat/completions';
+// Perplexity API 已遷移至 Firebase Cloud Functions
+// API Key 現在安全地存放在 Firebase Functions 環境變數中
+// const PERPLEXITY_API_KEY = 'MOVED_TO_FIREBASE_FUNCTIONS';
+// const PERPLEXITY_API_URL = 'https://api.perplexity.ai/chat/completions';
 
 // Sheet 栏位对应
 const COLUMNS = {

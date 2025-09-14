@@ -1,0 +1,10 @@
+{
+  "recursive": true,
+  "timeout": 5000,
+  "exit": true,
+  "reporter": "spec",
+  "spec": "test/simple.test.js",
+  "ui": "bdd",
+  "color": true,
+  "slow": 1000
+}

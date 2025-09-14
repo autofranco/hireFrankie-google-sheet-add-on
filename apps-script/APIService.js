@@ -1,6 +1,14 @@
 /**
  * API 服务 - 處理所有外部 API 调用
+ * 已遷移至 Firebase Cloud Functions 架構
  */
+
+// Firebase 配置
+const FIREBASE_CONFIG = {
+  projectId: 'auto-lead-warmer-mvp',
+  region: 'asia-east1',
+  functionsUrl: 'https://asia-east1-auto-lead-warmer-mvp.cloudfunctions.net'
+};
 
 // Token 使用量追蹤器
 const TokenTracker = {
@@ -301,189 +309,210 @@ const APIService = {
   },
 
   /**
-   * 呼叫 Perplexity API
+   * 呼叫 Perplexity API (透過 Firebase Cloud Functions)
+   * 
+   * @function callPerplexityAPI
+   * @param {string} prompt - API 請求的提示詞內容
+   * @param {number} [temperature=0.2] - AI 回應的創意程度
+   * @param {number} [maxTokens=1000] - 最大回應 Token 數量
+   * @returns {string} AI 生成的回應內容
    */
-  callPerplexityAPI(prompt) {
+  callPerplexityAPI(prompt, temperature = 0.2, maxTokens = 1000) {
     // 检查 prompt 是否为空或无效
     if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
       throw new Error('提示詞不能為空');
     }
-    
-    // 检查 API Key 是否设定
-    if (!PERPLEXITY_API_KEY) {
-      throw new Error('請先設定 Perplexity API Key');
-    }
-    
-    const payload = {
-      model: "sonar",
-      messages: [
-        {
-          role: "user",
-          content: prompt.trim()
-        }
-      ],
-      temperature: 0.2,
-      max_tokens: 1000
-    };
-    
-    const options = {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${PERPLEXITY_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      payload: JSON.stringify(payload),
-      muteHttpExceptions: true
-    };
-    
-    console.log('发送 API 请求:', JSON.stringify(payload, null, 2));
-    
-    const response = UrlFetchApp.fetch(PERPLEXITY_API_URL, options);
-    const responseCode = response.getResponseCode();
-    const responseText = response.getContentText();
-    
-    console.log('API 回应状态:', responseCode);
-    console.log('API 回应内容:', responseText);
-    
-    if (responseCode !== 200) {
-      let errorMessage = `HTTP ${responseCode}`;
-      try {
-        const errorData = JSON.parse(responseText);
-        errorMessage = errorData.error?.message || errorMessage;
-      } catch (e) {
-        errorMessage = responseText;
-      }
-      throw new Error(`Perplexity API 錯誤: ${errorMessage}`);
-    }
-    
-    let responseData;
+
     try {
-      responseData = JSON.parse(responseText);
-    } catch (e) {
-      throw new Error('API 回應格式錯誤: ' + responseText);
-    }
-    
-    if (!responseData.choices || !responseData.choices[0] || !responseData.choices[0].message) {
-      throw new Error('API 回應格式異常: ' + responseText);
-    }
-    
-    // 追蹤 token 使用量
-    if (responseData.usage) {
-      const inputTokens = responseData.usage.prompt_tokens || 0;
-      const outputTokens = responseData.usage.completion_tokens || 0;
-      TokenTracker.recordUsage('sonar', inputTokens, outputTokens);
+      console.log('呼叫 Firebase Cloud Function: callPerplexityAPI');
+      console.log('提示詞:', prompt.substring(0, 100) + '...');
       
-      // 檢查是否有進行中的 lead 步驟統計 (sonar 主要用於 mailAngle 和 firstMail)
-      for (const lead of TokenTracker.stepStats.leads) {
-        if (lead.mailAngle.startTime && !lead.mailAngle.time) {
-          TokenTracker.endStep(lead.index, 'mailAngle', inputTokens, outputTokens, 'sonar');
-          break;
-        } else if (lead.firstMail.startTime && !lead.firstMail.time) {
-          TokenTracker.endStep(lead.index, 'firstMail', inputTokens, outputTokens, 'sonar');
-          break;
+      // 獲取用戶的 Auth Token (需要用戶先登入)
+      const user = Session.getActiveUser();
+      if (!user.getEmail()) {
+        throw new Error('請先登入 Google 帳號才能使用 AI 服務');
+      }
+
+      // 調用 Firebase Cloud Function
+      const payload = {
+        prompt: prompt.trim(),
+        temperature: temperature,
+        maxTokens: maxTokens
+      };
+
+      const options = {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        payload: JSON.stringify({
+          data: payload
+        }),
+        muteHttpExceptions: true
+      };
+
+      const functionUrl = `${FIREBASE_CONFIG.functionsUrl}/callPerplexityAPI`;
+      const response = UrlFetchApp.fetch(functionUrl, options);
+      const responseCode = response.getResponseCode();
+      const responseText = response.getContentText();
+
+      console.log('Firebase Function 回應狀態:', responseCode);
+      console.log('Firebase Function 回應內容:', responseText.substring(0, 200) + '...');
+
+      if (responseCode !== 200) {
+        let errorMessage = `HTTP ${responseCode}`;
+        try {
+          const errorData = JSON.parse(responseText);
+          errorMessage = errorData.error?.message || errorMessage;
+        } catch (e) {
+          errorMessage = responseText;
+        }
+        throw new Error(`Firebase Function 錯誤: ${errorMessage}`);
+      }
+
+      let responseData;
+      try {
+        responseData = JSON.parse(responseText);
+      } catch (e) {
+        throw new Error('Firebase Function 回應格式錯誤: ' + responseText);
+      }
+
+      if (!responseData.result || !responseData.result.content) {
+        throw new Error('Firebase Function 回應格式異常: ' + responseText);
+      }
+
+      // 追蹤 token 使用量
+      if (responseData.result.usage) {
+        const inputTokens = responseData.result.usage.prompt_tokens || 0;
+        const outputTokens = responseData.result.usage.completion_tokens || 0;
+        TokenTracker.recordUsage('sonar', inputTokens, outputTokens);
+        
+        // 檢查是否有進行中的 lead 步驟統計 (sonar 主要用於 mailAngle 和 firstMail)
+        for (const lead of TokenTracker.stepStats.leads) {
+          if (lead.mailAngle.startTime && !lead.mailAngle.time) {
+            TokenTracker.endStep(lead.index, 'mailAngle', inputTokens, outputTokens, 'sonar');
+            break;
+          } else if (lead.firstMail.startTime && !lead.firstMail.time) {
+            TokenTracker.endStep(lead.index, 'firstMail', inputTokens, outputTokens, 'sonar');
+            break;
+          }
         }
       }
+
+      return responseData.result.content;
+
+    } catch (error) {
+      console.error('callPerplexityAPI 錯誤:', error);
+      throw new Error(`AI 服務調用失敗: ${error.message}`);
     }
-    
-    return responseData.choices[0].message.content;
   },
 
   /**
-   * 呼叫 Perplexity API (Sonar Pro 模型，用於 Lead Profile)
-   * 使用最佳設定避免幻覺並控制成本
+   * 呼叫 Perplexity API (Sonar Pro 模型，透過 Firebase Cloud Functions)
+   * 使用最佳設定避免幻覺並控制成本，主要用於 Lead Profile 生成
+   * 
+   * @function callPerplexityAPIWithSonarPro
+   * @param {string} prompt - API 請求的提示詞內容
+   * @param {number} [temperature=0.0] - AI 回應的創意程度 (Pro 模型建議使用較低值)
+   * @param {number} [maxTokens=500] - 最大回應 Token 數量
+   * @returns {string} AI 生成的回應內容
    */
-  callPerplexityAPIWithSonarPro(prompt) {
+  callPerplexityAPIWithSonarPro(prompt, temperature = 0.0, maxTokens = 500) {
     // 检查 prompt 是否为空或无效
     if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
       throw new Error('提示詞不能為空');
     }
-    
-    // 检查 API Key 是否设定
-    if (!PERPLEXITY_API_KEY) {
-      throw new Error('請先設定 Perplexity API Key');
-    }
-    
-    const payload = {
-      model: "sonar-pro",
-      messages: [
-        {
-          role: "user",
-          content: prompt.trim()
-        }
-      ],
-      temperature: 0.0,
-      max_tokens: 500,
-      search_context_size: "high"
-    };
-    
-    const options = {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${PERPLEXITY_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      payload: JSON.stringify(payload),
-      muteHttpExceptions: true
-    };
-    
-    console.log('发送 Sonar Pro API 请求:', JSON.stringify(payload, null, 2));
-    
-    const response = UrlFetchApp.fetch(PERPLEXITY_API_URL, options);
-    const responseCode = response.getResponseCode();
-    const responseText = response.getContentText();
-    
-    console.log('Sonar Pro API 回应状态:', responseCode);
-    console.log('Sonar Pro API 回应内容:', responseText);
-    
-    if (responseCode !== 200) {
-      let errorMessage = `HTTP ${responseCode}`;
-      try {
-        const errorData = JSON.parse(responseText);
-        errorMessage = errorData.error?.message || errorMessage;
-      } catch (e) {
-        errorMessage = responseText;
-      }
-      throw new Error(`Perplexity API (Sonar Pro) 錯誤: ${errorMessage}`);
-    }
-    
-    let responseData;
+
     try {
-      responseData = JSON.parse(responseText);
-    } catch (e) {
-      throw new Error('API 回應格式錯誤: ' + responseText);
-    }
-    
-    if (!responseData.choices || !responseData.choices[0] || !responseData.choices[0].message) {
-      throw new Error('API 回應格式異常: ' + responseText);
-    }
-    
-    // 追蹤 token 使用量
-    if (responseData.usage) {
-      const inputTokens = responseData.usage.prompt_tokens || 0;
-      const outputTokens = responseData.usage.completion_tokens || 0;
-      TokenTracker.recordUsage('sonar-pro', inputTokens, outputTokens);
+      console.log('呼叫 Firebase Cloud Function: callPerplexityAPIPro');
+      console.log('提示詞:', prompt.substring(0, 100) + '...');
       
-      // 檢查是否有進行中的 seminar brief 統計
-      if (TokenTracker.stepStats.seminarBrief.startTime) {
-        TokenTracker.endSeminarBrief(inputTokens, outputTokens, 'sonar-pro');
+      // 獲取用戶的 Auth Token (需要用戶先登入)
+      const user = Session.getActiveUser();
+      if (!user.getEmail()) {
+        throw new Error('請先登入 Google 帳號才能使用 AI Pro 服務');
       }
-      
-      // 檢查是否有進行中的 lead 步驟統計
-      for (const lead of TokenTracker.stepStats.leads) {
-        if (lead.leadProfile.startTime && !lead.leadProfile.time) {
-          TokenTracker.endStep(lead.index, 'leadProfile', inputTokens, outputTokens, 'sonar-pro');
-          break;
-        } else if (lead.mailAngle.startTime && !lead.mailAngle.time) {
-          TokenTracker.endStep(lead.index, 'mailAngle', inputTokens, outputTokens, 'sonar-pro');
-          break;
-        } else if (lead.firstMail.startTime && !lead.firstMail.time) {
-          TokenTracker.endStep(lead.index, 'firstMail', inputTokens, outputTokens, 'sonar-pro');
-          break;
+
+      // 調用 Firebase Cloud Function
+      const payload = {
+        prompt: prompt.trim(),
+        temperature: temperature,
+        maxTokens: maxTokens
+      };
+
+      const options = {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        payload: JSON.stringify({
+          data: payload
+        }),
+        muteHttpExceptions: true
+      };
+
+      const functionUrl = `${FIREBASE_CONFIG.functionsUrl}/callPerplexityAPIPro`;
+      const response = UrlFetchApp.fetch(functionUrl, options);
+      const responseCode = response.getResponseCode();
+      const responseText = response.getContentText();
+
+      console.log('Firebase Function Pro 回應狀態:', responseCode);
+      console.log('Firebase Function Pro 回應內容:', responseText.substring(0, 200) + '...');
+
+      if (responseCode !== 200) {
+        let errorMessage = `HTTP ${responseCode}`;
+        try {
+          const errorData = JSON.parse(responseText);
+          errorMessage = errorData.error?.message || errorMessage;
+        } catch (e) {
+          errorMessage = responseText;
+        }
+        throw new Error(`Firebase Function Pro 錯誤: ${errorMessage}`);
+      }
+
+      let responseData;
+      try {
+        responseData = JSON.parse(responseText);
+      } catch (e) {
+        throw new Error('Firebase Function Pro 回應格式錯誤: ' + responseText);
+      }
+
+      if (!responseData.result || !responseData.result.content) {
+        throw new Error('Firebase Function Pro 回應格式異常: ' + responseText);
+      }
+
+      // 追蹤 token 使用量
+      if (responseData.result.usage) {
+        const inputTokens = responseData.result.usage.prompt_tokens || 0;
+        const outputTokens = responseData.result.usage.completion_tokens || 0;
+        TokenTracker.recordUsage('sonar-pro', inputTokens, outputTokens);
+        
+        // 檢查是否有進行中的 seminar brief 統計
+        if (TokenTracker.stepStats.seminarBrief.startTime) {
+          TokenTracker.endSeminarBrief(inputTokens, outputTokens, 'sonar-pro');
+        }
+        
+        // 檢查是否有進行中的 lead 步驟統計
+        for (const lead of TokenTracker.stepStats.leads) {
+          if (lead.leadProfile.startTime && !lead.leadProfile.time) {
+            TokenTracker.endStep(lead.index, 'leadProfile', inputTokens, outputTokens, 'sonar-pro');
+            break;
+          } else if (lead.mailAngle.startTime && !lead.mailAngle.time) {
+            TokenTracker.endStep(lead.index, 'mailAngle', inputTokens, outputTokens, 'sonar-pro');
+            break;
+          } else if (lead.firstMail.startTime && !lead.firstMail.time) {
+            TokenTracker.endStep(lead.index, 'firstMail', inputTokens, outputTokens, 'sonar-pro');
+            break;
+          }
         }
       }
+
+      return responseData.result.content;
+
+    } catch (error) {
+      console.error('callPerplexityAPIWithSonarPro 錯誤:', error);
+      throw new Error(`AI Pro 服務調用失敗: ${error.message}`);
     }
-    
-    return responseData.choices[0].message.content;
   }
 };
 
