@@ -22,12 +22,12 @@ const SheetService = {
 
   /**
    * 設定表頭
-   * 初始化工作表的標題行、格式和欄寶
+   * 初始化工作表的標題行、格式和欄寶，並自動創建 Firebase 用戶
    * 
    * @function setupHeaders
-   * @returns {void}
+   * @returns {Promise<void>}
    */
-  setupHeaders() {
+  async setupHeaders() {
     const sheet = this.getMainSheet();
     
     // 在現有名稱後面加上 Auto Lead Warmer 標識和時間戳（避免覆蓋原名稱）
@@ -103,7 +103,24 @@ const SheetService = {
     // 同時設置用戶資訊工作表
     UserInfoService.getUserInfoSheet();
     
-    SpreadsheetApp.getUi().alert(`設定完成！\n\n✅ 工作表已重新命名為: ${finalTitle}\n✅ User Info 工作表已創建\n✅ 列寬已設定\n\n💡 重要提醒：\n• 請到 "User Info" 工作表填入您的個人資訊\n• 請在 "Seminar Info" 欄位填寫研習活動資訊\n• 系統會自動生成 "Seminar Brief" 供所有潛客分析使用\n• 個人資訊會自動添加到所有郵件簽名中`);
+    // 初始化用戶到 Firebase
+    try {
+      console.log('🔄 正在初始化 Firebase 用戶...');
+      const userResult = await APIService.createUser({
+        displayName: Session.getActiveUser().getEmail().split('@')[0]
+      });
+      
+      if (userResult && userResult.email) {
+        const statusText = userResult.paymentStatus === 'paid' ? '✅ 已付費' : '⚠️ 未付費';
+        console.log(`✅ Firebase 用戶初始化成功! 狀態: ${statusText}`);
+      }
+      
+    } catch (error) {
+      console.error('❌ Firebase 用戶初始化失敗:', error);
+      // 不中斷設定流程，只記錄錯誤
+    }
+    
+    SpreadsheetApp.getUi().alert(`設定完成！\n\n✅ 工作表已重新命名為: ${finalTitle}\n✅ User Info 工作表已創建\n✅ Firebase 用戶已初始化\n✅ 列寬已設定\n\n💡 重要提醒：\n• 請到 "User Info" 工作表填入您的個人資訊\n• 請在 "Seminar Info" 欄位填寫研習活動資訊\n• 系統會自動生成 "Seminar Brief" 供所有潛客分析使用\n• 個人資訊會自動添加到所有郵件簽名中`);
   },
 
   /**
@@ -441,8 +458,8 @@ const SheetService = {
 };
 
 // 全局函数包装器
-function setupHeaders() {
-  return SheetService.setupHeaders();
+async function setupHeaders() {
+  return await SheetService.setupHeaders();
 }
 
 /**

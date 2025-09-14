@@ -69,6 +69,14 @@ exports.updateUserUsage = updateUserUsage;
 exports.getUserInfo = getUserInfo;
 
 /**
+ * === User Management via Google Sheets ===
+ * 
+ * 用戶管理現在透過開發方的 Google Sheets 直接管理
+ * 管理員可以直接在 Google Sheets 中編輯用戶的付費狀態
+ * 格式：Email | Payment Status | Added Date | Updated By
+ */
+
+/**
  * === System Health Check Function ===
  * 
  * 系統健康狀態檢查端點，用於監控服務可用性

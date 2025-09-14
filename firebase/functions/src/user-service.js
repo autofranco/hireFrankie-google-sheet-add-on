@@ -1,5 +1,7 @@
 const {onCall, HttpsError} = require('firebase-functions/v2/https');
 const admin = require('firebase-admin');
+const {GoogleSpreadsheet} = require('google-spreadsheet');
+const {JWT} = require('google-auth-library');
 
 /**
  * 創建或更新用戶資料
@@ -36,17 +38,17 @@ const admin = require('firebase-admin');
  */
 exports.createUser = onCall(async (request) => {
   try {
-    // 1. 驗證用戶認證
-    if (!request.auth) {
-      throw new HttpsError('unauthenticated', '需要登入才能創建用戶資料');
-    }
-
-    const uid = request.auth.uid;
-    const email = request.auth.token.email;
-
+    // 1. 從 Apps Script 獲取用戶 email（不需要 Firebase Auth）
+    const email = request.data.email;
+    
     if (!email) {
-      throw new HttpsError('invalid-argument', '無法獲取用戶 email 地址');
+      throw new HttpsError('invalid-argument', '請提供用戶 email 地址');
     }
+
+    // 使用 email 創建唯一的用戶 ID（用於 Firestore）
+    const uid = Buffer.from(email.toLowerCase()).toString('base64').replace(/[^a-zA-Z0-9]/g, '');
+    
+    console.log(`Apps Script 用戶: ${email}, 生成 UID: ${uid}`);
 
     // 2. 檢查用戶是否已存在
     const userRef = admin.firestore().collection('users').doc(uid);
@@ -69,10 +71,31 @@ exports.createUser = onCall(async (request) => {
         usage: userData.usage
       };
     } else {
+      // 檢查是否為付費用戶並自動添加到 Google Sheets
+      const isPaidUser = await checkPaidUser(email);
+      
+      // 如果用戶不在 Google Sheets 中，自動添加為 unpaid 狀態
+      try {
+        const users = await readUsersFromSheet();
+        const existingUser = users.find(u => u.email === email.toLowerCase());
+        
+        if (!existingUser) {
+          await updateUserPaymentStatusInSheet(
+            email.toLowerCase(),
+            isPaidUser ? 'paid' : 'unpaid',
+            'Auto-Create'
+          );
+          console.log(`用戶 ${email} 已自動添加到 Google Sheets (${isPaidUser ? 'paid' : 'unpaid'})`);
+        }
+      } catch (sheetError) {
+        console.error('添加用戶到 Google Sheets 失敗:', sheetError);
+        // 不影響用戶創建流程
+      }
+      
       // 創建新用戶資料
       const userData = {
         email: email,
-        paymentStatus: 'unpaid',
+        paymentStatus: isPaidUser ? 'paid' : 'unpaid',
         createdAt: now,
         lastLoginAt: now,
         usage: {
@@ -146,15 +169,20 @@ exports.createUser = onCall(async (request) => {
  */
 exports.getUserInfo = onCall(async (request) => {
   try {
-    // 1. 驗證用戶認證
-    if (!request.auth) {
-      throw new HttpsError('unauthenticated', '需要登入才能查詢用戶資訊');
+    // 1. 從 Apps Script 獲取用戶 email
+    const email = request.data.email;
+    
+    if (!email) {
+      throw new HttpsError('invalid-argument', '請提供用戶 email 地址');
     }
+
+    // 生成對應的 UID
+    const uid = Buffer.from(email.toLowerCase()).toString('base64').replace(/[^a-zA-Z0-9]/g, '');
 
     // 2. 查詢用戶資料
     const userDoc = await admin.firestore()
       .collection('users')
-      .doc(request.auth.uid)
+      .doc(uid)
       .get();
 
     if (!userDoc.exists) {
@@ -218,10 +246,15 @@ exports.getUserInfo = onCall(async (request) => {
  */
 exports.updateUserUsage = onCall(async (request) => {
   try {
-    // 1. 驗證用戶認證
-    if (!request.auth) {
-      throw new HttpsError('unauthenticated', '需要登入才能更新使用量');
+    // 1. 從 Apps Script 獲取用戶 email
+    const email = request.data.email;
+    
+    if (!email) {
+      throw new HttpsError('invalid-argument', '請提供用戶 email 地址');
     }
+
+    // 生成對應的 UID
+    const uid = Buffer.from(email.toLowerCase()).toString('base64').replace(/[^a-zA-Z0-9]/g, '');
 
     // 2. 驗證請求數據
     const { model, inputTokens, outputTokens } = request.data;
@@ -239,7 +272,7 @@ exports.updateUserUsage = onCall(async (request) => {
     }
 
     // 3. 更新用戶使用量
-    const userRef = admin.firestore().collection('users').doc(request.auth.uid);
+    const userRef = admin.firestore().collection('users').doc(uid);
     const modelKey = model === 'sonar-pro' ? 'sonarPro' : 'sonar';
 
     await userRef.update({
@@ -267,3 +300,202 @@ exports.updateUserUsage = onCall(async (request) => {
     throw new HttpsError('internal', '更新使用量時發生錯誤，請稍後重試');
   }
 });
+
+/**
+ * 檢查是否為預設付費用戶
+ * 
+ * 檢查指定的 Email 是否在預設付費用戶清單中。
+ * 這允許管理員預先設定某些用戶為付費狀態。
+ * 
+ * @function checkPrePaidUser
+ * @async
+ * @private
+ * @param {string} email - 用戶 Email 地址
+ * 
+ * @returns {Promise<boolean>} 是否為預設付費用戶
+ * 
+ * @example
+ * // 檢查用戶是否為預設付費用戶
+ * const isPaid = await checkPrePaidUser('user@example.com');
+ * console.log('是否為預設付費用戶:', isPaid);
+ */
+/**
+ * === 用戶管理已簡化 ===
+ * 
+ * 管理員現在可以直接在 Google Sheets 中管理所有用戶的付費狀態
+ * Google Sheets 格式：
+ * - 欄位 A：Email
+ * - 欄位 B：Payment Status (paid/unpaid)
+ * - 欄位 C：Added Date
+ * - 欄位 D：Updated By
+ * 
+ * 系統會自動從 Google Sheets 讀取用戶付費狀態
+ */
+
+/**
+ * 檢查是否為付費用戶（內部函數）
+ * 從開發方的 Google Sheets 中讀取付費用戶清單
+ * 
+ * @function checkPaidUser
+ * @async
+ * @private
+ * @param {string} email - 用戶 Email
+ * @returns {Promise<boolean>} 是否為付費用戶
+ */
+/**
+ * 取得 Google Sheets 用戶管理實例
+ * 
+ * @function getUserManagementSheet
+ * @async
+ * @private
+ * @returns {Promise<Object>} Google Sheets 物件和工作表
+ */
+async function getUserManagementSheet() {
+  const sheetsConfig = process.env.PAID_USERS_SHEET_CONFIG;
+  if (!sheetsConfig) {
+    throw new Error('未設定 PAID_USERS_SHEET_CONFIG 環境變數');
+  }
+
+  const config = JSON.parse(sheetsConfig);
+  const serviceAccountAuth = new JWT({
+    email: config.client_email,
+    key: config.private_key,
+    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+  });
+
+  const doc = new GoogleSpreadsheet(config.sheet_id, serviceAccountAuth);
+  await doc.loadInfo();
+  
+  const sheet = doc.sheetsByIndex[0];
+  return { doc, sheet };
+}
+
+/**
+ * 從 Google Sheets 讀取所有用戶資料
+ * 
+ * @function readUsersFromSheet
+ * @async
+ * @private
+ * @returns {Promise<Array<{email: string, paymentStatus: string, addedDate: string, updatedBy: string}>>} 所有用戶資料
+ */
+async function readUsersFromSheet() {
+  try {
+    const { sheet } = await getUserManagementSheet();
+    const rows = await sheet.getRows();
+    
+    return rows.map(row => ({
+      email: row._rawData[0]?.toLowerCase() || '',
+      paymentStatus: row._rawData[1]?.toLowerCase() || 'unpaid',
+      addedDate: row._rawData[2] || '',
+      updatedBy: row._rawData[3] || ''
+    })).filter(user => user.email);
+    
+  } catch (error) {
+    console.error('讀取 Google Sheets 用戶資料錯誤:', error);
+    return [];
+  }
+}
+
+/**
+ * 向 Google Sheets 寫入所有用戶資料
+ * 
+ * @function writeUsersToSheet
+ * @async
+ * @private
+ * @param {Array<{email: string, paymentStatus: string, updatedBy: string}>} users - 用戶資料陣列
+ */
+async function writeUsersToSheet(users) {
+  const { sheet } = await getUserManagementSheet();
+  
+  // 清空現有資料
+  await sheet.clear();
+  
+  // 設定標題行
+  await sheet.setHeaderRow(['Email', 'Payment Status', 'Added Date', 'Updated By']);
+  
+  // 添加用戶資料
+  const rows = users.map(user => ({
+    Email: user.email,
+    'Payment Status': user.paymentStatus,
+    'Added Date': user.addedDate || new Date().toISOString(),
+    'Updated By': user.updatedBy || 'Firebase Functions'
+  }));
+  
+  if (rows.length > 0) {
+    await sheet.addRows(rows);
+  }
+}
+
+/**
+ * 在 Google Sheets 中更新用戶的付費狀態
+ * 
+ * @function updateUserPaymentStatusInSheet
+ * @async
+ * @private
+ * @param {string} email - 用戶 Email
+ * @param {string} paymentStatus - 付費狀態 ('paid' | 'unpaid')
+ * @param {string} updatedBy - 更新者
+ */
+async function updateUserPaymentStatusInSheet(email, paymentStatus, updatedBy) {
+  const users = await readUsersFromSheet();
+  const lowerEmail = email.toLowerCase();
+  
+  // 尋找現有用戶
+  const existingUserIndex = users.findIndex(user => user.email === lowerEmail);
+  
+  if (existingUserIndex >= 0) {
+    // 更新現有用戶
+    users[existingUserIndex].paymentStatus = paymentStatus;
+    users[existingUserIndex].updatedBy = updatedBy;
+  } else {
+    // 添加新用戶
+    users.push({
+      email: lowerEmail,
+      paymentStatus: paymentStatus,
+      addedDate: new Date().toISOString(),
+      updatedBy: updatedBy
+    });
+  }
+  
+  // 寫回 Google Sheets
+  await writeUsersToSheet(users);
+  return users;
+}
+
+async function checkPaidUser(email) {
+  try {
+    // 從 Google Sheets 讀取所有用戶資料
+    const users = await readUsersFromSheet();
+    const lowerEmail = email.toLowerCase();
+    
+    // 尋找用戶並檢查付費狀態
+    const user = users.find(u => u.email === lowerEmail);
+    
+    if (user) {
+      return user.paymentStatus === 'paid';
+    }
+    
+    // 如果用戶不存在於 Google Sheets 中，預設為未付費
+    return false;
+    
+  } catch (error) {
+    console.error('從 Google Sheets 檢查付費用戶錯誤:', error);
+    // 如果 Google Sheets 讀取失敗，回退到 Firestore
+    try {
+      const paidUsersDoc = await admin.firestore()
+        .collection('settings')
+        .doc('paidUsers')
+        .get();
+      
+      if (paidUsersDoc.exists) {
+        const paidData = paidUsersDoc.data();
+        const paidEmails = paidData.emails || [];
+        return paidEmails.includes(email.toLowerCase());
+      }
+    } catch (firestoreError) {
+      console.error('Firestore 回退檢查也失敗:', firestoreError);
+    }
+    
+    return false;
+  }
+}

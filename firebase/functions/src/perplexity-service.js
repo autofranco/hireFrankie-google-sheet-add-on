@@ -47,30 +47,53 @@ exports.callPerplexityAPI = onCall({
   memory: '256MiB'
 }, async (request) => {
   try {
-    // 1. 驗證用戶認證
-    if (!request.auth) {
-      throw new HttpsError('unauthenticated', '需要登入才能使用 AI 服務');
+    // 1. 從 Apps Script 獲取用戶資訊
+    const {email, prompt, temperature = 0.2, maxTokens = 1000} = request.data;
+    
+    if (!email) {
+      throw new HttpsError('invalid-argument', '請提供用戶 email 地址');
     }
 
     // 2. 驗證請求數據
-    const {prompt, temperature = 0.2, maxTokens = 1000} = request.data;
     if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
       throw new HttpsError('invalid-argument', '提示詞不能為空');
     }
 
-    // 3. 檢查用戶付款狀態
-    const userDoc = await admin.firestore()
-      .collection('users')
-      .doc(request.auth.uid)
-      .get();
+    // 3. 檢查用戶付款狀態（透過 Google Sheets）
+    // 直接使用 Google Sheets 檢查付費狀態
+    const {GoogleSpreadsheet} = require('google-spreadsheet');
+    const {JWT} = require('google-auth-library');
     
-    if (!userDoc.exists) {
-      throw new HttpsError('not-found', '用戶資料不存在，請先完成註冊');
-    }
+    try {
+      const sheetsConfig = process.env.PAID_USERS_SHEET_CONFIG;
+      const config = JSON.parse(sheetsConfig);
+      const serviceAccountAuth = new JWT({
+        email: config.client_email,
+        key: config.private_key,
+        scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
+      });
 
-    const userData = userDoc.data();
-    if (userData.paymentStatus !== 'paid') {
-      throw new HttpsError('permission-denied', '請先完成付款才能使用 AI 服務');
+      const doc = new GoogleSpreadsheet(config.sheet_id, serviceAccountAuth);
+      await doc.loadInfo();
+      const sheet = doc.sheetsByIndex[0];
+      const rows = await sheet.getRows();
+      
+      const users = rows.map(row => ({
+        email: row._rawData[0]?.toLowerCase() || '',
+        paymentStatus: row._rawData[1]?.toLowerCase() || 'unpaid'
+      }));
+      
+      const user = users.find(u => u.email === email.toLowerCase());
+      const isPaidUser = user ? user.paymentStatus === 'paid' : false;
+      
+      if (!isPaidUser) {
+        throw new HttpsError('permission-denied', `用戶 ${email} 尚未付費，無法使用 AI 服務`);
+      }
+
+      console.log(`Sonar API 調用 - 用戶: ${email} (已付費)`);
+    } catch (sheetsError) {
+      console.error('Google Sheets 付費狀態檢查失敗:', sheetsError);
+      throw new HttpsError('internal', '無法驗證付費狀態，請稍後重試');
     }
 
     // 4. 呼叫 Perplexity API
@@ -177,30 +200,52 @@ exports.callPerplexityAPIPro = onCall({
   memory: '512MiB'
 }, async (request) => {
   try {
-    // 1. 驗證用戶認證
-    if (!request.auth) {
-      throw new HttpsError('unauthenticated', '需要登入才能使用 AI Pro 服務');
+    // 1. 從 Apps Script 獲取用戶資訊
+    const {email, prompt, temperature = 0.0, maxTokens = 500} = request.data;
+    
+    if (!email) {
+      throw new HttpsError('invalid-argument', '請提供用戶 email 地址');
     }
 
     // 2. 驗證請求數據
-    const {prompt, temperature = 0.0, maxTokens = 500} = request.data;
     if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
       throw new HttpsError('invalid-argument', '提示詞不能為空');
     }
 
-    // 3. 檢查用戶付款狀態
-    const userDoc = await admin.firestore()
-      .collection('users')
-      .doc(request.auth.uid)
-      .get();
+    // 3. 檢查用戶付款狀態（透過 Google Sheets）
+    const {GoogleSpreadsheet} = require('google-spreadsheet');
+    const {JWT} = require('google-auth-library');
     
-    if (!userDoc.exists) {
-      throw new HttpsError('not-found', '用戶資料不存在，請先完成註冊');
-    }
+    try {
+      const sheetsConfig = process.env.PAID_USERS_SHEET_CONFIG;
+      const config = JSON.parse(sheetsConfig);
+      const serviceAccountAuth = new JWT({
+        email: config.client_email,
+        key: config.private_key,
+        scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
+      });
 
-    const userData = userDoc.data();
-    if (userData.paymentStatus !== 'paid') {
-      throw new HttpsError('permission-denied', '請先完成付款才能使用 AI Pro 服務');
+      const doc = new GoogleSpreadsheet(config.sheet_id, serviceAccountAuth);
+      await doc.loadInfo();
+      const sheet = doc.sheetsByIndex[0];
+      const rows = await sheet.getRows();
+      
+      const users = rows.map(row => ({
+        email: row._rawData[0]?.toLowerCase() || '',
+        paymentStatus: row._rawData[1]?.toLowerCase() || 'unpaid'
+      }));
+      
+      const user = users.find(u => u.email === email.toLowerCase());
+      const isPaidUser = user ? user.paymentStatus === 'paid' : false;
+      
+      if (!isPaidUser) {
+        throw new HttpsError('permission-denied', `用戶 ${email} 尚未付費，無法使用 AI Pro 服務`);
+      }
+
+      console.log(`Sonar Pro API 調用 - 用戶: ${email} (已付費)`);
+    } catch (sheetsError) {
+      console.error('Google Sheets 付費狀態檢查失敗:', sheetsError);
+      throw new HttpsError('internal', '無法驗證付費狀態，請稍後重試');
     }
 
     // 4. 呼叫 Perplexity API Pro

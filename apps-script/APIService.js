@@ -335,6 +335,7 @@ const APIService = {
 
       // 調用 Firebase Cloud Function
       const payload = {
+        email: user.getEmail(),
         prompt: prompt.trim(),
         temperature: temperature,
         maxTokens: maxTokens
@@ -435,6 +436,7 @@ const APIService = {
 
       // 調用 Firebase Cloud Function
       const payload = {
+        email: user.getEmail(),
         prompt: prompt.trim(),
         temperature: temperature,
         maxTokens: maxTokens
@@ -513,6 +515,82 @@ const APIService = {
       console.error('callPerplexityAPIWithSonarPro 錯誤:', error);
       throw new Error(`AI Pro 服務調用失敗: ${error.message}`);
     }
+  },
+
+  /**
+   * 創建或初始化用戶（透過 Firebase Cloud Functions）
+   * 
+   * @function createUser
+   * @param {Object} userData - 用戶數據
+   * @param {string} [userData.displayName] - 用戶顯示名稱
+   * @returns {Object} 用戶創建結果
+   */
+  createUser(userData = {}) {
+    try {
+      console.log('呼叫 Firebase Cloud Function: createUser');
+      
+      // 獲取當前用戶
+      const user = Session.getActiveUser();
+      if (!user.getEmail()) {
+        throw new Error('請先登入 Google 帳號才能初始化用戶資料');
+      }
+
+      console.log('當前用戶:', user.getEmail());
+
+      // 調用 Firebase Cloud Function
+      const payload = {
+        email: user.getEmail(),
+        ...userData
+      };
+
+      const options = {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        payload: JSON.stringify({
+          data: payload
+        }),
+        muteHttpExceptions: true
+      };
+
+      const functionUrl = `${FIREBASE_CONFIG.functionsUrl}/createUser`;
+      const response = UrlFetchApp.fetch(functionUrl, options);
+      const responseCode = response.getResponseCode();
+      const responseText = response.getContentText();
+
+      console.log('Firebase Function 回應狀態:', responseCode);
+      console.log('Firebase Function 回應內容:', responseText);
+
+      if (responseCode !== 200) {
+        let errorMessage = `HTTP ${responseCode}`;
+        try {
+          const errorData = JSON.parse(responseText);
+          errorMessage = errorData.error?.message || errorMessage;
+        } catch (e) {
+          errorMessage = responseText;
+        }
+        throw new Error(`Firebase Function 錯誤: ${errorMessage}`);
+      }
+
+      let responseData;
+      try {
+        responseData = JSON.parse(responseText);
+      } catch (e) {
+        throw new Error('Firebase Function 回應格式錯誤: ' + responseText);
+      }
+
+      if (!responseData.result) {
+        throw new Error('Firebase Function 回應格式異常: ' + responseText);
+      }
+
+      console.log('用戶創建成功:', responseData.result);
+      return responseData.result;
+
+    } catch (error) {
+      console.error('createUser 錯誤:', error);
+      throw new Error(`用戶初始化失敗: ${error.message}`);
+    }
   }
 };
 
@@ -578,4 +656,15 @@ function resetTokenStats() {
  */
 function showTokenSummary() {
   return TokenTracker.showSummary();
+}
+
+/**
+ * 創建用戶 - 全域函數包裝器
+ * 
+ * @function createUser
+ * @param {Object} userData - 用戶數據
+ * @returns {Object} 用戶創建結果
+ */
+function createUser(userData) {
+  return APIService.createUser(userData);
 }
