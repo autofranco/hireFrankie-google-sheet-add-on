@@ -45,7 +45,6 @@ const TokenTracker = {
     this.stepStats.seminarBrief = { cost: 0, time: 0, startTime: null };
     this.stepStats.leads = [];
     this.totalStartTime = Date.now();
-    console.log('=== Token 使用量統計已重置 ===');
   },
 
   /**
@@ -262,51 +261,6 @@ const TokenTracker = {
 
 const APIService = {
   
-  /**
-   * 测试基本网络连接
-   */
-  testNetworkConnection() {
-    try {
-      console.log('测试基本网络连接...');
-      
-      const response = UrlFetchApp.fetch('https://www.google.com', {
-        method: 'GET',
-        muteHttpExceptions: true
-      });
-      
-      console.log('Google 连接测试 - 状态码:', response.getResponseCode());
-      
-      if (response.getResponseCode() === 200) {
-        SpreadsheetApp.getUi().alert('✅ 網路連接正常！\n可以存取外部網站。');
-      } else {
-        SpreadsheetApp.getUi().alert('❌ 網路連接異常\n狀態碼: ' + response.getResponseCode());
-      }
-      
-    } catch (error) {
-      console.error('网络连接测试失败:', error);
-      SpreadsheetApp.getUi().alert('❌ 網路連接測試失敗：\n' + error.message);
-    }
-  },
-
-  /**
-   * 测试 API 连接
-   */
-  testAPIConnection() {
-    try {
-      const testPrompt = "请用繁体中文回答：什么是人工智慧？请简短回答。";
-      console.log('测试提示词:', testPrompt);
-      
-      const result = this.callPerplexityAPI(testPrompt);
-      console.log('API 测试成功:', result);
-      
-      SpreadsheetApp.getUi().alert('API 連接測試成功！\n\n回應內容：\n' + 
-        result.substring(0, 200) + (result.length > 200 ? '...' : ''));
-      
-    } catch (error) {
-      console.error('API 测试失败:', error);
-      SpreadsheetApp.getUi().alert('API 連接測試失敗：\n' + error.message);
-    }
-  },
 
   /**
    * 呼叫 Perplexity API (透過 Firebase Cloud Functions)
@@ -601,25 +555,6 @@ const APIService = {
 };
 
 // 全局函数包装器（为了向后兼容）
-/**
- * 測試網路連線 - 全域函數包裝器
- * 
- * @function testNetworkConnection
- * @returns {void}
- */
-function testNetworkConnection() {
-  return APIService.testNetworkConnection();
-}
-
-/**
- * 測試 API 連線 - 全域函數包裝器
- * 
- * @function testAPIConnection
- * @returns {void}
- */
-function testAPIConnection() {
-  return APIService.testAPIConnection();
-}
 
 /**
  * 呼叫 Perplexity API (Sonar 模型) - 全域函數包裝器

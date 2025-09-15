@@ -20,25 +20,42 @@ function onOpen() {
   const ui = SpreadsheetApp.getUi();
   
   ui.createMenu('Auto Lead Warmer')
-    .addItem('⚙️ Initial Setup', 'setupHeaders')
+    .addItem('⚙️ Initial Setup & Format', 'setupHeadersAndFormat')
     .addItem('🚀 Run', 'runAutoLeadWarmer')
     .addItem('📧 Send Now', 'sendNowFromMenu')
     .addItem('⏸️ Stop New Processing', 'stopNewProcessing')
-    .addItem('🎨 Format All Rows', 'formatAllLeadRows')
-    .addSeparator()
-    .addSubMenu(ui.createMenu('🔧 Debug Tools')
-      .addItem('🔗 Test API Connection', 'testAPIConnection')
-      .addItem('🌐 Test Network', 'testNetworkConnection')
-      .addSeparator()
-      .addItem('📧 Test Global Email Check', 'testGlobalEmailCheckManually')
-      .addItem('📬 Test Reply Detection', 'testReplyDetectionManually')
-      .addItem('Show Trigger Stats', 'showTriggerStats')
-      .addItem('🗑️ Delete All Triggers', 'deleteAllTriggersMenu'))
     .addToUi();
 }
 
 // 全局函數已拆分到各個專門的服務文件中
 // 這裡只保留必要的全局函數包裝器，以維持向後兼容性
+
+/**
+ * 初始設置和格式化 - 組合函數
+ * 執行表頭設置並格式化所有行
+ *
+ * @function setupHeadersAndFormat
+ * @description 結合初始設置和格式化功能，簡化用戶操作
+ * @returns {void}
+ */
+function setupHeadersAndFormat() {
+  try {
+    // 先執行表頭設置
+    SheetService.setupHeaders();
+
+    // 等待一下讓設置完成
+    Utilities.sleep(1000);
+
+    // 然後執行格式化
+    SheetService.formatAllLeadRows();
+
+    SpreadsheetApp.getUi().alert('✅ 初始設置完成！', '表頭設置和格式化已完成，可以開始使用 Auto Lead Warmer。', SpreadsheetApp.getUi().ButtonSet.OK);
+
+  } catch (error) {
+    console.error('初始設置和格式化失敗:', error);
+    SpreadsheetApp.getUi().alert('❌ 設置失敗', `初始設置失敗: ${error.message}`, SpreadsheetApp.getUi().ButtonSet.OK);
+  }
+}
 
 /**
  * 當儲存格編輯時觸發的事件處理函數
