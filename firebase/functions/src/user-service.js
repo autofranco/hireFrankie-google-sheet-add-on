@@ -38,90 +38,48 @@ const {JWT} = require('google-auth-library');
  */
 exports.createUser = onCall(async (request) => {
   try {
-    // 1. 從 Apps Script 獲取用戶 email（不需要 Firebase Auth）
+    // 1. 從 Apps Script 獲取用戶 email
     const email = request.data.email;
-    
+
     if (!email) {
       throw new HttpsError('invalid-argument', '請提供用戶 email 地址');
     }
 
-    // 使用 email 創建唯一的用戶 ID（用於 Firestore）
-    const uid = Buffer.from(email.toLowerCase()).toString('base64').replace(/[^a-zA-Z0-9]/g, '');
-    
-    console.log(`Apps Script 用戶: ${email}, 生成 UID: ${uid}`);
+    console.log(`Apps Script 用戶: ${email}`);
 
-    // 2. 檢查用戶是否已存在
-    const userRef = admin.firestore().collection('users').doc(uid);
-    const userDoc = await userRef.get();
-    
-    const now = admin.firestore.FieldValue.serverTimestamp();
-    
-    if (userDoc.exists) {
-      // 更新現有用戶的最後登入時間
-      await userRef.update({
-        lastLoginAt: now,
-        ...(request.data.displayName && { displayName: request.data.displayName })
-      });
-      
-      const userData = userDoc.data();
+    // 2. 檢查用戶是否已存在於 Google Sheets
+    const users = await readUsersFromSheet();
+    const existingUser = users.find(u => u.email === email.toLowerCase());
+
+    if (existingUser) {
+      // 用戶已存在，回傳現有資料
+      console.log(`用戶 ${email} 已存在於 Google Sheets`);
       return {
         isNewUser: false,
-        email: userData.email,
-        paymentStatus: userData.paymentStatus,
-        usage: userData.usage
+        email: existingUser.email,
+        paymentStatus: existingUser.paymentStatus
       };
     } else {
-      // 檢查是否為付費用戶並自動添加到 Google Sheets
+      // 用戶不存在，創建新用戶
       const isPaidUser = await checkPaidUser(email);
-      
-      // 如果用戶不在 Google Sheets 中，自動添加為 unpaid 狀態
+
       try {
-        const users = await readUsersFromSheet();
-        const existingUser = users.find(u => u.email === email.toLowerCase());
-        
-        if (!existingUser) {
-          await updateUserPaymentStatusInSheet(
-            email.toLowerCase(),
-            isPaidUser ? 'paid' : 'unpaid',
-            'Auto-Create'
-          );
-          console.log(`用戶 ${email} 已自動添加到 Google Sheets (${isPaidUser ? 'paid' : 'unpaid'})`);
-        }
+        await updateUserPaymentStatusInSheet(
+          email.toLowerCase(),
+          isPaidUser ? 'paid' : 'unpaid',
+          'Auto-Create'
+        );
+        console.log(`用戶 ${email} 已自動添加到 Google Sheets (${isPaidUser ? 'paid' : 'unpaid'})`);
+
+        return {
+          isNewUser: true,
+          email: email.toLowerCase(),
+          paymentStatus: isPaidUser ? 'paid' : 'unpaid'
+        };
       } catch (sheetError) {
         console.error('添加用戶到 Google Sheets 失敗:', sheetError);
-        // 不影響用戶創建流程
+        throw new HttpsError('internal', `無法創建用戶資料: ${sheetError.message}`);
       }
-      
-      // 創建新用戶資料
-      const userData = {
-        email: email,
-        paymentStatus: isPaidUser ? 'paid' : 'unpaid',
-        createdAt: now,
-        lastLoginAt: now,
-        usage: {
-          currentMonth: {
-            sonar: {
-              inputTokens: 0,
-              outputTokens: 0
-            },
-            sonarPro: {
-              inputTokens: 0,
-              outputTokens: 0
-            }
-          },
-          lastUpdated: now
-        },
-        ...(request.data.displayName && { displayName: request.data.displayName })
-      };
-
-      await userRef.set(userData);
-
-      return {
-        isNewUser: true,
-        email: userData.email,
-        paymentStatus: userData.paymentStatus,
-        usage: userData.usage
-      };
     }
 
   } catch (error) {
@@ -171,33 +129,24 @@ exports.getUserInfo = onCall(async (request) => {
   try {
     // 1. 從 Apps Script 獲取用戶 email
     const email = request.data.email;
-    
+
     if (!email) {
       throw new HttpsError('invalid-argument', '請提供用戶 email 地址');
     }
 
-    // 生成對應的 UID
-    const uid = Buffer.from(email.toLowerCase()).toString('base64').replace(/[^a-zA-Z0-9]/g, '');
+    // 2. 從 Google Sheets 查詢用戶資料
+    const users = await readUsersFromSheet();
+    const userData = users.find(u => u.email === email.toLowerCase());
 
-    // 2. 查詢用戶資料
-    const userDoc = await admin.firestore()
-      .collection('users')
-      .doc(uid)
-      .get();
-
-    if (!userDoc.exists) {
+    if (!userData) {
       throw new HttpsError('not-found', '用戶資料不存在，請先完成註冊');
     }
-
-    const userData = userDoc.data();
 
     return {
       email: userData.email,
       paymentStatus: userData.paymentStatus,
-      ...(userData.displayName && { displayName: userData.displayName }),
-      usage: userData.usage,
-      memberSince: userData.createdAt?.toDate().toISOString() || null,
-      lastLogin: userData.lastLoginAt?.toDate().toISOString() || null
+      memberSince: userData.addedDate || null,
+      updatedBy: userData.updatedBy || null
     };
 
   } catch (error) {
@@ -246,57 +195,17 @@ exports.getUserInfo = onCall(async (request) => {
  */
 exports.updateUserUsage = onCall(async (request) => {
   try {
-    // 1. 從 Apps Script 獲取用戶 email
-    const email = request.data.email;
-    
-    if (!email) {
-      throw new HttpsError('invalid-argument', '請提供用戶 email 地址');
-    }
-
-    // 生成對應的 UID
-    const uid = Buffer.from(email.toLowerCase()).toString('base64').replace(/[^a-zA-Z0-9]/g, '');
-
-    // 2. 驗證請求數據
-    const { model, inputTokens, outputTokens } = request.data;
-    
-    if (!model || !['sonar', 'sonar-pro'].includes(model)) {
-      throw new HttpsError('invalid-argument', '模型類型必須是 sonar 或 sonar-pro');
-    }
-
-    if (typeof inputTokens !== 'number' || typeof outputTokens !== 'number') {
-      throw new HttpsError('invalid-argument', 'Token 數量必須是數字');
-    }
-
-    if (inputTokens < 0 || outputTokens < 0) {
-      throw new HttpsError('invalid-argument', 'Token 數量不能為負數');
-    }
-
-    // 3. 更新用戶使用量
-    const userRef = admin.firestore().collection('users').doc(uid);
-    const modelKey = model === 'sonar-pro' ? 'sonarPro' : 'sonar';
-
-    await userRef.update({
-      [`usage.currentMonth.${modelKey}.inputTokens`]: admin.firestore.FieldValue.increment(inputTokens),
-      [`usage.currentMonth.${modelKey}.outputTokens`]: admin.firestore.FieldValue.increment(outputTokens),
-      'usage.lastUpdated': admin.firestore.FieldValue.serverTimestamp()
-    });
-
-    // 4. 獲取更新後的資料
-    const updatedDoc = await userRef.get();
-    if (!updatedDoc.exists) {
-      throw new HttpsError('not-found', '用戶資料不存在');
-    }
+    // Token 使用量統計已移到 Apps Script 端的 TokenTracker 處理
+    // 此函數暫時停用，直接返回成功
+    console.log('updateUserUsage 被調用，但已停用（使用 Apps Script TokenTracker）');
 
     return {
       success: true,
-      newUsage: updatedDoc.data().usage
+      message: 'Token 統計已移到 Apps Script 端處理'
     };
 
   } catch (error) {
     console.error('updateUserUsage 錯誤:', error);
-    if (error instanceof HttpsError) {
-      throw error;
-    }
     throw new HttpsError('internal', '更新使用量時發生錯誤，請稍後重試');
   }
 });

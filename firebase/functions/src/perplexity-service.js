@@ -1,6 +1,15 @@
 const {onCall, HttpsError} = require('firebase-functions/v2/https');
 const admin = require('firebase-admin');
-const fetch = require('node-fetch');
+
+// 動態導入 node-fetch (ESM 模組)
+let fetch;
+async function loadFetch() {
+  if (!fetch) {
+    const nodeFetch = await import('node-fetch');
+    fetch = nodeFetch.default;
+  }
+  return fetch;
+}
 
 /**
  * 呼叫 Perplexity API (Sonar 模型)
@@ -112,7 +121,8 @@ exports.callPerplexityAPI = onCall({
       max_tokens: Math.min(Math.max(maxTokens, 1), 2000)  // 限制範圍 1-2000
     };
 
-    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+    const fetchFn = await loadFetch();
+    const response = await fetchFn('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
@@ -135,12 +145,8 @@ exports.callPerplexityAPI = onCall({
       throw new HttpsError('internal', 'API 回應格式異常，請稍後重試');
     }
 
-    // 6. 更新用戶使用量
-    if (responseData.usage) {
-      const inputTokens = responseData.usage.prompt_tokens || 0;
-      const outputTokens = responseData.usage.completion_tokens || 0;
-      await updateTokenUsage(request.auth.uid, 'sonar', inputTokens, outputTokens);
-    }
+    // 6. Token 使用量統計已移到 Apps Script 端處理
+    console.log('Token 使用量:', responseData.usage || null);
 
     return {
       content: responseData.choices[0].message.content,
@@ -265,7 +271,8 @@ exports.callPerplexityAPIPro = onCall({
       search_context_size: "high" // Pro 模型專用參數
     };
 
-    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+    const fetchFn = await loadFetch();
+    const response = await fetchFn('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
@@ -288,12 +295,8 @@ exports.callPerplexityAPIPro = onCall({
       throw new HttpsError('internal', 'API 回應格式異常，請稍後重試');
     }
 
-    // 6. 更新用戶使用量
-    if (responseData.usage) {
-      const inputTokens = responseData.usage.prompt_tokens || 0;
-      const outputTokens = responseData.usage.completion_tokens || 0;
-      await updateTokenUsage(request.auth.uid, 'sonar-pro', inputTokens, outputTokens);
-    }
+    // 6. Token 使用量統計已移到 Apps Script 端處理
+    console.log('Pro Token 使用量:', responseData.usage || null);
 
     return {
       content: responseData.choices[0].message.content,
@@ -310,34 +313,6 @@ exports.callPerplexityAPIPro = onCall({
 });
 
 /**
- * 更新用戶 Token 使用量 (內部輔助函數)
- * 
- * 當 AI API 調用完成後，自動更新用戶在 Firestore 中的 Token 使用統計。
- * 使用原子性操作確保數據一致性。
- * 
- * @function updateTokenUsage
- * @async
- * @private
- * @param {string} userId - 用戶唯一識別碼
- * @param {string} model - AI 模型類型 ('sonar' 或 'sonar-pro')
- * @param {number} inputTokens - 輸入 Token 數量
- * @param {number} outputTokens - 輸出 Token 數量
- * 
- * @returns {Promise<void>} 無回傳值
- * 
- * @throws {Error} 當 Firestore 更新失敗時拋出
- * 
- * @example
- * // 內部使用 - 在 API 調用後自動執行
- * await updateTokenUsage('user123', 'sonar-pro', 150, 300);
+ * Token 使用量統計已移到 Apps Script 端的 TokenTracker 處理
+ * 此函數已停用
  */
-async function updateTokenUsage(userId, model, inputTokens, outputTokens) {
-  const userRef = admin.firestore().collection('users').doc(userId);
-  const modelKey = model === 'sonar-pro' ? 'sonarPro' : 'sonar';
-
-  await userRef.update({
-    [`usage.currentMonth.${modelKey}.inputTokens`]: admin.firestore.FieldValue.increment(inputTokens || 0),
-    [`usage.currentMonth.${modelKey}.outputTokens`]: admin.firestore.FieldValue.increment(outputTokens || 0),
-    'usage.lastUpdated': admin.firestore.FieldValue.serverTimestamp()
-  });
-}
