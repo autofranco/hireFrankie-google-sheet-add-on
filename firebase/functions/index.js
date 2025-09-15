@@ -129,7 +129,7 @@ exports.healthCheck = onRequest(async (req, res) => {
       services: {
         perplexityAPI: 'active',
         userManagement: 'active',
-        firestore: 'active'
+        googleSheets: 'active'
       }
     });
   } catch (error) {
