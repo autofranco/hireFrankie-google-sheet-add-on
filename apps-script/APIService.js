@@ -528,20 +528,24 @@ const APIService = {
   createUser(userData = {}) {
     try {
       console.log('呼叫 Firebase Cloud Function: createUser');
-      
+
       // 獲取當前用戶
       const user = Session.getActiveUser();
-      if (!user.getEmail()) {
+      const userEmail = user.getEmail();
+
+      if (!userEmail || userEmail.trim() === '') {
         throw new Error('請先登入 Google 帳號才能初始化用戶資料');
       }
 
-      console.log('當前用戶:', user.getEmail());
+      console.log('當前用戶:', userEmail);
 
       // 調用 Firebase Cloud Function
       const payload = {
-        email: user.getEmail(),
+        email: userEmail,
         ...userData
       };
+
+      console.log('準備發送的 payload:', JSON.stringify(payload));
 
       const options = {
         method: 'POST',
@@ -553,6 +557,8 @@ const APIService = {
         }),
         muteHttpExceptions: true
       };
+
+      console.log('完整請求結構:', JSON.stringify({ data: payload }));
 
       const functionUrl = `${FIREBASE_CONFIG.functionsUrl}/createUser`;
       const response = UrlFetchApp.fetch(functionUrl, options);

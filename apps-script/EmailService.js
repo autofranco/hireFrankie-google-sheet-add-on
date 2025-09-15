@@ -30,16 +30,19 @@ const EmailService = {
   sendImmediateEmail(email, firstName, subject, content, rowIndex, emailType) {
     try {
       this.sendEmail(email, firstName, content, subject, rowIndex, emailType);
-      
+
       // 更新排程狀態（加刪除線）
       SheetService.updateScheduleStatus(rowIndex, emailType);
-      
+
+      // 發送成功後，檢查是否需要生成下一封郵件
+      this.generateNextMailIfNeeded(rowIndex, emailType, firstName);
+
       // 更新 info 欄位
       const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
       SheetService.updateInfo(sheet, rowIndex, `立即發送: ${emailType} 已發送`);
-      
+
       console.log(`立即發送成功: ${subject} 發送給 ${firstName} (${email})`);
-      
+
     } catch (error) {
       console.error('立即發送郵件失敗:', error);
       const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
