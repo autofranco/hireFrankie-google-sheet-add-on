@@ -19,8 +19,7 @@ const RowProcessor = {
       // 設置狀態下拉選單
       SheetService.setupStatusDropdown(sheet, rowIndex);
       
-      // 初始化該 Lead 的統計追蹤
-      TokenTracker.startLead(rowIndex);
+      // Token 統計現在由 Firebase Cloud Functions 自動處理
       
       // 執行所有處理步驟（Seminar Brief 已在全域預處理中檢查，此處不重複檢查）
       this.generateLeadsProfile(sheet, row, rowIndex);
@@ -82,8 +81,7 @@ const RowProcessor = {
     SheetService.updateInfo(sheet, rowIndex, '正在生成客戶畫像...');
     SpreadsheetApp.flush();
     
-    // 開始統計 Lead Profile 生成
-    TokenTracker.startStep(rowIndex, 'leadProfile');
+    // Token 統計現在由 Firebase Cloud Functions 自動處理
     
     const leadsProfile = ContentGenerator.generateLeadsProfile(
       row[COLUMNS.COMPANY_URL], 
@@ -113,8 +111,7 @@ const RowProcessor = {
     SheetService.updateInfo(sheet, rowIndex, '正在生成郵件切入點...');
     SpreadsheetApp.flush();
     
-    // 開始統計 Mail Angle 生成
-    TokenTracker.startStep(rowIndex, 'mailAngle');
+    // Token 統計現在由 Firebase Cloud Functions 自動處理
     
     const leadsProfile = sheet.getRange(rowIndex, COLUMNS.LEADS_PROFILE + 1).getValue();
     
@@ -151,8 +148,7 @@ const RowProcessor = {
     SheetService.updateInfo(sheet, rowIndex, '正在生成第1封追蹤郵件...');
     SpreadsheetApp.flush();
     
-    // 開始統計 First Mail 生成
-    TokenTracker.startStep(rowIndex, 'firstMail');
+    // Token 統計現在由 Firebase Cloud Functions 自動處理
     
     const leadsProfile = sheet.getRange(rowIndex, COLUMNS.LEADS_PROFILE + 1).getValue();
     const mailAngle1 = sheet.getRange(rowIndex, COLUMNS.MAIL_ANGLE_1 + 1).getValue();
