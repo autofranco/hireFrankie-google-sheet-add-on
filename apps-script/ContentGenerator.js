@@ -291,6 +291,10 @@ Mail Angle：${mailAngle}
     try {
       console.log('開始生成研習活動簡介...');
 
+      // 檢查用戶付費狀態
+      APIService.checkUserPaymentStatus();
+      console.log('✅ 用戶付費狀態驗證通過');
+
       const response = APIService.callPerplexityAPI(prompt, 'sonar-pro');
       console.log('研習活動簡介生成成功:', response.substring(0, 100) + '...');
 

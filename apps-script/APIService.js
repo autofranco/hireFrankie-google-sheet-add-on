@@ -183,6 +183,90 @@ const APIService = {
       console.error('createUser 錯誤:', error);
       throw new Error(`用戶初始化失敗: ${error.message}`);
     }
+  },
+
+  /**
+   * 檢查用戶付費狀態
+   * 使用 Firebase Cloud Functions 檢查用戶是否有付費權限
+   *
+   * @function checkUserPaymentStatus
+   * @returns {boolean} 用戶是否已付費
+   * @throws {Error} 檢查失敗時拋出錯誤
+   */
+  checkUserPaymentStatus() {
+    try {
+      console.log('檢查用戶付費狀態...');
+
+      // 獲取當前用戶
+      const user = Session.getActiveUser();
+      const userEmail = user.getEmail();
+
+      if (!userEmail || userEmail.trim() === '') {
+        throw new Error('無法取得用戶 Email，請確保已登入 Google 帳號');
+      }
+
+      console.log('檢查用戶:', userEmail);
+
+      // 調用 Firebase Cloud Function 檢查付費狀態
+      const payload = {
+        email: userEmail
+      };
+
+      const options = {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        payload: JSON.stringify({
+          data: payload
+        }),
+        muteHttpExceptions: true
+      };
+
+      const functionUrl = `${FIREBASE_CONFIG.functionsUrl}/getUserInfo`;
+      const response = UrlFetchApp.fetch(functionUrl, options);
+      const responseCode = response.getResponseCode();
+      const responseText = response.getContentText();
+
+      console.log('付費狀態檢查回應狀態:', responseCode);
+
+      if (responseCode !== 200) {
+        let errorMessage = `HTTP ${responseCode}`;
+        try {
+          const errorData = JSON.parse(responseText);
+          errorMessage = errorData.error?.message || errorMessage;
+        } catch (e) {
+          errorMessage = responseText;
+        }
+        throw new Error(`付費狀態檢查失敗: ${errorMessage}`);
+      }
+
+      let responseData;
+      try {
+        responseData = JSON.parse(responseText);
+      } catch (e) {
+        throw new Error('付費狀態回應格式錯誤: ' + responseText);
+      }
+
+      if (!responseData.result) {
+        throw new Error('付費狀態回應格式異常: ' + responseText);
+      }
+
+      const paymentStatus = responseData.result.paymentStatus;
+      const isPaid = paymentStatus === 'paid';
+
+      console.log(`用戶 ${userEmail} 付費狀態: ${paymentStatus}`);
+
+      if (!isPaid) {
+        throw new Error(`用戶尚未付費，無法使用 AI 服務。請聯繫管理員開通付費權限。`);
+      }
+
+      return true;
+
+    } catch (error) {
+      console.error('檢查付費狀態錯誤:', error);
+      throw error;
+    }
   }
 };
 

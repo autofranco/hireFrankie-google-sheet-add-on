@@ -16,11 +16,15 @@ const RowProcessor = {
     console.log(`处理客户: ${row[COLUMNS.FIRST_NAME]} (${row[COLUMNS.EMAIL]})`);
     
     try {
+      // 檢查用戶付費狀態
+      APIService.checkUserPaymentStatus();
+      console.log('✅ 用戶付費狀態驗證通過');
+
       // 設置狀態下拉選單
       SheetService.setupStatusDropdown(sheet, rowIndex);
-      
+
       // Token 統計現在由 Firebase Cloud Functions 自動處理
-      
+
       // 執行所有處理步驟（Seminar Brief 已在全域預處理中檢查，此處不重複檢查）
       this.generateLeadsProfile(sheet, row, rowIndex);
       this.generateMailAngles(sheet, row, rowIndex);
