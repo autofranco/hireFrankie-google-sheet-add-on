@@ -174,7 +174,7 @@ async function callGeminiAPI(prompt, model = 'gemini-2.5-flash', temperature = 0
  * @returns {number} returns.usage.total_tokens - 總 Token 數量
  * @throws {Error} API 調用失敗時拋出錯誤
  */
-async function callGPTAPI(prompt, model = 'gpt-5-mini', temperature = 0.2, maxTokens = 5000) {
+async function callGPTAPI(prompt, model = 'gpt-4.1-mini', temperature = 0.2, maxTokens = 5000) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     throw new Error('OPENAI_API_KEY 環境變數未設定');
@@ -236,7 +236,7 @@ async function callGPTAPI(prompt, model = 'gpt-5-mini', temperature = 0.2, maxTo
  * @param {string} [request.data.model] - 模型名稱，依供應商而定：
  *   - perplexity: 固定使用 'sonar-pro'
  *   - gemini: 'gemini-2.5-flash' (預設)
- *   - gpt: 'gpt-4-mini', 'gpt-5-mini' (預設 'gpt-5-mini')
+ *   - gpt: 'gpt-4.1-mini', 'gpt-5-mini' (預設 'gpt-4.1-mini')
  * @param {number} [request.data.temperature=0.2] - AI 回應的創意程度 (0-2)
  * @param {number} [request.data.maxTokens=5000] - 最大回應 Token 數量
  *
