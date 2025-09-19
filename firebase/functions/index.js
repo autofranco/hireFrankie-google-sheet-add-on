@@ -22,7 +22,7 @@ setGlobalOptions({
 });
 
 // 匯入服務模組
-const {callPerplexityAPI, callPerplexityAPIPro} = require('./src/perplexity-service');
+const {callLLMAPI} = require('./src/llm-service');
 const {createUser, updateUserUsage, getUserInfo} = require('./src/user-service');
 const {
   calculateTokenCost,
@@ -32,23 +32,18 @@ const {
 } = require('./src/token-service');
 
 /**
- * === Perplexity AI API Functions ===
- * 
- * 提供 Sonar 和 Sonar Pro 模型的 AI 推理服務
+ * === Unified LLM API Functions ===
+ *
+ * 提供統一的多供應商 LLM API 服務
+ * 支援 Perplexity、Gemini 和 GPT 等多種 AI 模型
  * 用於生成 Lead Profile、Mail Angle 和 First Mail 內容
  */
 
 /**
- * 呼叫 Perplexity Sonar API
- * @see ./src/perplexity-service.js#callPerplexityAPI
+ * 統一 LLM API 呼叫服務
+ * @see ./src/llm-service.js#callLLMAPI
  */
-exports.callPerplexityAPI = callPerplexityAPI;
-
-/**
- * 呼叫 Perplexity Sonar Pro API  
- * @see ./src/perplexity-service.js#callPerplexityAPIPro
- */
-exports.callPerplexityAPIPro = callPerplexityAPIPro;
+exports.callLLMAPI = callLLMAPI;
 
 /**
  * === User Management Functions ===

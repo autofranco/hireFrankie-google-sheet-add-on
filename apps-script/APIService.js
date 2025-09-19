@@ -13,27 +13,28 @@ const FIREBASE_CONFIG = {
 // Token 計算已移到 Firebase Cloud Functions
 
 const APIService = {
-  
 
   /**
-   * 呼叫 Perplexity API (透過 Firebase Cloud Functions)
+   * 呼叫統一 LLM API (透過 Firebase Cloud Functions)
    *
-   * @function callPerplexityAPI
+   * @function callLLMAPI
    * @param {string} prompt - API 請求的提示詞內容
-   * @param {string} [model='sonar-pro'] - AI 模型類型 ('sonar' 或 'sonar-pro')
+   * @param {string} [provider='perplexity'] - LLM 供應商 ('perplexity' | 'gemini' | 'gpt')
+   * @param {string} [model] - AI 模型名稱，依供應商而定
    * @param {number} [temperature=0.2] - AI 回應的創意程度
    * @param {number} [maxTokens=1000] - 最大回應 Token 數量
-   * @returns {string} AI 生成的回應內容
+   * @returns {Object} AI 回應結果，包含 content、provider、model、usage 等資訊
    */
-  callPerplexityAPI(prompt, model = 'sonar-pro', temperature = 0.2, maxTokens = 1000) {
+  callLLMAPI(prompt, provider = 'perplexity', model = null, temperature = 0.2, maxTokens = 1000) {
     // 检查 prompt 是否为空或无效
     if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
       throw new Error('提示詞不能為空');
     }
 
     try {
-      console.log('呼叫 Firebase Cloud Function: callPerplexityAPI');
-      console.log('模型:', model);
+      console.log('呼叫 Firebase Cloud Function: callLLMAPI');
+      console.log('供應商:', provider);
+      console.log('模型:', model || '預設');
       console.log('提示詞:', prompt.substring(0, 100) + '...');
 
       // 獲取用戶的 Auth Token (需要用戶先登入)
@@ -46,6 +47,7 @@ const APIService = {
       const payload = {
         email: user.getEmail(),
         prompt: prompt.trim(),
+        provider: provider,
         model: model,
         temperature: temperature,
         maxTokens: maxTokens
@@ -62,7 +64,7 @@ const APIService = {
         muteHttpExceptions: true
       };
 
-      const functionUrl = `${FIREBASE_CONFIG.functionsUrl}/callPerplexityAPI`;
+      const functionUrl = `${FIREBASE_CONFIG.functionsUrl}/callLLMAPI`;
       const response = UrlFetchApp.fetch(functionUrl, options);
       const responseCode = response.getResponseCode();
       const responseText = response.getContentText();
@@ -92,12 +94,17 @@ const APIService = {
         throw new Error('Firebase Function 回應格式異常: ' + responseText);
       }
 
-      // Token 追蹤已移到 Firebase Cloud Functions 自動處理
+      // 記錄使用統計
+      const result = responseData.result;
+      if (result.usage) {
+        console.log(`${result.provider} (${result.model}) 使用統計:`,
+          `input=${result.usage.prompt_tokens}, output=${result.usage.completion_tokens}, total=${result.usage.total_tokens}`);
+      }
 
-      return responseData.result.content;
+      return result;
 
     } catch (error) {
-      console.error('callPerplexityAPI 錯誤:', error);
+      console.error('callLLMAPI 錯誤:', error);
       throw new Error(`AI 服務調用失敗: ${error.message}`);
     }
   },

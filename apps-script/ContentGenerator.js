@@ -35,11 +35,11 @@ const ContentGenerator = {
 - 確保五個面向都完整呈現`;
 
     try {
-      const response = APIService.callPerplexityAPI(prompt, 'sonar-pro');
-      console.log('生成客户画像成功:', response.substring(0, 100) + '...');
-      
+      const result = APIService.callLLMAPI(prompt, 'perplexity', 'sonar-pro');
+      console.log('生成客户画像成功:', result.content.substring(0, 100) + '...');
+
       // 清理 Markdown 格式，使其適合 Google Sheets 顯示
-      const cleanedResponse = this.cleanMarkdownForSheets(response);
+      const cleanedResponse = this.cleanMarkdownForSheets(result.content);
       return cleanedResponse;
     } catch (error) {
       console.error('生成客户画像失败:', error);
@@ -102,11 +102,11 @@ Leads Profile：${leadsProfile}
 
     try {
       console.log('开始生成邮件切入点...');
-      const response = APIService.callPerplexityAPI(prompt, 'sonar');
-      console.log('API 回应原始内容:', response);
-      
+      const result = APIService.callLLMAPI(prompt, 'perplexity', 'sonar-pro');
+      console.log('API 回应原始内容:', result.content);
+
       // 改进的解析方法
-      const angles = this.parseMailAngles(response);
+      const angles = this.parseMailAngles(result.content);
       console.log('解析后的切入点:', angles);
       
       return angles;
@@ -250,8 +250,9 @@ Mail Angle：${mailAngle}
 - 重要：不要包含任何簽名、敬祝商祺或聯絡方式，只寫郵件正文內容`;
 
       console.log(`生成第${emailNumber}封郵件...`);
-      let mailContent = APIService.callPerplexityAPI(prompt);
-      
+      const result = APIService.callLLMAPI(prompt, 'perplexity', 'sonar-pro');
+      let mailContent = result.content;
+
       // 添加用戶簽名
       const signature = UserInfoService.generateEmailSignature();
       if (signature) {
@@ -295,11 +296,11 @@ Mail Angle：${mailAngle}
       APIService.checkUserPaymentStatus();
       console.log('✅ 用戶付費狀態驗證通過');
 
-      const response = APIService.callPerplexityAPI(prompt, 'sonar-pro');
-      console.log('研習活動簡介生成成功:', response.substring(0, 100) + '...');
+      const result = APIService.callLLMAPI(prompt, 'perplexity', 'sonar-pro');
+      console.log('研習活動簡介生成成功:', result.content.substring(0, 100) + '...');
 
       // 清理 Markdown 格式
-      const cleanedResponse = this.cleanMarkdownForSheets(response);
+      const cleanedResponse = this.cleanMarkdownForSheets(result.content);
 
       // 立即儲存到工作表
       UserInfoService.updateSeminarBrief(cleanedResponse);
