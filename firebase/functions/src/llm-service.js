@@ -174,22 +174,28 @@ async function callGeminiAPI(prompt, model = 'gemini-2.5-flash', temperature = 0
  * @returns {number} returns.usage.total_tokens - 總 Token 數量
  * @throws {Error} API 調用失敗時拋出錯誤
  */
-async function callGPTAPI(prompt, model = 'gpt-4.1-mini', temperature = 0.2, maxTokens = 5000) {
+async function callGPTAPI(prompt, model = 'gpt-5-mini', temperature = 0.2, maxTokens = 5000) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     throw new Error('OPENAI_API_KEY 環境變數未設定');
   }
 
+  // GPT-5-mini 有特殊參數限制
   const payload = {
     model: model,
     messages: [{
       role: "user",
       content: prompt.trim()
     }],
-    temperature: Math.min(Math.max(temperature, 0), 2),
-    max_completion_tokens: Math.min(Math.max(maxTokens, 1), 5000),
-    top_p: 1
+    max_completion_tokens: Math.min(Math.max(maxTokens, 1), 5000)
   };
+
+  // GPT-5-mini 只支援 temperature=1 或不設定，其他模型可以設定
+  if (model !== 'gpt-5-mini') {
+    payload.temperature = Math.min(Math.max(temperature, 0), 2);
+    payload.top_p = 1;
+  }
+  // GPT-5-mini 使用固定 temperature=1（預設值），不傳遞此參數
 
   const fetchFn = await loadFetch();
   const response = await fetchFn('https://api.openai.com/v1/chat/completions', {
@@ -236,7 +242,7 @@ async function callGPTAPI(prompt, model = 'gpt-4.1-mini', temperature = 0.2, max
  * @param {string} [request.data.model] - 模型名稱，依供應商而定：
  *   - perplexity: 固定使用 'sonar-pro'
  *   - gemini: 'gemini-2.5-flash' (預設)
- *   - gpt: 'gpt-4.1-mini', 'gpt-5-mini' (預設 'gpt-4.1-mini')
+ *   - gpt: 'gpt-4.1-mini', 'gpt-5-mini' (預設 'gpt-5-mini')
  * @param {number} [request.data.temperature=0.2] - AI 回應的創意程度 (0-2)
  * @param {number} [request.data.maxTokens=5000] - 最大回應 Token 數量
  *
