@@ -74,7 +74,7 @@ exports.callPerplexityAPI = onCall({
     // 4. 呼叫 Perplexity API
     const apiKey = process.env.PERPLEXITY_API_KEY;
     if (!apiKey) {
-      throw new HttpsError('internal', 'API 金鑰未設定，請聯繫管理員');
+      throw new HttpsError('internal', '服務配置錯誤，請聯繫管理員');
     }
 
     const payload = {
@@ -100,7 +100,7 @@ exports.callPerplexityAPI = onCall({
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Perplexity API 錯誤:', response.status, errorText);
-      throw new HttpsError('internal', `Perplexity API 錯誤 (${response.status})，請稍後重試`);
+      throw new HttpsError('internal', '內容生成服務暫時不可用，請稍後重試');
     }
 
     const responseData = await response.json();
@@ -108,7 +108,7 @@ exports.callPerplexityAPI = onCall({
     // 5. 驗證回應格式
     if (!responseData.choices || !responseData.choices[0] || !responseData.choices[0].message) {
       console.error('API 回應格式異常:', responseData);
-      throw new HttpsError('internal', 'API 回應格式異常，請稍後重試');
+      throw new HttpsError('internal', '內容生成失敗，請稍後重試');
     }
 
     // 6. Token 使用量統計已移到 Apps Script 端處理
@@ -190,7 +190,7 @@ exports.callPerplexityAPIPro = onCall({
     // 4. 呼叫 Perplexity API Pro
     const apiKey = process.env.PERPLEXITY_API_KEY;
     if (!apiKey) {
-      throw new HttpsError('internal', 'API 金鑰未設定，請聯繫管理員');
+      throw new HttpsError('internal', '服務配置錯誤，請聯繫管理員');
     }
 
     const payload = {
@@ -217,7 +217,7 @@ exports.callPerplexityAPIPro = onCall({
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Perplexity API Pro 錯誤:', response.status, errorText);
-      throw new HttpsError('internal', `Perplexity API Pro 錯誤 (${response.status})，請稍後重試`);
+      throw new HttpsError('internal', '內容生成服務暫時不可用，請稍後重試');
     }
 
     const responseData = await response.json();
@@ -225,7 +225,7 @@ exports.callPerplexityAPIPro = onCall({
     // 5. 驗證回應格式
     if (!responseData.choices || !responseData.choices[0] || !responseData.choices[0].message) {
       console.error('API Pro 回應格式異常:', responseData);
-      throw new HttpsError('internal', 'API 回應格式異常，請稍後重試');
+      throw new HttpsError('internal', '內容生成失敗，請稍後重試');
     }
 
     // 6. Token 使用量統計已移到 Apps Script 端處理
@@ -241,7 +241,7 @@ exports.callPerplexityAPIPro = onCall({
     if (error instanceof HttpsError) {
       throw error;
     }
-    throw new HttpsError('internal', 'Pro 服務暫時不可用，請稍後重試');
+    throw new HttpsError('internal', '內容生成服務暫時不可用，請稍後重試');
   }
 });
 

@@ -362,7 +362,7 @@ const calculateTokenCost = onCall({
     };
   } catch (error) {
     console.error('計算 token 成本失敗:', error);
-    throw new HttpsError('internal', `計算成本失敗: ${error.message}`);
+    throw new HttpsError('internal', '系統處理失敗，請稍後重試');
   }
 });
 
@@ -441,7 +441,7 @@ const logTokenUsage = onCall({
     };
   } catch (error) {
     console.error('記錄 token 使用量失敗:', error);
-    throw new HttpsError('internal', `記錄使用量失敗: ${error.message}`);
+    throw new HttpsError('internal', '系統處理失敗，請稍後重試');
   }
 });
 
@@ -476,7 +476,7 @@ const resetTokenStats = onCall({
     };
   } catch (error) {
     console.error('重置 token 統計失敗:', error);
-    throw new HttpsError('internal', `重置統計失敗: ${error.message}`);
+    throw new HttpsError('internal', '系統處理失敗，請稍後重試');
   }
 });
 
@@ -529,7 +529,7 @@ const getTokenSummary = onCall({
     };
   } catch (error) {
     console.error('獲取 token 統計總結失敗:', error);
-    throw new HttpsError('internal', `獲取統計失敗: ${error.message}`);
+    throw new HttpsError('internal', '系統處理失敗，請稍後重試');
   }
 });
 

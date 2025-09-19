@@ -78,7 +78,8 @@ exports.createUser = onCall(async (request) => {
         };
       } catch (sheetError) {
         console.error('添加用戶到 Google Sheets 失敗:', sheetError);
-        throw new HttpsError('internal', `無法創建用戶資料: ${sheetError.message}`);
+        // 不洩漏內部技術細節給前端
+        throw new HttpsError('internal', '無法創建用戶資料，請稍後重試或聯繫管理員');
       }
     }
 
