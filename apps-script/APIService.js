@@ -80,18 +80,18 @@ const APIService = {
         } catch (e) {
           errorMessage = responseText;
         }
-        throw new Error(`Firebase Function 錯誤: ${errorMessage}`);
+        throw new Error('AI 服務暫時不可用，請稍後重試');
       }
 
       let responseData;
       try {
         responseData = JSON.parse(responseText);
       } catch (e) {
-        throw new Error('Firebase Function 回應格式錯誤: ' + responseText);
+        throw new Error('AI 服務回應格式異常，請稍後重試');
       }
 
       if (!responseData.result || !responseData.result.content) {
-        throw new Error('Firebase Function 回應格式異常: ' + responseText);
+        throw new Error('AI 服務暫時不可用，請稍後重試');
       }
 
       // 記錄使用統計
@@ -169,18 +169,18 @@ const APIService = {
         } catch (e) {
           errorMessage = responseText;
         }
-        throw new Error(`Firebase Function 錯誤: ${errorMessage}`);
+        throw new Error('AI 服務暫時不可用，請稍後重試');
       }
 
       let responseData;
       try {
         responseData = JSON.parse(responseText);
       } catch (e) {
-        throw new Error('Firebase Function 回應格式錯誤: ' + responseText);
+        throw new Error('AI 服務回應格式異常，請稍後重試');
       }
 
       if (!responseData.result) {
-        throw new Error('Firebase Function 回應格式異常: ' + responseText);
+        throw new Error('AI 服務暫時不可用，請稍後重試');
       }
 
       console.log('用戶創建成功:', responseData.result);

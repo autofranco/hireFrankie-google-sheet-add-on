@@ -40,7 +40,7 @@ async function loadFetch() {
  * @returns {number} returns.usage.total_tokens - 總 Token 數量
  * @throws {Error} API 調用失敗時拋出錯誤
  */
-async function callPerplexityAPI(prompt, temperature = 0.0, maxTokens = 500) {
+async function callPerplexityAPI(prompt, temperature = 0.2, maxTokens = 5000) {
   const apiKey = process.env.PERPLEXITY_API_KEY;
   if (!apiKey) {
     throw new Error('PERPLEXITY_API_KEY 環境變數未設定');
@@ -53,7 +53,8 @@ async function callPerplexityAPI(prompt, temperature = 0.0, maxTokens = 500) {
       content: prompt.trim()
     }],
     temperature: Math.min(Math.max(temperature, 0), 2),
-    max_tokens: Math.min(Math.max(maxTokens, 1), 1000),
+    max_tokens: Math.min(Math.max(maxTokens, 1), 5000),
+    top_p: 1,
     search_context_size: "high"
   };
 
@@ -90,14 +91,14 @@ async function callPerplexityAPI(prompt, temperature = 0.0, maxTokens = 500) {
  * 呼叫 Gemini API
  *
  * 內部函數，使用 Google Gemini 模型進行 AI 推理。
- * 支援多種 Gemini 模型，預設使用 gemini-2.5-flash。
+ * 使用 OpenAI 兼容格式，支援多種 Gemini 模型，預設使用 gemini-2.5-flash。
  *
  * @function callGeminiAPI
  * @async
  * @param {string} prompt - 發送給 AI 的提示詞內容
  * @param {string} [model='gemini-2.5-flash'] - Gemini 模型名稱
  * @param {number} [temperature=0.2] - AI 回應的創意程度 (0-2)
- * @param {number} [maxTokens=1000] - 最大回應 Token 數量
+ * @param {number} [maxTokens=5000] - 最大回應 Token 數量
  * @returns {Promise<Object>} API 回應結果
  * @returns {string} returns.content - AI 生成的回應內容
  * @returns {Object|null} returns.usage - Token 使用量統計
@@ -106,31 +107,29 @@ async function callPerplexityAPI(prompt, temperature = 0.0, maxTokens = 500) {
  * @returns {number} returns.usage.total_tokens - 總 Token 數量
  * @throws {Error} API 調用失敗時拋出錯誤
  */
-async function callGeminiAPI(prompt, model = 'gemini-2.5-flash', temperature = 0.2, maxTokens = 1000) {
+async function callGeminiAPI(prompt, model = 'gemini-2.5-flash', temperature = 0.2, maxTokens = 5000) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new Error('GEMINI_API_KEY 環境變數未設定');
   }
 
-  // 使用 Gemini REST API
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-
+  // 使用 OpenAI 兼容格式
   const payload = {
-    contents: [{
-      parts: [{
-        text: prompt.trim()
-      }]
-    }],
-    generationConfig: {
-      temperature: Math.min(Math.max(temperature, 0), 2),
-      maxOutputTokens: Math.min(Math.max(maxTokens, 1), 8192)
-    }
+    model: model,
+    messages: [
+      {"role": "system", "content": "You are a helpful assistant."},
+      {"role": "user", "content": prompt.trim()}
+    ],
+    temperature: Math.min(Math.max(temperature, 0), 2),
+    max_tokens: Math.min(Math.max(maxTokens, 1), 8192),
+    top_p: 1
   };
 
   const fetchFn = await loadFetch();
-  const response = await fetchFn(endpoint, {
+  const response = await fetchFn('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
+      'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify(payload)
@@ -144,22 +143,14 @@ async function callGeminiAPI(prompt, model = 'gemini-2.5-flash', temperature = 0
 
   const responseData = await response.json();
 
-  if (!responseData.candidates || !responseData.candidates[0] ||
-      !responseData.candidates[0].content || !responseData.candidates[0].content.parts[0]) {
+  if (!responseData.choices || !responseData.choices[0] || !responseData.choices[0].message) {
     console.error('Gemini API 回應格式異常:', responseData);
     throw new Error('Gemini API 回應格式錯誤');
   }
 
-  // 從 Gemini 回應中提取 usage 資訊
-  const usage = responseData.usageMetadata ? {
-    prompt_tokens: responseData.usageMetadata.promptTokenCount || 0,
-    completion_tokens: responseData.usageMetadata.candidatesTokenCount || 0,
-    total_tokens: responseData.usageMetadata.totalTokenCount || 0
-  } : null;
-
   return {
-    content: responseData.candidates[0].content.parts[0].text,
-    usage: usage
+    content: responseData.choices[0].message.content,
+    usage: responseData.usage || null
   };
 }
 
@@ -183,7 +174,7 @@ async function callGeminiAPI(prompt, model = 'gemini-2.5-flash', temperature = 0
  * @returns {number} returns.usage.total_tokens - 總 Token 數量
  * @throws {Error} API 調用失敗時拋出錯誤
  */
-async function callGPTAPI(prompt, model = 'gpt-5-mini', temperature = 0.2, maxTokens = 1000) {
+async function callGPTAPI(prompt, model = 'gpt-5-mini', temperature = 0.2, maxTokens = 5000) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     throw new Error('OPENAI_API_KEY 環境變數未設定');
@@ -196,7 +187,8 @@ async function callGPTAPI(prompt, model = 'gpt-5-mini', temperature = 0.2, maxTo
       content: prompt.trim()
     }],
     temperature: Math.min(Math.max(temperature, 0), 2),
-    max_tokens: Math.min(Math.max(maxTokens, 1), 4096)
+    max_tokens: Math.min(Math.max(maxTokens, 1), 5000),
+    top_p: 1
   };
 
   const fetchFn = await loadFetch();
@@ -246,7 +238,7 @@ async function callGPTAPI(prompt, model = 'gpt-5-mini', temperature = 0.2, maxTo
  *   - gemini: 'gemini-2.5-flash' (預設)
  *   - gpt: 'gpt-4-mini', 'gpt-5-mini' (預設 'gpt-5-mini')
  * @param {number} [request.data.temperature=0.2] - AI 回應的創意程度 (0-2)
- * @param {number} [request.data.maxTokens=1000] - 最大回應 Token 數量
+ * @param {number} [request.data.maxTokens=5000] - 最大回應 Token 數量
  *
  * @returns {Promise<Object>} API 回應結果
  * @returns {string} returns.content - AI 生成的回應內容
@@ -305,7 +297,7 @@ exports.callLLMAPI = onCall({
       provider = 'perplexity',
       model,
       temperature = 0.2,
-      maxTokens = 1000
+      maxTokens = 5000
     } = request.data;
 
     if (!email) {
