@@ -187,7 +187,7 @@ async function callGPTAPI(prompt, model = 'gpt-5-mini', temperature = 0.2, maxTo
       content: prompt.trim()
     }],
     temperature: Math.min(Math.max(temperature, 0), 2),
-    max_tokens: Math.min(Math.max(maxTokens, 1), 5000),
+    max_completion_tokens: Math.min(Math.max(maxTokens, 1), 5000),
     top_p: 1
   };
 
