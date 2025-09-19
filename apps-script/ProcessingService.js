@@ -10,9 +10,8 @@ const ProcessingService = {
   runAutoLeadWarmer() {
     try {
       console.log('=== 开始执行 Auto Lead Warmer ===');
-      
-      // 重置 Token 使用量統計
-      resetTokenStats();
+
+      // Token 統計現在由 Firebase Cloud Functions 自動處理
       
       // 清除任何現有的停止標記（允許重新開始處理）
       this.clearStopFlag();
@@ -28,15 +27,13 @@ const ProcessingService = {
       // 獲取並處理數據
       this.processAllRows();
       
-      // 顯示 Token 使用量統計
-      showTokenSummary();
+      // Token 使用量統計現在由 Firebase Cloud Functions 自動處理
       
     } catch (error) {
       console.error('執行錯誤:', error);
       SpreadsheetApp.getUi().alert('執行錯誤', `發生未預期的錯誤: ${error.message}\n\n請檢查：\n1. API Key是否正確\n2. 網路連接是否正常\n3. 工作表格式是否正確`, SpreadsheetApp.getUi().ButtonSet.OK);
       
-      // 即使發生錯誤也顯示 Token 使用量統計
-      showTokenSummary();
+      // Token 使用量統計現在由 Firebase Cloud Functions 自動處理
     }
   },
 
