@@ -102,7 +102,7 @@ Leads Profile：${leadsProfile}
 
     try {
       console.log('开始生成邮件切入点...');
-      const result = APIService.callLLMAPI(prompt, 'perplexity', 'sonar-pro');
+      const result = APIService.callLLMAPI(prompt, 'gpt', 'gpt-5-mini');
       console.log('API 回应原始内容:', result.content);
 
       // 改进的解析方法
@@ -250,7 +250,7 @@ Mail Angle：${mailAngle}
 - 重要：不要包含任何簽名、敬祝商祺或聯絡方式，只寫郵件正文內容`;
 
       console.log(`生成第${emailNumber}封郵件...`);
-      const result = APIService.callLLMAPI(prompt, 'perplexity', 'sonar-pro');
+      const result = APIService.callLLMAPI(prompt, 'gpt', 'gpt-5-mini');
       let mailContent = result.content;
 
       // 添加用戶簽名
