@@ -159,60 +159,7 @@ const UserInfoService = {
     return signature;
   },
 
-  /**
-   * 檢查用戶資訊是否已設定
-   * 檢查是否至少有一個用戶資訊欄位有內容
-   * 
-   * @function hasUserInfo
-   * @returns {boolean} 如果有用戶資訊則返回 true
-   */
-  hasUserInfo() {
-    const userInfo = this.getUserInfo();
-    return userInfo.name || userInfo.company || userInfo.title || userInfo.contact;
-  },
 
-  /**
-   * 生成研習活動簡介 (Seminar Brief)
-   */
-  generateSeminarBrief(seminarInfo) {
-    const prompt = `請根據以下研習活動資訊，搜索相關資料並整理出簡潔的活動簡介。請用繁體中文回答，總字數控制在400字內。
-
-研習活動資訊：${seminarInfo}
-
-請簡潔分析以下五個面向（每個面向約80-100字）：
-1. 活動概要：名稱、主辦單位、基本資訊
-2. 主題重點：活動核心內容和學習要點  
-3. 目標族群：參加者職業背景和特質
-4. 學習價值：參與者可獲得的具體收穫
-5. 行業趨勢：相關領域的發展背景
-
-格式要求：
-- 每個面向用簡潔段落表達，避免冗長描述
-- 基於搜索結果提供準確資訊，不生成虛假內容
-- 不使用 Markdown 格式，用「」符號強調重點
-- 確保五個面向都完整呈現，有助後續潛客分析`;
-
-    try {
-      console.log('開始生成研習活動簡介...');
-      
-      // 開始統計
-      TokenTracker.startSeminarBrief();
-      
-      const response = APIService.callPerplexityAPIWithSonarPro(prompt);
-      console.log('研習活動簡介生成成功:', response.substring(0, 100) + '...');
-      
-      // 清理 Markdown 格式
-      const cleanedResponse = ContentGenerator.cleanMarkdownForSheets(response);
-      
-      // 立即儲存到工作表
-      this.updateSeminarBrief(cleanedResponse);
-      
-      return cleanedResponse;
-    } catch (error) {
-      console.error('生成研習活動簡介失敗:', error);
-      throw new Error(`生成研習活動簡介失敗: ${error.message}`);
-    }
-  },
 
   /**
    * 更新研習活動簡介到工作表
@@ -268,7 +215,7 @@ const UserInfoService = {
       console.log('檢測到 Seminar Info 變更或 Brief 為空，準備重新生成 Seminar Brief...');
       
       // 重新生成 seminar brief
-      const seminarBrief = this.generateSeminarBrief(userInfo.seminarInfo);
+      const seminarBrief = ContentGenerator.generateSeminarBrief(userInfo.seminarInfo);
       
       // 存儲當前 info 到 PropertiesService
       PropertiesService.getScriptProperties().setProperty('lastSeminarInfo', currentInfo);
@@ -314,13 +261,3 @@ function checkAndGenerateSeminarBrief() {
   return UserInfoService.checkAndGenerateSeminarBrief();
 }
 
-/**
- * 生成研習活動簡介 - 全域函數包裝器
- * 
- * @function generateSeminarBrief
- * @param {string} seminarInfo - 研習活動資訊
- * @returns {string} 生成的研習活動簡介
- */
-function generateSeminarBrief(seminarInfo) {
-  return UserInfoService.generateSeminarBrief(seminarInfo);
-}

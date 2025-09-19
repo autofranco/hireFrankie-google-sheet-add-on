@@ -35,7 +35,7 @@ const ContentGenerator = {
 - 確保五個面向都完整呈現`;
 
     try {
-      const response = APIService.callPerplexityAPIWithSonarPro(prompt);
+      const response = APIService.callPerplexityAPI(prompt, 'sonar-pro');
       console.log('生成客户画像成功:', response.substring(0, 100) + '...');
       
       // 清理 Markdown 格式，使其適合 Google Sheets 顯示
@@ -102,7 +102,7 @@ Leads Profile：${leadsProfile}
 
     try {
       console.log('开始生成邮件切入点...');
-      const response = APIService.callPerplexityAPI(prompt);
+      const response = APIService.callPerplexityAPI(prompt, 'sonar');
       console.log('API 回应原始内容:', response);
       
       // 改进的解析方法
@@ -268,45 +268,43 @@ Mail Angle：${mailAngle}
   },
 
   /**
-   * 测试单个切入点生成（用于调试）
+   * 生成研習活動簡介 (Seminar Brief)
    */
-  testSingleAngleGeneration(leadsProfile, firstName) {
-    const prompt = `基于以下客户画像，请设计一个销售信件切入点。请用繁体中文回答。
+  generateSeminarBrief(seminarInfo) {
+    const prompt = `請根據以下研習活動資訊，搜索相關資料並整理出簡潔的活動簡介。請用繁體中文回答，總字數控制在400字內。
 
-客户名称：${firstName}
-客户画像：${leadsProfile}
+研習活動資訊：${seminarInfo}
 
-请提供：
-主题：解决客户最关心的痛点
-内容大纲：100字内，包括价值主张和行动呼籲
+請簡潔分析以下五個面向（每個面向約80-100字）：
+1. 活動概要：名稱、主辦單位、基本資訊
+2. 主題重點：活動核心內容和學習要點
+3. 目標族群：參加者職業背景和特質
+4. 學習價值：參與者可獲得的具體收穫
+5. 行業趨勢：相關領域的發展背景
 
-请直接回答，不需要标号。`;
+格式要求：
+- 每個面向用簡潔段落表達，避免冗長描述
+- 基於搜索結果提供準確資訊，不生成虛假內容
+- 不使用 Markdown 格式，用「」符號強調重點
+- 確保五個面向都完整呈現，有助後續潛客分析`;
 
     try {
-      const response = APIService.callPerplexityAPI(prompt);
-      console.log('测试单个切入点生成成功:', response);
-      return response;
+      console.log('開始生成研習活動簡介...');
+
+      const response = APIService.callPerplexityAPI(prompt, 'sonar-pro');
+      console.log('研習活動簡介生成成功:', response.substring(0, 100) + '...');
+
+      // 清理 Markdown 格式
+      const cleanedResponse = this.cleanMarkdownForSheets(response);
+
+      // 立即儲存到工作表
+      UserInfoService.updateSeminarBrief(cleanedResponse);
+
+      return cleanedResponse;
     } catch (error) {
-      console.error('测试单个切入点生成失败:', error);
-      throw error;
+      console.error('生成研習活動簡介失敗:', error);
+      throw new Error(`生成研習活動簡介失敗: ${error.message}`);
     }
   }
 };
 
-// 全局函数包装器
-function generateLeadsProfile(companyUrl, position, resourceUrl, firstName) {
-  return ContentGenerator.generateLeadsProfile(companyUrl, position, resourceUrl, firstName);
-}
-
-function generateMailAngles(leadsProfile, firstName) {
-  return ContentGenerator.generateMailAngles(leadsProfile, firstName);
-}
-
-function generateSingleFollowUpMail(leadsProfile, mailAngle, firstName, emailNumber) {
-  return ContentGenerator.generateSingleFollowUpMail(leadsProfile, mailAngle, firstName, emailNumber);
-}
-
-// 添加测试函数
-function testSingleAngleGeneration(leadsProfile, firstName) {
-  return ContentGenerator.testSingleAngleGeneration(leadsProfile, firstName);
-}
