@@ -24,6 +24,12 @@ setGlobalOptions({
 // 匯入服務模組
 const {callPerplexityAPI, callPerplexityAPIPro} = require('./src/perplexity-service');
 const {createUser, updateUserUsage, getUserInfo} = require('./src/user-service');
+const {
+  calculateTokenCost,
+  logTokenUsage,
+  resetTokenStats,
+  getTokenSummary
+} = require('./src/token-service');
 
 /**
  * === Perplexity AI API Functions ===
@@ -67,6 +73,37 @@ exports.updateUserUsage = updateUserUsage;
  * @see ./src/user-service.js#getUserInfo
  */
 exports.getUserInfo = getUserInfo;
+
+/**
+ * === Token Usage and Cost Calculation Functions ===
+ *
+ * 提供 AI API token 使用量追蹤和成本計算服務
+ * 支援 Sonar 和 Sonar Pro 模型的成本分析
+ */
+
+/**
+ * 計算 AI API 使用成本
+ * @see ./src/token-service.js#calculateTokenCost
+ */
+exports.calculateTokenCost = calculateTokenCost;
+
+/**
+ * 記錄 token 使用量
+ * @see ./src/token-service.js#logTokenUsage
+ */
+exports.logTokenUsage = logTokenUsage;
+
+/**
+ * 重置 token 統計
+ * @see ./src/token-service.js#resetTokenStats
+ */
+exports.resetTokenStats = resetTokenStats;
+
+/**
+ * 獲取 token 使用統計總結
+ * @see ./src/token-service.js#getTokenSummary
+ */
+exports.getTokenSummary = getTokenSummary;
 
 /**
  * === User Management via Google Sheets ===
