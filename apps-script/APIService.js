@@ -81,7 +81,7 @@ const APIService = {
           errorMessage = responseText;
         }
         // 在 console.log 顯示完整錯誤供開發者調試
-        console.error('Firebase Function 詳細錯誤:', responseCode, errorMessage);
+        console.error('Firebase Function 回應格式異常:', responseCode);
         console.error('Firebase Function 回應內容:', responseText);
 
         // 對用戶顯示友善的錯誤訊息
@@ -97,7 +97,7 @@ const APIService = {
 
       if (!responseData.result || !responseData.result.content) {
         // 在 console.log 顯示完整錯誤供開發者調試
-        console.error('Firebase Function 詳細錯誤:', responseCode, errorMessage);
+        console.error('Firebase Function 回應格式異常:', responseCode);
         console.error('Firebase Function 回應內容:', responseText);
 
         // 對用戶顯示友善的錯誤訊息
@@ -115,7 +115,8 @@ const APIService = {
 
     } catch (error) {
       console.error('callLLMAPI 錯誤:', error);
-      throw new Error(`AI 服務調用失敗: ${error.message}`);
+      const errorMessage = error.message || error.toString() || '未知錯誤';
+      throw new Error(`AI 服務調用失敗: ${errorMessage}`);
     }
   },
 
@@ -180,7 +181,7 @@ const APIService = {
           errorMessage = responseText;
         }
         // 在 console.log 顯示完整錯誤供開發者調試
-        console.error('Firebase Function 詳細錯誤:', responseCode, errorMessage);
+        console.error('Firebase Function 回應格式異常:', responseCode);
         console.error('Firebase Function 回應內容:', responseText);
 
         // 對用戶顯示友善的錯誤訊息
@@ -196,7 +197,7 @@ const APIService = {
 
       if (!responseData.result) {
         // 在 console.log 顯示完整錯誤供開發者調試
-        console.error('Firebase Function 詳細錯誤:', responseCode, errorMessage);
+        console.error('Firebase Function 回應格式異常:', responseCode);
         console.error('Firebase Function 回應內容:', responseText);
 
         // 對用戶顯示友善的錯誤訊息
