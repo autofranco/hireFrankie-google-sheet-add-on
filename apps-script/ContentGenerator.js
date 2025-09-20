@@ -12,27 +12,22 @@ const ContentGenerator = {
     const userInfo = UserInfoService.getUserInfo();
     const seminarBrief = userInfo.seminarBrief || '';
     
-    const prompt = `基於以下客戶資訊，請協助分析並生成簡潔的潛在客戶畫像。請用繁體中文回答，總字數控制在500字內。
+    const prompt = `# 參與活動的客戶方資訊
+客戶公司：${companyUrl}
 
-客戶名稱：${firstName}
-客戶公司網站：${companyUrl}
-客戶職位：${position}
-本研習活動資訊：${seminarBrief}
+# 任務
+請分析客戶公司背景，並嚴格用此格式輸出：
+- 規模:
+- 業務特色:
+- 近期公司活動:
+- 近期產業新聞:
 
-請簡潔分析以下五個面向（每個面向約80-100字）：
-1. 公司背景：規模、行業、業務特色
-2. 職位權力：決策權力和關注重點
-3. 參與動機：參加研習活動的可能需求
-4. 面臨挑戰：此職位常見的痛點
-5. 溝通策略：最適合的接觸方式和價值主張
-
-格式要求：
-- 每個面向用簡潔的段落表達，避免冗長描述
+# 格式要求
+- 總字數必須控制在170~200字，用繁體中文回答
+- 簡潔的段落表達，避免冗長描述
 - 嚴禁生成不存在的公司、品牌、解決方案、產品、案例、數據，只能使用搜尋結果的資訊
-- 在提到任何公司、品牌、解決方案、產品、案例、數據時，前方必須註明「客戶公司的資訊」或是「本研習活動的資訊」。
-  例如：提到客戶公司的產品"Lead Warmer"，必須寫："客戶公司的產品Lead Warmer"
-- 不使用 Markdown 格式，用「」符號強調重點
-- 確保五個面向都完整呈現`;
+- 不使用 Markdown 或 HTML 格式，用「」符號強調重點
+`;
 
     try {
       const result = APIService.callLLMAPI(prompt, 'perplexity', 'sonar-pro');
@@ -72,33 +67,33 @@ const ContentGenerator = {
    * 生成三个信件切入点 - 改进版本
    */
   generateMailAngles(leadsProfile, firstName) {
-    const prompt = `基於以下潛在Leads Profile，請設計三個不同的銷售信件切入點。請用繁體中文回答。
-
-Leads Profile：${leadsProfile}
-
-三個切入點都要包含研習活動的內容和具體的活動與產品名稱，目的是讓參加過活動的客人知道這則追蹤信件的來源。
-信件的主題以研習活動的內容為主軸。
+    const prompt = `# 我方舉辦的活動資訊:{seminar brief}
+# 參與活動的客戶方資訊:
+客戶姓名：${firstName}
+客戶職位：${position}
+客戶公司資訊：${leadsProfile}
+# 任務
+基於以上我方活動與客戶方資訊，請協助分析並簡潔的生成以下2個面向和3個切入點。
+信件的主題切入點以研習活動的內容為主軸。
+三個切入點應該根據客戶本人選擇最在意的痛點與對他影響最大的地方。
 請嚴格按照以下格式回答，每個切入點獨立成段：
 
-切入點1
-主題：[簡短描述主題]
-內容大綱：[50字內，包括價值主張、行動呼籲]
+<aspect1> 職權與挑戰：[100字內：決策權力和關注重點與此職位常見的痛點]
 
-切入點2
-主題：[簡短描述主題]
-內容大綱：[50字內，包括價值主張、行動呼籲]
+<aspect2> 參與動機與溝通策略：[100字內：客戶參加本研習活動的可能需求，以及最適合的接觸方式和價值主張]
 
-切入點3
-主題：[簡短描述主題]
-內容大綱：[50字內，包括價值主張、行動呼籲]
+<angle1> 內容大綱：[50字內，包括價值主張、行動呼籲]
 
-三個切入點應該根據客戶畫像選擇他們最在意的痛點與對他們影響最大的地方。
+<angle2> 內容大綱：[50字內，包括價值主張、行動呼籲]
 
-注意：
-- 嚴禁生成不存在的公司、品牌、解決方案、產品、案例、數據，只能使用Leads Profile的資訊。
-- 在提到任何公司、品牌、解決方案、產品、案例、數據時，前方必須註明「客戶公司的資訊」或是「本研習活動的資訊」。
-  例如：提到客戶公司的產品"Lead Warmer"，必須寫："客戶公司的產品Lead Warmer"
-- 請不要使用任何 Markdown 格式（如 **粗體** 或 *斜體*），請使用純文字格式，可以用「」符號來強調重點內容。`;
+<angle3> 內容大綱：[50字內，包括價值主張、行動呼籲]
+ 
+# 格式要求
+- 請用繁體中文回答，總字數必須控制在320~380個字
+- 每個面向用簡潔的段落表達，避免冗長描述
+- 嚴禁生成不存在的公司、品牌、解決方案、產品、案例、數據，只能使用上述的資訊
+- 不使用 Markdown 格式，用「」符號強調重點
+`;
 
     try {
       console.log('开始生成邮件切入点...');
@@ -127,78 +122,42 @@ Leads Profile：${leadsProfile}
    */
   parseMailAngles(response) {
     try {
-      // 使用繁體中文關鍵字匹配
-      const angle1Match = response.match(/切入點1[\s\S]*?(?=切入點2|$)/);
-      const angle2Match = response.match(/切入點2[\s\S]*?(?=切入點3|$)/);
-      const angle3Match = response.match(/切入點3[\s\S]*?$/);
+      // 解析 aspect1 和 aspect2
+      const aspect1Match = response.match(/<aspect1>[\s\S]*?(?=<aspect2>|<angle1>|$)/);
+      const aspect2Match = response.match(/<aspect2>[\s\S]*?(?=<angle1>|$)/);
 
-      let angle1 = angle1Match ? angle1Match[0].replace('切入點1', '').trim() : '';
-      let angle2 = angle2Match ? angle2Match[0].replace('切入點2', '').trim() : '';
-      let angle3 = angle3Match ? angle3Match[0].replace('切入點3', '').trim() : '';
+      let aspect1 = aspect1Match ? aspect1Match[0].replace('<aspect1>', '').replace(/職權與挑戰：?/, '').trim() : '';
+      let aspect2 = aspect2Match ? aspect2Match[0].replace('<aspect2>', '').replace(/參與動機與溝通策略：?/, '').trim() : '';
 
-      // 如果繁體匹配失败，尝试简体中文
-      if (!angle1 || !angle2 || !angle3) {
-        console.log('繁體匹配失败，尝试简体中文...');
-        const sections = response.split(/切入[点點][123]/);
-        
-        if (sections.length >= 4) {
-          angle1 = sections[1]?.trim() || '';
-          angle2 = sections[2]?.trim() || '';
-          angle3 = sections[3]?.trim() || '';
-        }
-      }
+      // 解析 angle1, angle2, angle3
+      const angle1Match = response.match(/<angle1>[\s\S]*?(?=<angle2>|$)/);
+      const angle2Match = response.match(/<angle2>[\s\S]*?(?=<angle3>|$)/);
+      const angle3Match = response.match(/<angle3>[\s\S]*?$/);
 
-      // 如果还是失败，尝试按行解析（支援繁簡體）
-      if (!angle1 || !angle2 || !angle3) {
-        console.log('分割方法失败，尝试按行解析...');
-        const lines = response.split('\n');
-        let currentAngle = '';
-        let tempAngles = { angle1: '', angle2: '', angle3: '' };
-        
-        for (const line of lines) {
-          if (line.includes('切入點1') || line.includes('切入点1')) {
-            currentAngle = 'angle1';
-            continue;
-          } else if (line.includes('切入點2') || line.includes('切入点2')) {
-            currentAngle = 'angle2';
-            continue;
-          } else if (line.includes('切入點3') || line.includes('切入点3')) {
-            currentAngle = 'angle3';
-            continue;
-          }
-          
-          if (currentAngle && line.trim()) {
-            tempAngles[currentAngle] += line.trim() + ' ';
-          }
-        }
-        
-        if (tempAngles.angle1) angle1 = tempAngles.angle1.trim();
-        if (tempAngles.angle2) angle2 = tempAngles.angle2.trim();
-        if (tempAngles.angle3) angle3 = tempAngles.angle3.trim();
-      }
+      let angle1 = angle1Match ? angle1Match[0].replace('<angle1>', '').replace(/內容大綱：?/, '').trim() : '';
+      let angle2 = angle2Match ? angle2Match[0].replace('<angle2>', '').replace(/內容大綱：?/, '').trim() : '';
+      let angle3 = angle3Match ? angle3Match[0].replace('<angle3>', '').replace(/內容大綱：?/, '').trim() : '';
 
-      // 最后检查，如果还是空的，返回原始回应的片段
-      if (!angle1 && !angle2 && !angle3) {
-        console.log('所有解析方法都失败，使用原始回应...');
-        const responseLength = response.length;
-        const third = Math.floor(responseLength / 3);
-        
-        return {
-          angle1: response.substring(0, third) || '解析失敗，請檢查API回應格式',
-          angle2: response.substring(third, third * 2) || '解析失敗，請檢查API回應格式',
-          angle3: response.substring(third * 2) || '解析失敗，請檢查API回應格式'
-        };
-      }
+      // 如果任何項目解析失敗，記錄日誌但繼續
+      if (!aspect1) console.log('aspect1 解析失敗');
+      if (!aspect2) console.log('aspect2 解析失敗');
+      if (!angle1) console.log('angle1 解析失敗');
+      if (!angle2) console.log('angle2 解析失敗');
+      if (!angle3) console.log('angle3 解析失敗');
 
       return {
-        angle1: angle1 || '切入點1解析失敗',
-        angle2: angle2 || '切入點2解析失敗',
-        angle3: angle3 || '切入點3解析失敗'
+        aspect1: aspect1 || 'aspect1解析失敗',
+        aspect2: aspect2 || 'aspect2解析失敗',
+        angle1: angle1 || 'angle1解析失敗',
+        angle2: angle2 || 'angle2解析失敗',
+        angle3: angle3 || 'angle3解析失敗'
       };
 
     } catch (error) {
       console.error('解析邮件切入点时发生错误:', error);
       return {
+        aspect1: `解析錯誤: ${error.message}`,
+        aspect2: `解析錯誤: ${error.message}`,
         angle1: `解析錯誤: ${error.message}`,
         angle2: `解析錯誤: ${error.message}`,
         angle3: `解析錯誤: ${error.message}`
@@ -234,20 +193,30 @@ Leads Profile：${leadsProfile}
       }
       
       const prompt = `${emailPrompt}
+- 開場使用Leads Profile的資訊展現對客戶職位與其公司的了解
+- 內容要使用 Mail Angle 的角度切入，使用Leads Profile的資訊讓客戶感覺此封信件是專門為'他'和'他的公司'寫的
 
-收件人：${firstName}
-Leads Profile：${leadsProfile}
-Mail Angle：${mailAngle}
+# 客戶方資訊
+- 收件人: ${firstName}
+- Leads Profile : ${leadsProfile} 
 
+# 我方舉辦的活動資訊
+${seminarBrief}
+
+# 信件切入點
+Mail Angle: ${mailAngle}
+
+# 輸出
 請按照以下格式提供：
 主旨：[郵件主旨]
 內容：[郵件正文]
 
-注意：
-- 嚴禁生成不存在的公司、品牌、解決方案、產品、案例、數據，只能使用上述收件人、Leads Profile與Mail Angle的資訊。
+# 注意
+- 嚴禁生成不存在的公司、品牌、解決方案、產品、案例、數據，只能使用上的資訊。
 - 不要在信中提及客戶以外的個人姓名，只能提到公司名
 - 請不要使用任何 Markdown 格式（如 **粗體** 或 *斜體*），請使用純文字格式，可以用「」符號來強調重點內容。
-- 重要：不要包含任何簽名、敬祝商祺或聯絡方式，只寫郵件正文內容`;
+- 嚴禁輸出任何簽名、祝福或聯絡方式，只寫郵件正文內容
+`;
 
       console.log(`生成第${emailNumber}封郵件...`);
       const result = APIService.callLLMAPI(prompt, 'gpt', 'gpt-5-mini-2025-08-07');
@@ -285,7 +254,7 @@ Mail Angle：${mailAngle}
 
 格式要求：
 - 每個面向用簡潔段落表達，避免冗長描述
-- 基於搜索結果提供準確資訊，不生成虛假內容
+- 基於搜索結果提供準確資訊，嚴禁生成虛假內容
 - 不使用 Markdown 格式，用「」符號強調重點
 - 確保五個面向都完整呈現，有助後續潛客分析`;
 

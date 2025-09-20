@@ -22,7 +22,7 @@ setGlobalOptions({
 });
 
 // 匯入服務模組
-const {callLLMAPI} = require('./src/llm-service');
+const {callLLMAPI, testPerplexity, testGemini, testGPT, testGPT5Mini, testGPT41Mini} = require('./src/llm-service');
 const {createUser, updateUserUsage, getUserInfo} = require('./src/user-service');
 const {
   calculateTokenCost,
@@ -44,6 +44,37 @@ const {
  * @see ./src/llm-service.js#callLLMAPI
  */
 exports.callLLMAPI = callLLMAPI;
+
+/**
+ * 測試 Perplexity API 連接
+ * @see ./src/llm-service.js#testPerplexity
+ */
+exports.testPerplexity = testPerplexity;
+
+/**
+ * 測試 Gemini API 連接
+ * @see ./src/llm-service.js#testGemini
+ */
+exports.testGemini = testGemini;
+
+/**
+ * 測試 OpenAI GPT API 連接（通用）
+ * @see ./src/llm-service.js#testGPT
+ * @deprecated 建議使用 testGPT5Mini 或 testGPT41Mini 進行特定模型測試
+ */
+exports.testGPT = testGPT;
+
+/**
+ * 測試 OpenAI GPT-5-mini API 連接
+ * @see ./src/llm-service.js#testGPT5Mini
+ */
+exports.testGPT5Mini = testGPT5Mini;
+
+/**
+ * 測試 OpenAI GPT-4.1-mini API 連接
+ * @see ./src/llm-service.js#testGPT41Mini
+ */
+exports.testGPT41Mini = testGPT41Mini;
 
 /**
  * === User Management Functions ===

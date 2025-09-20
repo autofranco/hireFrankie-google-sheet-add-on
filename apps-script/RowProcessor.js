@@ -124,18 +124,25 @@ const RowProcessor = {
       row[COLUMNS.FIRST_NAME]
     );
     
-    // 验证切入点是否成功生成
-    if (mailAngles.angle1.includes('切入点1：解决客户痛点的方案') ||
-        mailAngles.angle2.includes('切入点2：展示获利机会') ||
-        mailAngles.angle3.includes('切入点3：建立信任关系')) {
-      throw new Error('郵件切入點生成失敗，返回了預設值');
+
+    // 先將 aspect1 和 aspect2 添加到 Leads Profile 中
+    if (mailAngles.aspect1 && mailAngles.aspect2) {
+      const currentLeadsProfile = sheet.getRange(rowIndex, COLUMNS.LEADS_PROFILE + 1).getValue();
+      const updatedLeadsProfile = currentLeadsProfile +
+        '\n- 職權與挑戰：' + mailAngles.aspect1 +
+        '\n- 參與動機與溝通策略：' + mailAngles.aspect2;
+
+      sheet.getRange(rowIndex, COLUMNS.LEADS_PROFILE + 1).setValue(updatedLeadsProfile);
+      SheetService.updateInfo(sheet, rowIndex, '✅ 已更新 Leads Profile');
+      SpreadsheetApp.flush();
+      console.log('已將面向1和面向2添加到 Leads Profile');
     }
-    
-    // 逐個填入切入點
+
+    // 再逐個填入切入點
     sheet.getRange(rowIndex, COLUMNS.MAIL_ANGLE_1 + 1).setValue(mailAngles.angle1);
     SheetService.updateInfo(sheet, rowIndex, '✅ 第1個郵件切入點已生成');
     SpreadsheetApp.flush();
-    
+
     sheet.getRange(rowIndex, COLUMNS.MAIL_ANGLE_2 + 1).setValue(mailAngles.angle2);
     sheet.getRange(rowIndex, COLUMNS.MAIL_ANGLE_3 + 1).setValue(mailAngles.angle3);
     SheetService.updateInfo(sheet, rowIndex, '✅ 所有郵件切入點已生成');
