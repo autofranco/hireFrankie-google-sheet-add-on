@@ -70,7 +70,7 @@ const APIService = {
       const responseText = response.getContentText();
 
       console.log('Firebase Function 回應狀態:', responseCode);
-      console.log('Firebase Function 回應內容:', responseText.substring(0, 200) + '...');
+      console.log('Firebase Function 完整回應內容:', responseText);
 
       if (responseCode !== 200) {
         let errorMessage = `HTTP ${responseCode}`;
