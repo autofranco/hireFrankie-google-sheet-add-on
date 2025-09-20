@@ -66,8 +66,11 @@ const ContentGenerator = {
   /**
    * 生成三个信件切入点 - 改进版本
    */
-  generateMailAngles(leadsProfile, firstName) {
-    const prompt = `# 我方舉辦的活動資訊:{seminar brief}
+  generateMailAngles(leadsProfile, firstName, position) {
+    const userInfo = UserInfoService.getUserInfo();
+    const seminarBrief = userInfo.seminarBrief || '';
+
+    const prompt = `# 我方舉辦的活動資訊: ${seminarBrief}
 # 參與活動的客戶方資訊:
 客戶姓名：${firstName}
 客戶職位：${position}
@@ -78,15 +81,15 @@ const ContentGenerator = {
 三個切入點應該根據客戶本人選擇最在意的痛點與對他影響最大的地方。
 請嚴格按照以下格式回答，每個切入點獨立成段：
 
-<aspect1> 職權與挑戰：[100字內：決策權力和關注重點與此職位常見的痛點]
+<aspect1> 職權與挑戰：100字內，決策權力和關注重點與此職位常見的痛點
 
-<aspect2> 參與動機與溝通策略：[100字內：客戶參加本研習活動的可能需求，以及最適合的接觸方式和價值主張]
+<aspect2> 參與動機與溝通策略：100字內，客戶參加本研習活動的可能需求，以及活動後最適合的追蹤方式和價值主張
 
-<angle1> 內容大綱：[50字內，包括價值主張、行動呼籲]
+<angle1> 內容大綱：50字內，包括價值主張、行動呼籲
 
-<angle2> 內容大綱：[50字內，包括價值主張、行動呼籲]
+<angle2> 內容大綱：50字內，包括價值主張、行動呼籲
 
-<angle3> 內容大綱：[50字內，包括價值主張、行動呼籲]
+<angle3> 內容大綱：50字內，包括價值主張、行動呼籲
  
 # 格式要求
 - 請用繁體中文回答，總字數必須控制在320~380個字
@@ -172,6 +175,7 @@ const ContentGenerator = {
   generateSingleFollowUpMail(leadsProfile, mailAngle, firstName, emailNumber) {
     try {
       const userInfo = UserInfoService.getUserInfo();
+      const seminarBrief = userInfo.seminarBrief || '';
       let promptField, emailPrompt;
       
       // 根據郵件編號選擇對應的提示詞

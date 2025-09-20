@@ -120,8 +120,9 @@ const RowProcessor = {
     const leadsProfile = sheet.getRange(rowIndex, COLUMNS.LEADS_PROFILE + 1).getValue();
     
     const mailAngles = ContentGenerator.generateMailAngles(
-      leadsProfile, 
-      row[COLUMNS.FIRST_NAME]
+      leadsProfile,
+      row[COLUMNS.FIRST_NAME],
+      row[COLUMNS.POSITION]
     );
     
 
