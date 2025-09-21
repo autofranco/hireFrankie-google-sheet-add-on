@@ -184,14 +184,14 @@ const ProcessingService = {
   },
 
   /**
-   * 並行處理一批次的資料
+   * 並行處理一批次的資料 - 使用真正的並行 API 調用
    * @param {GoogleAppsScript.Spreadsheet.Sheet} sheet
    * @param {Array} batchRows
    * @param {Array} batchRowIndexes
    * @returns {Object} 處理結果統計
    */
   processBatchConcurrently(sheet, batchRows, batchRowIndexes) {
-    console.log(`開始並行處理 ${batchRows.length} 筆資料...`);
+    console.log(`=== 開始真正並行處理 ${batchRows.length} 筆資料 ===`);
 
     // 立即將所有行狀態更新為 Processing
     batchRowIndexes.forEach(rowIndex => {
@@ -199,55 +199,280 @@ const ProcessingService = {
     });
     SpreadsheetApp.flush();
 
-    // 創建所有處理任務的 Promise 陣列
-    const processingPromises = batchRows.map((row, index) => {
-      const rowIndex = batchRowIndexes[index];
-
-      return new Promise((resolve, reject) => {
-        try {
-          console.log(`開始處理第 ${rowIndex} 行 (${row[COLUMNS.FIRST_NAME]})`);
-          const success = RowProcessor.processRow(sheet, row, rowIndex);
-          resolve({ success, rowIndex, row });
-        } catch (error) {
-          console.error(`處理第 ${rowIndex} 行時發生錯誤:`, error);
-          reject({ error, rowIndex, row });
-        }
-      });
-    });
-
-    // 使用 Promise.allSettled 確保所有任務都完成（無論成功或失敗）
-    const results = Promise.allSettled(processingPromises);
-
-    // 等待所有任務完成
     let successCount = 0;
     let errorCount = 0;
 
-    results.forEach((result, index) => {
-      const rowIndex = batchRowIndexes[index];
+    try {
+      // 檢查用戶付費狀態（只檢查一次）
+      APIService.checkUserPaymentStatus();
+      console.log('✅ 用戶付費狀態驗證通過');
 
-      if (result.status === 'fulfilled') {
-        if (result.value.success) {
-          successCount++;
-          console.log(`第 ${rowIndex} 行處理成功`);
-        } else {
+      // 第1階段：並行生成所有 Leads Profiles
+      console.log('第1階段：並行生成 Leads Profiles...');
+      const leadsProfilesData = this.generateLeadsProfilesConcurrently(sheet, batchRows, batchRowIndexes);
+
+      // 第2階段：並行生成所有 Mail Angles
+      console.log('第2階段：並行生成 Mail Angles...');
+      const mailAnglesData = this.generateMailAnglesConcurrently(sheet, batchRows, batchRowIndexes, leadsProfilesData);
+
+      // 第3階段：並行生成所有第一封郵件
+      console.log('第3階段：並行生成第一封郵件...');
+      const firstMailsData = this.generateFirstMailsConcurrently(sheet, batchRows, batchRowIndexes, leadsProfilesData, mailAnglesData);
+
+      // 第4階段：設定排程和觸發器
+      console.log('第4階段：設定排程和觸發器...');
+      batchRows.forEach((row, index) => {
+        const rowIndex = batchRowIndexes[index];
+
+        try {
+          // 檢查所有階段是否成功
+          const leadsProfileSuccess = leadsProfilesData[index] && leadsProfilesData[index].success;
+          const mailAnglesSuccess = mailAnglesData[index] && mailAnglesData[index].success;
+          const firstMailSuccess = firstMailsData[index] && firstMailsData[index].success;
+
+          if (leadsProfileSuccess && mailAnglesSuccess && firstMailSuccess) {
+            // 設定排程和觸發器
+            RowProcessor.setupSchedules(sheet, row, rowIndex);
+            RowProcessor.setupEmailTriggers(sheet, row, rowIndex);
+            RowProcessor.setupRowFormatting(sheet, rowIndex);
+
+            // 記錄統計資料
+            StatisticsService.recordRowProcessing(
+              rowIndex,
+              leadsProfilesData[index],
+              mailAnglesData[index],
+              [firstMailsData[index]]
+            );
+
+            // 標記為已處理
+            SheetService.markRowProcessed(sheet, rowIndex);
+            SheetService.updateInfo(sheet, rowIndex, '🎉 完成！已設定所有郵件排程');
+            successCount++;
+            console.log(`第 ${rowIndex} 行處理成功`);
+          } else {
+            throw new Error('部分內容生成失敗');
+          }
+        } catch (error) {
+          console.error(`設定第 ${rowIndex} 行排程失敗:`, error);
+          SheetService.markRowError(sheet, rowIndex, error.message);
           errorCount++;
-          console.log(`第 ${rowIndex} 行處理失敗`);
         }
-      } else {
-        // Promise rejected
-        errorCount++;
-        const error = result.reason.error;
-        console.error(`第 ${rowIndex} 行處理失敗:`, error);
-        SheetService.markRowError(sheet, rowIndex, error.message);
-      }
-    });
+      });
 
-    console.log(`批次處理完成: 成功 ${successCount}，失敗 ${errorCount}`);
+      SpreadsheetApp.flush();
+
+    } catch (error) {
+      console.error('批次處理發生錯誤:', error);
+
+      // 如果並行處理失敗，回到逐一處理模式
+      console.log('回到逐一處理模式...');
+      batchRows.forEach((row, index) => {
+        const rowIndex = batchRowIndexes[index];
+        try {
+          const success = RowProcessor.processRow(sheet, row, rowIndex);
+          if (success) successCount++;
+        } catch (error) {
+          console.error(`處理第 ${rowIndex} 行失敗:`, error);
+          SheetService.markRowError(sheet, rowIndex, error.message);
+          errorCount++;
+        }
+      });
+    }
+
+    console.log(`=== 並行處理完成：成功 ${successCount}，失敗 ${errorCount} ===`);
 
     return {
       successCount,
       errorCount
     };
+  },
+
+  /**
+   * 第1階段：並行生成多個 Leads Profiles
+   */
+  generateLeadsProfilesConcurrently(sheet, batchRows, batchRowIndexes) {
+    try {
+      // 準備批次資料
+      const batchData = batchRows.map((row, index) => ({
+        companyUrl: row[COLUMNS.COMPANY_URL],
+        position: row[COLUMNS.POSITION],
+        firstName: row[COLUMNS.FIRST_NAME]
+      }));
+
+      // 更新狀態
+      batchRowIndexes.forEach(rowIndex => {
+        SheetService.updateInfo(sheet, rowIndex, '正在生成客戶畫像...');
+      });
+
+      // 批次生成
+      const results = ContentGenerator.generateLeadsProfilesBatch(batchData);
+
+      // 填入工作表
+      results.forEach((result, index) => {
+        const rowIndex = batchRowIndexes[index];
+        if (result.success) {
+          sheet.getRange(rowIndex, COLUMNS.LEADS_PROFILE + 1).setValue(result.content);
+          SheetService.updateInfo(sheet, rowIndex, '✅ 客戶畫像已生成');
+        } else {
+          SheetService.updateInfo(sheet, rowIndex, `❌ 客戶畫像生成失敗: ${result.error}`);
+        }
+      });
+
+      SpreadsheetApp.flush();
+      return results;
+
+    } catch (error) {
+      console.error('並行生成客戶畫像失敗:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * 第2階段：並行生成多個 Mail Angles
+   */
+  generateMailAnglesConcurrently(sheet, batchRows, batchRowIndexes, leadsProfilesData) {
+    try {
+      // 準備批次資料
+      const batchData = batchRows.map((row, index) => {
+        const leadsProfileResult = leadsProfilesData[index];
+        if (!leadsProfileResult || !leadsProfileResult.success) {
+          return null;
+        }
+
+        return {
+          leadsProfile: leadsProfileResult.content,
+          firstName: row[COLUMNS.FIRST_NAME],
+          position: row[COLUMNS.POSITION]
+        };
+      });
+
+      // 過濾掉空值
+      const validBatchData = batchData.filter(data => data !== null);
+      const validIndexes = batchData.map((data, index) => data !== null ? index : -1).filter(i => i !== -1);
+
+      if (validBatchData.length === 0) {
+        console.log('沒有有效的客戶畫像可用於生成郵件切入點');
+        return batchRows.map(() => ({ success: false, error: '客戶畫像生成失敗' }));
+      }
+
+      // 更新狀態
+      validIndexes.forEach(index => {
+        const rowIndex = batchRowIndexes[index];
+        SheetService.updateInfo(sheet, rowIndex, '正在生成郵件切入點...');
+      });
+
+      // 批次生成
+      const results = ContentGenerator.generateMailAnglesBatch(validBatchData);
+
+      // 填入工作表
+      const allResults = batchRows.map(() => ({ success: false, error: '跳過處理' }));
+
+      results.forEach((result, resultIndex) => {
+        const originalIndex = validIndexes[resultIndex];
+        const rowIndex = batchRowIndexes[originalIndex];
+
+        allResults[originalIndex] = result;
+
+        if (result.success) {
+          const mailAngles = result.content;
+
+          // 先將 aspect1 和 aspect2 添加到 Leads Profile 中
+          if (mailAngles.aspect1 && mailAngles.aspect2) {
+            const currentLeadsProfile = sheet.getRange(rowIndex, COLUMNS.LEADS_PROFILE + 1).getValue();
+            const updatedLeadsProfile = currentLeadsProfile +
+              '\n- 職權與挑戰：' + mailAngles.aspect1 +
+              '\n- 參與動機與溝通策略：' + mailAngles.aspect2;
+            sheet.getRange(rowIndex, COLUMNS.LEADS_PROFILE + 1).setValue(updatedLeadsProfile);
+          }
+
+          // 填入切入點
+          sheet.getRange(rowIndex, COLUMNS.MAIL_ANGLE_1 + 1).setValue(mailAngles.angle1);
+          sheet.getRange(rowIndex, COLUMNS.MAIL_ANGLE_2 + 1).setValue(mailAngles.angle2);
+          sheet.getRange(rowIndex, COLUMNS.MAIL_ANGLE_3 + 1).setValue(mailAngles.angle3);
+
+          SheetService.updateInfo(sheet, rowIndex, '✅ 所有郵件切入點已生成');
+        } else {
+          SheetService.updateInfo(sheet, rowIndex, `❌ 郵件切入點生成失敗: ${result.error}`);
+        }
+      });
+
+      SpreadsheetApp.flush();
+      return allResults;
+
+    } catch (error) {
+      console.error('並行生成郵件切入點失敗:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * 第3階段：並行生成多封第一封郵件
+   */
+  generateFirstMailsConcurrently(sheet, batchRows, batchRowIndexes, leadsProfilesData, mailAnglesData) {
+    try {
+      // 準備批次資料
+      const batchData = batchRows.map((row, index) => {
+        const leadsProfileResult = leadsProfilesData[index];
+        const mailAnglesResult = mailAnglesData[index];
+
+        if (!leadsProfileResult || !leadsProfileResult.success ||
+            !mailAnglesResult || !mailAnglesResult.success) {
+          return null;
+        }
+
+        // 從工作表取得更新後的 Leads Profile（包含 aspect1 和 aspect2）
+        const rowIndex = batchRowIndexes[index];
+        const updatedLeadsProfile = sheet.getRange(rowIndex, COLUMNS.LEADS_PROFILE + 1).getValue();
+
+        return {
+          leadsProfile: updatedLeadsProfile,
+          mailAngle: mailAnglesResult.content.angle1,
+          firstName: row[COLUMNS.FIRST_NAME]
+        };
+      });
+
+      // 過濾掉空值
+      const validBatchData = batchData.filter(data => data !== null);
+      const validIndexes = batchData.map((data, index) => data !== null ? index : -1).filter(i => i !== -1);
+
+      if (validBatchData.length === 0) {
+        console.log('沒有有效的切入點可用於生成第一封郵件');
+        return batchRows.map(() => ({ success: false, error: '前階段生成失敗' }));
+      }
+
+      // 更新狀態
+      validIndexes.forEach(index => {
+        const rowIndex = batchRowIndexes[index];
+        SheetService.updateInfo(sheet, rowIndex, '正在生成第1封追蹤郵件...');
+      });
+
+      // 批次生成
+      const results = ContentGenerator.generateFirstMailsBatch(validBatchData);
+
+      // 填入工作表
+      const allResults = batchRows.map(() => ({ success: false, error: '跳過處理' }));
+
+      results.forEach((result, resultIndex) => {
+        const originalIndex = validIndexes[resultIndex];
+        const rowIndex = batchRowIndexes[originalIndex];
+
+        allResults[originalIndex] = result;
+
+        if (result.success) {
+          sheet.getRange(rowIndex, COLUMNS.FOLLOW_UP_1 + 1).setValue(result.content);
+          SheetService.updateInfo(sheet, rowIndex, '✅ 第1封追蹤郵件已生成');
+        } else {
+          SheetService.updateInfo(sheet, rowIndex, `❌ 第一封郵件生成失敗: ${result.error}`);
+        }
+      });
+
+      SpreadsheetApp.flush();
+      return allResults;
+
+    } catch (error) {
+      console.error('並行生成第一封郵件失敗:', error);
+      throw error;
+    }
   },
 
   /**

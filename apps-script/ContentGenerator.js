@@ -313,6 +313,265 @@ Mail Angle: ${mailAngle}
       console.error('生成研習活動簡介失敗:', error);
       throw new Error(`生成研習活動簡介失敗: ${error.message}`);
     }
+  },
+
+  /**
+   * 批次生成多個潛在客戶畫像
+   * @param {Array} batchData - 批次資料陣列，每個元素包含 companyUrl, position, firstName
+   * @returns {Array} 生成結果陣列
+   */
+  generateLeadsProfilesBatch(batchData) {
+    try {
+      console.log(`開始批次生成 ${batchData.length} 個客戶畫像...`);
+
+      // 檢查用戶付費狀態
+      APIService.checkUserPaymentStatus();
+
+      // 獲取研習活動簡介資訊
+      const userInfo = UserInfoService.getUserInfo();
+      const seminarBrief = userInfo.seminarBrief || '';
+
+      // 準備所有 API 請求
+      const requests = batchData.map((data, index) => {
+        const prompt = `# 參與活動的客戶方資訊
+客戶公司：${data.companyUrl}
+
+# 任務
+請分析客戶公司背景，並嚴格用此格式輸出：
+- 規模:
+- 業務特色:
+- 近期公司活動:
+- 近期產業新聞:
+
+# 格式要求
+- 總字數必須控制在170~200字，用繁體中文回答
+- 簡潔的段落表達，避免冗長描述
+- 嚴禁生成不存在的公司、品牌、解決方案、產品、案例、數據，只能使用搜尋結果的資訊
+- 不使用 Markdown 或 HTML 格式，用「」符號強調重點`;
+
+        return {
+          prompt: prompt,
+          provider: 'perplexity',
+          model: 'sonar-pro'
+        };
+      });
+
+      // 批次調用 API
+      const responses = APIService.callLLMAPIBatch(requests);
+
+      // 處理回應結果
+      const results = responses.map((response, index) => {
+        if (response.success) {
+          const cleanedContent = this.cleanMarkdownForSheets(response.result.content);
+          console.log(`客戶畫像 ${index + 1} 生成成功 (${cleanedContent.length} 字符)`);
+
+          return {
+            success: true,
+            content: cleanedContent,
+            provider: response.result.provider,
+            model: response.result.model,
+            usage: response.result.usage,
+            tracking: response.result.tracking
+          };
+        } else {
+          console.error(`客戶畫像 ${index + 1} 生成失敗:`, response.error);
+          return {
+            success: false,
+            error: response.error,
+            content: null
+          };
+        }
+      });
+
+      const successCount = results.filter(r => r.success).length;
+      console.log(`批次客戶畫像生成完成: 成功 ${successCount}/${batchData.length}`);
+
+      return results;
+
+    } catch (error) {
+      console.error('批次生成客戶畫像失敗:', error);
+      throw new Error(`批次生成客戶畫像失敗: ${error.message}`);
+    }
+  },
+
+  /**
+   * 批次生成多個郵件切入點
+   * @param {Array} batchData - 批次資料陣列，每個元素包含 leadsProfile, firstName, position
+   * @returns {Array} 生成結果陣列
+   */
+  generateMailAnglesBatch(batchData) {
+    try {
+      console.log(`開始批次生成 ${batchData.length} 個郵件切入點...`);
+
+      const userInfo = UserInfoService.getUserInfo();
+      const seminarBrief = userInfo.seminarBrief || '';
+
+      // 準備所有 API 請求
+      const requests = batchData.map((data, index) => {
+        const prompt = `# 我方舉辦的活動資訊: ${seminarBrief}
+# 參與活動的客戶方資訊:
+客戶姓名：${data.firstName}
+客戶職位：${data.position}
+客戶公司資訊：${data.leadsProfile}
+# 任務
+基於以上我方活動與客戶方資訊，請協助分析並簡潔的生成以下2個面向和3個信件內容切入點。
+用戶已經參加過我方舉辦的活動，信件的目的是邀約客戶做後續的動作，信件切入點以研習活動的內容為主軸。
+三個切入點應該根據客戶本人選擇最在意的痛點與對他影響最大的地方。
+請嚴格按照以下格式回答，每個切入點獨立成段：
+
+<aspect1> (**職權與挑戰，100字內，決策權力和關注重點與此職位常見的痛點**)
+
+<aspect2> (**參與動機與溝通策略，100字內，客戶參加本研習活動的可能需求，以及活動後最適合的追蹤方式和價值主張**)
+
+<angle1> (**信件1內容大綱，50字內，包括價值主張、行動呼籲**)
+
+<angle2> (**信件2大綱，50字內，包括價值主張、行動呼籲**)
+
+<angle3> (**信件3大綱，50字內，包括價值主張、行動呼籲**)
+
+# 格式要求
+- 在parentheses()中被**包起來的說明文字不要輸出
+- 開頭必須要是 <aspect?> 或是 <angle?>
+- 請用繁體中文回答，總字數必須控制在320~380個字
+- 每個面向用簡潔的段落表達，避免冗長描述
+- 嚴禁生成不存在的公司、品牌、解決方案、產品、案例、數據，只能使用上述的資訊
+- 不使用 Markdown 格式，用「」符號強調重點`;
+
+        return {
+          prompt: prompt,
+          provider: 'gpt',
+          model: 'gpt-5-mini-2025-08-07'
+        };
+      });
+
+      // 批次調用 API
+      const responses = APIService.callLLMAPIBatch(requests);
+
+      // 處理回應結果
+      const results = responses.map((response, index) => {
+        if (response.success) {
+          const angles = this.parseMailAngles(response.result.content);
+          console.log(`郵件切入點 ${index + 1} 生成成功`);
+
+          return {
+            success: true,
+            content: angles,
+            provider: response.result.provider,
+            model: response.result.model,
+            usage: response.result.usage,
+            tracking: response.result.tracking
+          };
+        } else {
+          console.error(`郵件切入點 ${index + 1} 生成失敗:`, response.error);
+          return {
+            success: false,
+            error: response.error,
+            content: null
+          };
+        }
+      });
+
+      const successCount = results.filter(r => r.success).length;
+      console.log(`批次郵件切入點生成完成: 成功 ${successCount}/${batchData.length}`);
+
+      return results;
+
+    } catch (error) {
+      console.error('批次生成郵件切入點失敗:', error);
+      throw new Error(`批次生成郵件切入點失敗: ${error.message}`);
+    }
+  },
+
+  /**
+   * 批次生成多封第一封追蹤郵件
+   * @param {Array} batchData - 批次資料陣列，每個元素包含 leadsProfile, mailAngle, firstName
+   * @returns {Array} 生成結果陣列
+   */
+  generateFirstMailsBatch(batchData) {
+    try {
+      console.log(`開始批次生成 ${batchData.length} 封第一封追蹤郵件...`);
+
+      const userInfo = UserInfoService.getUserInfo();
+      const seminarBrief = userInfo.seminarBrief || '';
+      const emailPrompt = userInfo.email1Prompt;
+
+      // 準備所有 API 請求
+      const requests = batchData.map((data, index) => {
+        const prompt = `${emailPrompt}
+- 開場使用Leads Profile的資訊展現對客戶職位與其公司的了解
+- 內容要使用 Mail Angle 的角度切入，使用Leads Profile的資訊讓客戶感覺此封信件是專門為'他'和'他的公司'寫的
+
+# 客戶方資訊
+- 收件人: ${data.firstName}
+- Leads Profile : ${data.leadsProfile}
+
+# 我方舉辦的活動資訊
+${seminarBrief}
+
+# 信件切入點
+Mail Angle: ${data.mailAngle}
+
+# 輸出
+請按照以下格式提供：
+主旨：[郵件主旨]
+內容：[郵件正文]
+
+# 注意
+- 嚴禁生成不存在的公司、品牌、解決方案、產品、案例、數據，只能使用上的資訊。
+- 不要在信中提及客戶以外的個人姓名，只能提到公司名
+- 請不要使用任何 Markdown 格式（如 **粗體** 或 *斜體*），請使用純文字格式，可以用「」符號來強調重點內容。
+- 嚴禁輸出任何簽名、祝福或聯絡方式，只寫郵件正文內容`;
+
+        return {
+          prompt: prompt,
+          provider: 'gpt',
+          model: 'gpt-5-mini-2025-08-07'
+        };
+      });
+
+      // 批次調用 API
+      const responses = APIService.callLLMAPIBatch(requests);
+
+      // 處理回應結果
+      const results = responses.map((response, index) => {
+        if (response.success) {
+          let mailContent = response.result.content;
+
+          // 添加用戶簽名
+          const signature = UserInfoService.generateEmailSignature();
+          if (signature) {
+            mailContent += signature;
+          }
+
+          console.log(`第一封郵件 ${index + 1} 生成成功`);
+
+          return {
+            success: true,
+            content: mailContent,
+            provider: response.result.provider,
+            model: response.result.model,
+            usage: response.result.usage,
+            tracking: response.result.tracking
+          };
+        } else {
+          console.error(`第一封郵件 ${index + 1} 生成失敗:`, response.error);
+          return {
+            success: false,
+            error: response.error,
+            content: null
+          };
+        }
+      });
+
+      const successCount = results.filter(r => r.success).length;
+      console.log(`批次第一封郵件生成完成: 成功 ${successCount}/${batchData.length}`);
+
+      return results;
+
+    } catch (error) {
+      console.error('批次生成第一封郵件失敗:', error);
+      throw new Error(`批次生成第一封郵件失敗: ${error.message}`);
+    }
   }
 };
 

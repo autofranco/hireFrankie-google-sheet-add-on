@@ -306,6 +306,144 @@ const APIService = {
       console.error('檢查付費狀態錯誤:', error);
       throw error;
     }
+  },
+
+  /**
+   * 批次呼叫多個 LLM API (透過 Firebase Cloud Functions)
+   * 使用 UrlFetchApp.fetchAll() 實現真正的並行處理
+   *
+   * @function callLLMAPIBatch
+   * @param {Array} requests - API 請求陣列，每個元素包含 prompt, provider, model 等參數
+   * @returns {Array} API 回應結果陣列
+   */
+  callLLMAPIBatch(requests) {
+    if (!requests || !Array.isArray(requests) || requests.length === 0) {
+      throw new Error('批次請求陣列不能為空');
+    }
+
+    try {
+      console.log(`開始批次呼叫 ${requests.length} 個 LLM API...`);
+
+      // 獲取用戶的 Auth Token
+      const user = Session.getActiveUser();
+      if (!user.getEmail()) {
+        throw new Error('請先登入 Google 帳號才能使用 AI 服務');
+      }
+
+      const userEmail = user.getEmail();
+
+      // 準備所有 HTTP 請求
+      const httpRequests = requests.map((request, index) => {
+        // 檢查單個請求的有效性
+        if (!request.prompt || typeof request.prompt !== 'string' || request.prompt.trim().length === 0) {
+          throw new Error(`第 ${index + 1} 個請求的提示詞不能為空`);
+        }
+
+        const payload = {
+          email: userEmail,
+          prompt: request.prompt.trim(),
+          provider: request.provider || 'perplexity',
+          model: request.model || null,
+          temperature: request.temperature || 0.2,
+          maxTokens: request.maxTokens || 1000
+        };
+
+        return {
+          url: `${FIREBASE_CONFIG.functionsUrl}/callLLMAPI`,
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          payload: JSON.stringify({
+            data: payload
+          }),
+          muteHttpExceptions: true
+        };
+      });
+
+      console.log(`準備同時發送 ${httpRequests.length} 個 HTTP 請求...`);
+
+      // 使用 fetchAll 同時發送所有請求 - 這是真正的並行！
+      const startTime = new Date().getTime();
+      const responses = UrlFetchApp.fetchAll(httpRequests);
+      const endTime = new Date().getTime();
+
+      console.log(`批次 API 調用完成，耗時 ${(endTime - startTime) / 1000} 秒`);
+
+      // 處理所有回應
+      const results = responses.map((response, index) => {
+        const responseCode = response.getResponseCode();
+        const responseText = response.getContentText();
+
+        console.log(`API ${index + 1} 回應狀態: ${responseCode}`);
+
+        if (responseCode !== 200) {
+          let errorMessage = `HTTP ${responseCode}`;
+          try {
+            const errorData = JSON.parse(responseText);
+            errorMessage = errorData.error?.message || errorMessage;
+          } catch (e) {
+            errorMessage = responseText;
+          }
+
+          console.error(`API ${index + 1} 失敗:`, errorMessage);
+          return {
+            success: false,
+            error: errorMessage,
+            index: index
+          };
+        }
+
+        let responseData;
+        try {
+          responseData = JSON.parse(responseText);
+        } catch (e) {
+          console.error(`API ${index + 1} 回應格式錯誤:`, responseText);
+          return {
+            success: false,
+            error: 'AI 服務回應格式異常',
+            index: index
+          };
+        }
+
+        if (!responseData.result || !responseData.result.content) {
+          console.error(`API ${index + 1} 回應內容異常:`, responseText);
+          return {
+            success: false,
+            error: 'AI 服務暫時不可用',
+            index: index
+          };
+        }
+
+        const result = responseData.result;
+
+        // 記錄統計資訊
+        if (result.usage && result.tracking) {
+          console.log(`API ${index + 1} - ${result.provider}/${result.model}:`);
+          console.log(`  Input: ${result.usage.prompt_tokens || 0}, Output: ${result.usage.completion_tokens || 0}`);
+          console.log(`  Cost: NT$${result.tracking.cost_twd?.toFixed(4) || 0}, Duration: ${(result.tracking.duration_ms / 1000)?.toFixed(2) || 0}秒`);
+        }
+
+        return {
+          success: true,
+          result: result,
+          index: index
+        };
+      });
+
+      // 統計成功和失敗數量
+      const successCount = results.filter(r => r.success).length;
+      const errorCount = results.filter(r => !r.success).length;
+
+      console.log(`批次處理完成: 成功 ${successCount}，失敗 ${errorCount}`);
+
+      return results;
+
+    } catch (error) {
+      console.error('callLLMAPIBatch 錯誤:', error);
+      const errorMessage = error.message || error.toString() || '未知錯誤';
+      throw new Error(`批次 AI 服務調用失敗: ${errorMessage}`);
+    }
   }
 };
 
