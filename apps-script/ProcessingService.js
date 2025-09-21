@@ -130,23 +130,25 @@ const ProcessingService = {
   },
 
   /**
-   * 處理所有行
+   * 處理所有行 - 使用批次並行處理
    */
   processAllRows() {
     const sheet = SheetService.getMainSheet();
     const data = SheetService.getUnprocessedData(sheet);
-    
+
     if (data.rows.length === 0) {
       SpreadsheetApp.getUi().alert('沒有資料需要處理。\n\n請確保：\n1. 已設置表頭\n2. 已填入客戶資料\n3. 資料未被標記為已處理');
       return;
     }
-    
-    console.log(`找到 ${data.rows.length} 行待处理数据`);
-    
+
+    console.log(`找到 ${data.rows.length} 行待处理数据，將使用批次並行處理（每批次 10 筆）`);
+
     let processedCount = 0;
     let errorCount = 0;
-    
-    for (let i = 0; i < data.rows.length; i++) {
+    const batchSize = 10;
+
+    // 分批處理
+    for (let i = 0; i < data.rows.length; i += batchSize) {
       // 檢查是否有停止處理的標記
       if (this.shouldStopProcessing()) {
         console.log('檢測到停止處理標記，終止處理新行');
@@ -155,38 +157,97 @@ const ProcessingService = {
         PropertiesService.getScriptProperties().deleteProperty('stop_processing');
         break;
       }
-      
-      const row = data.rows[i];
-      const rowIndex = data.rowIndexes[i]; // 使用正確的行索引
-      
-      try {
-        console.log(`--- 处理第 ${i + 1}/${data.rows.length} 行 (Sheet行号: ${rowIndex}) ---`);
-        
-        // 立即更新狀態為 Processing
-        SheetService.updateStatus(sheet, rowIndex, 'Processing');
-        
-        // 处理单行数据
-        const success = RowProcessor.processRow(sheet, row, rowIndex);
-        if (success) {
-          processedCount++;
-          console.log(`第 ${rowIndex} 行处理成功`);
-        }
-        
-        // 每处理5行休息一下，避免API限制
-        if ((i + 1) % 5 === 0) {
-          console.log('休息2秒避免API限制...');
-          Utilities.sleep(2000);
-        }
-        
-      } catch (error) {
-        console.error(`处理第 ${rowIndex} 行时发生错误:`, error);
-        SheetService.markRowError(sheet, rowIndex, error.message);
-        errorCount++;
+
+      // 取得當前批次的資料
+      const batchRows = data.rows.slice(i, i + batchSize);
+      const batchRowIndexes = data.rowIndexes.slice(i, i + batchSize);
+
+      console.log(`--- 開始處理第 ${Math.floor(i/batchSize) + 1} 批次 (${batchRows.length} 筆資料) ---`);
+
+      // 並行處理當前批次
+      const batchResult = this.processBatchConcurrently(sheet, batchRows, batchRowIndexes);
+
+      processedCount += batchResult.successCount;
+      errorCount += batchResult.errorCount;
+
+      console.log(`第 ${Math.floor(i/batchSize) + 1} 批次完成: 成功 ${batchResult.successCount}，失敗 ${batchResult.errorCount}`);
+
+      // 批次間休息，避免API限制
+      if (i + batchSize < data.rows.length) {
+        console.log('批次間休息 5 秒避免 API 限制...');
+        Utilities.sleep(5000);
       }
     }
-    
+
     // 顯示完成結果
     this.showCompletionMessage(processedCount, errorCount);
+  },
+
+  /**
+   * 並行處理一批次的資料
+   * @param {GoogleAppsScript.Spreadsheet.Sheet} sheet
+   * @param {Array} batchRows
+   * @param {Array} batchRowIndexes
+   * @returns {Object} 處理結果統計
+   */
+  processBatchConcurrently(sheet, batchRows, batchRowIndexes) {
+    console.log(`開始並行處理 ${batchRows.length} 筆資料...`);
+
+    // 立即將所有行狀態更新為 Processing
+    batchRowIndexes.forEach(rowIndex => {
+      SheetService.updateStatus(sheet, rowIndex, 'Processing');
+    });
+    SpreadsheetApp.flush();
+
+    // 創建所有處理任務的 Promise 陣列
+    const processingPromises = batchRows.map((row, index) => {
+      const rowIndex = batchRowIndexes[index];
+
+      return new Promise((resolve, reject) => {
+        try {
+          console.log(`開始處理第 ${rowIndex} 行 (${row[COLUMNS.FIRST_NAME]})`);
+          const success = RowProcessor.processRow(sheet, row, rowIndex);
+          resolve({ success, rowIndex, row });
+        } catch (error) {
+          console.error(`處理第 ${rowIndex} 行時發生錯誤:`, error);
+          reject({ error, rowIndex, row });
+        }
+      });
+    });
+
+    // 使用 Promise.allSettled 確保所有任務都完成（無論成功或失敗）
+    const results = Promise.allSettled(processingPromises);
+
+    // 等待所有任務完成
+    let successCount = 0;
+    let errorCount = 0;
+
+    results.forEach((result, index) => {
+      const rowIndex = batchRowIndexes[index];
+
+      if (result.status === 'fulfilled') {
+        if (result.value.success) {
+          successCount++;
+          console.log(`第 ${rowIndex} 行處理成功`);
+        } else {
+          errorCount++;
+          console.log(`第 ${rowIndex} 行處理失敗`);
+        }
+      } else {
+        // Promise rejected
+        errorCount++;
+        const error = result.reason.error;
+        console.error(`第 ${rowIndex} 行處理失敗:`, error);
+        SheetService.markRowError(sheet, rowIndex, error.message);
+      }
+    });
+
+    console.log(`批次處理完成: 成功 ${successCount}，失敗 ${errorCount}`);
+
+    return {
+      successCount,
+      errorCount
+    };
   },
 
   /**
