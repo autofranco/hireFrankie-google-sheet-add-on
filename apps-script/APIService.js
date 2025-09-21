@@ -104,11 +104,22 @@ const APIService = {
         throw new Error('AI 服務暫時不可用，請稍後重試');
       }
 
-      // 記錄使用統計
+      // 記錄詳細的使用統計和追蹤資訊
       const result = responseData.result;
-      if (result.usage) {
-        console.log(`${result.provider} (${result.model}) 使用統計:`,
-          `input=${result.usage.prompt_tokens}, output=${result.usage.completion_tokens}, total=${result.usage.total_tokens}`);
+
+      // 顯示詳細的 API 調用統計
+      if (result.usage && result.tracking) {
+        console.log(`\n=== ${result.provider}/${result.model} API 調用統計 ===`);
+        console.log(`Input tokens: ${result.usage.prompt_tokens?.toLocaleString() || 0}`);
+        console.log(`Output tokens: ${result.usage.completion_tokens?.toLocaleString() || 0}`);
+        console.log(`Total tokens: ${result.usage.total_tokens?.toLocaleString() || 0}`);
+        console.log(`Cost: NT$${result.tracking.cost_twd?.toFixed(4) || 0}`);
+        console.log(`Duration: ${(result.tracking.duration_ms / 1000)?.toFixed(2) || 0}秒`);
+        console.log(`Tracking ID: ${result.tracking.trackingId || 'N/A'}`);
+        console.log('================================\n');
+      } else {
+        console.log(`${result.provider} (${result.model}) 基本統計:`,
+          `content=${result.content?.length || 0} chars`);
       }
 
       return result;

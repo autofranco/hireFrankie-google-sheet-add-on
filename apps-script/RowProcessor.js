@@ -12,9 +12,9 @@ const RowProcessor = {
     if (!this.validateRequiredFields(row, rowIndex)) {
       return false;
     }
-    
+
     console.log(`处理客户: ${row[COLUMNS.FIRST_NAME]} (${row[COLUMNS.EMAIL]})`);
-    
+
     try {
       // 檢查用戶付費狀態
       APIService.checkUserPaymentStatus();
@@ -23,26 +23,29 @@ const RowProcessor = {
       // 設置狀態下拉選單
       SheetService.setupStatusDropdown(sheet, rowIndex);
 
-      // Token 統計現在由 Firebase Cloud Functions 自動處理
+      // 執行所有處理步驟並收集統計資料
+      const leadProfileResult = this.generateLeadsProfile(sheet, row, rowIndex);
+      const mailAnglesResult = this.generateMailAngles(sheet, row, rowIndex);
+      const firstMailResult = this.generateFirstMail(sheet, row, rowIndex);
 
-      // 執行所有處理步驟（Seminar Brief 已在全域預處理中檢查，此處不重複檢查）
-      this.generateLeadsProfile(sheet, row, rowIndex);
-      this.generateMailAngles(sheet, row, rowIndex);
-      this.generateFirstMail(sheet, row, rowIndex);
       this.setupSchedules(sheet, row, rowIndex);
       this.setupEmailTriggers(sheet, row, rowIndex);
-      
+
       // 設定行格式（行高和文字換行）
       this.setupRowFormatting(sheet, rowIndex);
-      
+
+      // 記錄該行處理統計
+      const mails = [firstMailResult]; // 只有第一封郵件在初始處理時生成
+      StatisticsService.recordRowProcessing(rowIndex, leadProfileResult, mailAnglesResult, mails);
+
       // 標記為已處理
       SheetService.markRowProcessed(sheet, rowIndex);
       SheetService.updateInfo(sheet, rowIndex, '🎉 完成！已設定所有郵件排程');
       SpreadsheetApp.flush();
       console.log('邮件发送触发器设定成功');
-      
+
       return true;
-      
+
     } catch (error) {
       console.error(`处理第 ${rowIndex} 行失败:`, error);
       throw error;
@@ -84,27 +87,25 @@ const RowProcessor = {
     console.log('步骤1: 生成客户画像...');
     SheetService.updateInfo(sheet, rowIndex, '正在生成客戶畫像...');
     SpreadsheetApp.flush();
-    
-    // Token 統計現在由 Firebase Cloud Functions 自動處理
-    
-    const leadsProfile = ContentGenerator.generateLeadsProfile(
-      row[COLUMNS.COMPANY_URL], 
+
+    const result = ContentGenerator.generateLeadsProfile(
+      row[COLUMNS.COMPANY_URL],
       row[COLUMNS.POSITION],
       null, // resourceUrl 不再使用，改用 seminar brief
       row[COLUMNS.FIRST_NAME]
     );
-    
-    if (!leadsProfile || leadsProfile.length < 50) {
+
+    if (!result.content || result.content.length < 50) {
       throw new Error('客戶畫像生成失敗或內容過短');
     }
-    
+
     // 立即填入客戶畫像
-    sheet.getRange(rowIndex, COLUMNS.LEADS_PROFILE + 1).setValue(leadsProfile);
+    sheet.getRange(rowIndex, COLUMNS.LEADS_PROFILE + 1).setValue(result.content);
     SheetService.updateInfo(sheet, rowIndex, '✅ 客戶畫像已生成');
     SpreadsheetApp.flush();
-    console.log(`客户画像生成成功 (${leadsProfile.length} 字符)`);
-    
-    return leadsProfile;
+    console.log(`客户画像生成成功 (${result.content.length} 字符)`);
+
+    return result;
   },
 
   /**
@@ -114,17 +115,16 @@ const RowProcessor = {
     console.log('步骤2: 生成邮件切入点...');
     SheetService.updateInfo(sheet, rowIndex, '正在生成郵件切入點...');
     SpreadsheetApp.flush();
-    
-    // Token 統計現在由 Firebase Cloud Functions 自動處理
-    
+
     const leadsProfile = sheet.getRange(rowIndex, COLUMNS.LEADS_PROFILE + 1).getValue();
-    
-    const mailAngles = ContentGenerator.generateMailAngles(
+
+    const result = ContentGenerator.generateMailAngles(
       leadsProfile,
       row[COLUMNS.FIRST_NAME],
       row[COLUMNS.POSITION]
     );
-    
+
+    const mailAngles = result.content;
 
     // 先將 aspect1 和 aspect2 添加到 Leads Profile 中
     if (mailAngles.aspect1 && mailAngles.aspect2) {
@@ -148,8 +148,8 @@ const RowProcessor = {
     sheet.getRange(rowIndex, COLUMNS.MAIL_ANGLE_3 + 1).setValue(mailAngles.angle3);
     SheetService.updateInfo(sheet, rowIndex, '✅ 所有郵件切入點已生成');
     SpreadsheetApp.flush();
-    
-    return mailAngles;
+
+    return result;
   },
 
   /**
@@ -159,30 +159,28 @@ const RowProcessor = {
     console.log('步骤3: 生成第1封追蹤郵件...');
     SheetService.updateInfo(sheet, rowIndex, '正在生成第1封追蹤郵件...');
     SpreadsheetApp.flush();
-    
-    // Token 統計現在由 Firebase Cloud Functions 自動處理
-    
+
     const leadsProfile = sheet.getRange(rowIndex, COLUMNS.LEADS_PROFILE + 1).getValue();
     const mailAngle1 = sheet.getRange(rowIndex, COLUMNS.MAIL_ANGLE_1 + 1).getValue();
-    
-    const firstMail = ContentGenerator.generateSingleFollowUpMail(
-      leadsProfile, 
-      mailAngle1, 
+
+    const result = ContentGenerator.generateSingleFollowUpMail(
+      leadsProfile,
+      mailAngle1,
       row[COLUMNS.FIRST_NAME],
       1
     );
-    
+
     // 验证邮件是否成功生成
-    if (firstMail.includes('生成第1封郵件失敗')) {
+    if (result.content.includes('生成第1封郵件失敗')) {
       throw new Error('第1封追蹤郵件生成失敗');
     }
-    
+
     // 填入第一封郵件內容
-    sheet.getRange(rowIndex, COLUMNS.FOLLOW_UP_1 + 1).setValue(firstMail);
+    sheet.getRange(rowIndex, COLUMNS.FOLLOW_UP_1 + 1).setValue(result.content);
     SheetService.updateInfo(sheet, rowIndex, '✅ 第1封追蹤郵件已生成');
     SpreadsheetApp.flush();
-    
-    return firstMail;
+
+    return result;
   },
 
   /**

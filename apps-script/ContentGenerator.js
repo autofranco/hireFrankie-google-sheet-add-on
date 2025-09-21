@@ -35,11 +35,17 @@ const ContentGenerator = {
 
       // 清理 Markdown 格式，使其適合 Google Sheets 顯示
       const cleanedResponse = this.cleanMarkdownForSheets(result.content);
-      return cleanedResponse;
+
+      // 返回包含統計資訊的完整結果
+      return {
+        content: cleanedResponse,
+        provider: result.provider,
+        model: result.model,
+        usage: result.usage,
+        tracking: result.tracking
+      };
     } catch (error) {
       console.error('生成客户画像失败:', error);
-      
-      
       throw new Error(`生成客戶畫像失敗: ${error.message}`);
     }
   },
@@ -107,8 +113,15 @@ const ContentGenerator = {
       // 改进的解析方法
       const angles = this.parseMailAngles(result.content);
       console.log('解析后的切入点:', angles);
-      
-      return angles;
+
+      // 返回包含統計資訊的完整結果
+      return {
+        content: angles,
+        provider: result.provider,
+        model: result.model,
+        usage: result.usage,
+        tracking: result.tracking
+      };
       
     } catch (error) {
       console.error('生成邮件切入点失败:', error);
@@ -232,9 +245,17 @@ Mail Angle: ${mailAngle}
       if (signature) {
         mailContent += signature;
       }
-      
+
       console.log(`第${emailNumber}封郵件生成成功`);
-      return mailContent;
+
+      // 返回包含統計資訊的完整結果
+      return {
+        content: mailContent,
+        provider: result.provider,
+        model: result.model,
+        usage: result.usage,
+        tracking: result.tracking
+      };
       
     } catch (error) {
       console.error(`生成第${emailNumber}封郵件失敗:`, error);
@@ -279,7 +300,14 @@ Mail Angle: ${mailAngle}
       // 立即儲存到工作表
       UserInfoService.updateSeminarBrief(cleanedResponse);
 
-      return cleanedResponse;
+      // 返回包含統計資訊的完整結果
+      return {
+        content: cleanedResponse,
+        provider: result.provider,
+        model: result.model,
+        usage: result.usage,
+        tracking: result.tracking
+      };
     } catch (error) {
       console.error('生成研習活動簡介失敗:', error);
       throw new Error(`生成研習活動簡介失敗: ${error.message}`);

@@ -11,11 +11,12 @@ const ProcessingService = {
     try {
       console.log('=== 开始执行 Auto Lead Warmer ===');
 
-      // Token 統計現在由 Firebase Cloud Functions 自動處理
-      
+      // 開始統計追蹤
+      StatisticsService.startRun();
+
       // 清除任何現有的停止標記（允許重新開始處理）
       this.clearStopFlag();
-      
+
       // 檢查並處理研習活動簡介
       if (!this.handleSeminarBrief()) {
         return; // 如果需要用戶輸入，停止執行
@@ -23,17 +24,19 @@ const ProcessingService = {
 
       // 清理觸發器並創建新的
       this.setupTriggers();
-      
+
       // 獲取並處理數據
       this.processAllRows();
-      
-      // Token 使用量統計現在由 Firebase Cloud Functions 自動處理
-      
+
+      // 結束統計追蹤並輸出報告
+      StatisticsService.endRun();
+
     } catch (error) {
       console.error('執行錯誤:', error);
       SpreadsheetApp.getUi().alert('執行錯誤', `發生未預期的錯誤: ${error.message}\n\n請檢查：\n1. API Key是否正確\n2. 網路連接是否正常\n3. 工作表格式是否正確`, SpreadsheetApp.getUi().ButtonSet.OK);
-      
-      // Token 使用量統計現在由 Firebase Cloud Functions 自動處理
+
+      // 即使發生錯誤也結束統計追蹤
+      StatisticsService.endRun();
     }
   },
 
@@ -79,10 +82,15 @@ const ProcessingService = {
         // 成功生成，提供用戶反饋但不停止執行
         console.log('研習活動簡介自動生成成功');
         SpreadsheetApp.getActiveSpreadsheet().toast(
-          '✅ 研習活動簡介已更新，將用於所有潛在客戶分析', 
-          '研習活動簡介生成完成', 
+          '✅ 研習活動簡介已更新，將用於所有潛在客戶分析',
+          '研習活動簡介生成完成',
           3
         );
+
+        // 記錄 Seminar Brief 統計（如果有新生成的簡介）
+        if (seminarResult.seminarBrief && typeof seminarResult.seminarBrief === 'object' && seminarResult.seminarBrief.tracking) {
+          StatisticsService.recordSeminarBrief(seminarResult.seminarBrief);
+        }
       }
     } catch (error) {
       console.error('檢查研習活動資訊時發生錯誤:', error);
