@@ -21,9 +21,11 @@ class TokenService {
   constructor() {
     /**
      * AI 模型價格配置（美金/百萬 tokens）
+     * 更新日期：2025-09-21
      * @type {Object}
      */
     this.pricing = {
+      // Legacy Perplexity models
       sonar: {
         input: 0.2,
         output: 0.2
@@ -31,14 +33,32 @@ class TokenService {
       sonarPro: {
         input: 1.0,
         output: 1.0
+      },
+      // New pricing table according to user requirements
+      'gemini-2.5-flash-lite': {
+        input: 0.10,
+        output: 0.40
+      },
+      'gpt-5-mini': {
+        input: 0.25,
+        output: 2.00
+      },
+      'gpt-4.1-mini': {
+        input: 0.40,
+        output: 1.60
+      },
+      'perplexity-sonar-pro': {
+        input: 3.00,
+        output: 15.00
       }
     };
 
     /**
      * 台幣匯率（美金對台幣）
+     * 更新匯率：30:1
      * @type {number}
      */
-    this.exchangeRate = 31.5;
+    this.exchangeRate = 30;
 
     /**
      * 步驟統計資料
@@ -76,7 +96,7 @@ class TokenService {
    *
    * @example
    * const cost = tokenService.calculateStepCost(1000, 500, 'sonar-pro');
-   * console.log(`成本: NT$${cost.toFixed(2)}`);
+   * console.log(`成本: NT$${cost.toFixed(4)}`);
    */
   calculateStepCost(inputTokens, outputTokens, model = 'sonar-pro') {
     const modelKey = model === 'sonar-pro' ? 'sonarPro' : 'sonar';
@@ -176,13 +196,13 @@ class TokenService {
    *
    * @example
    * const result = tokenService.logTokenUsage('sonar-pro', 1000, 500);
-   * console.log(`成本: NT$${result.cost.toFixed(2)}`);
+   * console.log(`成本: NT$${result.cost.toFixed(4)}`);
    */
   logTokenUsage(model, inputTokens, outputTokens) {
     const cost = this.calculateStepCost(inputTokens, outputTokens, model);
 
     console.log(`記錄 ${model} 使用: input=${inputTokens}, output=${outputTokens} tokens`);
-    console.log(`成本: NT$${cost.toFixed(2)}`);
+    console.log(`成本: NT$${cost.toFixed(4)}`);
 
     return {
       model,
@@ -258,13 +278,191 @@ class TokenService {
     };
 
     console.log('\n=== Token 使用統計總結 ===');
-    console.log(`研習活動簡介: NT$${this.stepStats.seminarBrief.cost.toFixed(2)} (${this.stepStats.seminarBrief.time.toFixed(1)}s)`);
-    console.log(`潛客處理: NT$${this.stepStats.leadProcessing.cost.toFixed(2)} (${this.stepStats.leadProcessing.time.toFixed(1)}s)`);
-    console.log(`郵件生成: NT$${this.stepStats.mailGeneration.cost.toFixed(2)} (${this.stepStats.mailGeneration.time.toFixed(1)}s)`);
-    console.log(`總計: NT$${totalCost.toFixed(2)} (${totalTime.toFixed(1)}s)`);
+    console.log(`研習活動簡介: NT$${this.stepStats.seminarBrief.cost.toFixed(4)} (${this.stepStats.seminarBrief.time.toFixed(1)}s)`);
+    console.log(`潛客處理: NT$${this.stepStats.leadProcessing.cost.toFixed(4)} (${this.stepStats.leadProcessing.time.toFixed(1)}s)`);
+    console.log(`郵件生成: NT$${this.stepStats.mailGeneration.cost.toFixed(4)} (${this.stepStats.mailGeneration.time.toFixed(1)}s)`);
+    console.log(`總計: NT$${totalCost.toFixed(4)} (${totalTime.toFixed(1)}s)`);
     console.log('========================\n');
 
     return summary;
+  }
+
+  /**
+   * 開始 API 呼叫追蹤
+   *
+   * 初始化特定 API 呼叫的時間追蹤。
+   * 記錄開始時間並準備追蹤該次 API 呼叫的成本和時間。
+   *
+   * @function startAPICall
+   * @param {string} apiName - API 名稱（如 'perplexity', 'gemini', 'gpt'）
+   * @param {string} model - 模型名稱（如 'sonar-pro', 'gemini-2.5-flash', 'gpt-5-mini'）
+   * @returns {Object} 追蹤會話物件，包含開始時間和追蹤 ID
+   *
+   * @example
+   * const tracker = tokenService.startAPICall('perplexity', 'sonar-pro');
+   * // ... 執行 API 呼叫
+   * const result = tokenService.endAPICall(tracker, usage);
+   */
+  startAPICall(apiName, model) {
+    const trackingId = `${apiName}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const tracker = {
+      trackingId,
+      apiName,
+      model,
+      startTime: Date.now(),
+      timestamp: new Date().toISOString()
+    };
+
+    console.log(`🚀 開始追蹤 ${apiName} API 呼叫 (模型: ${model}) [ID: ${trackingId}]`);
+    return tracker;
+  }
+
+  /**
+   * 結束 API 呼叫追蹤並計算費用
+   *
+   * 完成特定 API 呼叫的追蹤，計算執行時間和費用。
+   * 自動從 API response 的 usage 物件中提取 token 使用量並計算新台幣費用。
+   *
+   * @function endAPICall
+   * @param {Object} tracker - 由 startAPICall 返回的追蹤物件
+   * @param {Object} usage - API response 中的 usage 物件
+   * @param {number} usage.prompt_tokens - 輸入 token 數量
+   * @param {number} usage.completion_tokens - 輸出 token 數量
+   * @param {number} usage.total_tokens - 總 token 數量
+   * @returns {Object} 完整的追蹤統計結果
+   *
+   * @example
+   * const tracker = tokenService.startAPICall('gemini', 'gemini-2.5-flash');
+   * const apiResponse = await callGeminiAPI(prompt);
+   * const stats = tokenService.endAPICall(tracker, apiResponse.usage);
+   * console.log(`API 呼叫費用: NT$${stats.cost_twd}`);
+   */
+  endAPICall(tracker, usage) {
+    const endTime = Date.now();
+    const duration = endTime - tracker.startTime;
+
+    // 從 usage 物件提取 token 數量
+    const inputTokens = usage?.prompt_tokens || 0;
+    const outputTokens = usage?.completion_tokens || 0;
+    const totalTokens = usage?.total_tokens || (inputTokens + outputTokens);
+
+    // 計算費用
+    const cost = this.calculateCostFromUsage(usage, tracker.model);
+
+    const stats = {
+      trackingId: tracker.trackingId,
+      apiName: tracker.apiName,
+      model: tracker.model,
+      duration_ms: duration,
+      duration_s: (duration / 1000).toFixed(3),
+      cost_twd: parseFloat(cost.toFixed(4)),
+      input_tokens: inputTokens,
+      output_tokens: outputTokens,
+      total_tokens: totalTokens,
+      started_at: tracker.timestamp,
+      completed_at: new Date().toISOString()
+    };
+
+    // 記錄詳細統計
+    this.logAPICallStats(stats);
+
+    return stats;
+  }
+
+  /**
+   * 從 API usage 物件計算新台幣費用
+   *
+   * 根據 API response 中的 usage 物件和模型類型計算準確的新台幣費用。
+   * 自動識別模型並使用對應的價格表進行計算。
+   *
+   * @function calculateCostFromUsage
+   * @param {Object} usage - API response 中的 usage 物件
+   * @param {number} usage.prompt_tokens - 輸入 token 數量
+   * @param {number} usage.completion_tokens - 輸出 token 數量
+   * @param {string} model - AI 模型名稱
+   * @returns {number} 計算出的新台幣費用
+   *
+   * @example
+   * const usage = { prompt_tokens: 1000, completion_tokens: 500, total_tokens: 1500 };
+   * const cost = tokenService.calculateCostFromUsage(usage, 'gpt-5-mini');
+   * console.log(`費用: NT$${cost.toFixed(4)}`);
+   */
+  calculateCostFromUsage(usage, model) {
+    const inputTokens = usage?.prompt_tokens || 0;
+    const outputTokens = usage?.completion_tokens || 0;
+
+    // 模型名稱映射和價格查找
+    let modelKey = model;
+
+    // 處理模型名稱映射
+    if (model === 'sonar-pro' || model === 'perplexity-sonar-pro') {
+      modelKey = 'perplexity-sonar-pro';
+    } else if (model === 'gpt-5-mini-2025-08-07') {
+      modelKey = 'gpt-5-mini';
+    } else if (model === 'gpt-4.1-mini' || model === 'openai/gpt-4.1-mini-2025-04-14') {
+      modelKey = 'gpt-4.1-mini';
+    } else if (model === 'gemini-2.5-flash') {
+      modelKey = 'gemini-2.5-flash-lite';
+    }
+
+    // 查找價格配置
+    const pricing = this.pricing[modelKey];
+    if (!pricing) {
+      console.warn(`⚠️ 未找到模型 "${model}" (映射為 "${modelKey}") 的價格配置，使用預設價格`);
+      // 使用 Perplexity Sonar Pro 作為預設價格
+      const defaultPricing = this.pricing['perplexity-sonar-pro'];
+      const inputCost = (inputTokens / 1000000) * defaultPricing.input * this.exchangeRate;
+      const outputCost = (outputTokens / 1000000) * defaultPricing.output * this.exchangeRate;
+      return inputCost + outputCost;
+    }
+
+    // 計算費用：(tokens / 1,000,000) * 美金價格 * 匯率
+    const inputCost = (inputTokens / 1000000) * pricing.input * this.exchangeRate;
+    const outputCost = (outputTokens / 1000000) * pricing.output * this.exchangeRate;
+
+    return inputCost + outputCost;
+  }
+
+  /**
+   * 記錄 API 呼叫統計資訊
+   *
+   * 在 console 中輸出格式化的 API 呼叫統計資訊，
+   * 包含時間、費用、token 使用量等詳細資訊。
+   *
+   * @function logAPICallStats
+   * @param {Object} stats - API 呼叫統計物件
+   * @param {string} stats.apiName - API 名稱
+   * @param {string} stats.model - 模型名稱
+   * @param {number} stats.duration_ms - 執行時間（毫秒）
+   * @param {number} stats.cost_twd - 新台幣費用
+   * @param {number} stats.input_tokens - 輸入 token 數量
+   * @param {number} stats.output_tokens - 輸出 token 數量
+   * @returns {void}
+   *
+   * @example
+   * const stats = {
+   *   apiName: 'gemini',
+   *   model: 'gemini-2.5-flash',
+   *   duration_ms: 2340,
+   *   cost_twd: 12.50,
+   *   input_tokens: 1000,
+   *   output_tokens: 500
+   * };
+   * tokenService.logAPICallStats(stats);
+   */
+  logAPICallStats(stats) {
+    console.log('\n🏁 ===== API 呼叫統計 =====');
+    console.log(`📡 API: ${stats.apiName.toUpperCase()}`);
+    console.log(`🤖 模型: ${stats.model}`);
+    console.log(`⏱️ 執行時間: ${stats.duration_ms}ms (${stats.duration_s}s)`);
+    console.log(`💰 費用: NT$${stats.cost_twd.toFixed(4)}`);
+    console.log(`📥 輸入 tokens: ${stats.input_tokens.toLocaleString()}`);
+    console.log(`📤 輸出 tokens: ${stats.output_tokens.toLocaleString()}`);
+    console.log(`📊 總計 tokens: ${stats.total_tokens.toLocaleString()}`);
+    console.log(`🕐 開始時間: ${stats.started_at}`);
+    console.log(`🏁 完成時間: ${stats.completed_at}`);
+    console.log(`🆔 追蹤 ID: ${stats.trackingId}`);
+    console.log('========================\n');
   }
 
   /**

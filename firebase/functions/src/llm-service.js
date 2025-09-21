@@ -11,6 +11,7 @@
 
 const {onCall, onRequest, HttpsError} = require('firebase-functions/v2/https');
 const { GoogleGenAI } = require('@google/genai');
+const { tokenService } = require('./token-service');
 
 // 動態導入 node-fetch (ESM 模組)
 let fetch;
@@ -40,6 +41,10 @@ async function loadFetch() {
  * @returns {number} returns.usage.prompt_tokens - 輸入 Token 數量
  * @returns {number} returns.usage.completion_tokens - 輸出 Token 數量
  * @returns {number} returns.usage.total_tokens - 總 Token 數量
+ * @returns {Object} returns.tracking - API 呼叫追蹤資訊
+ * @returns {number} returns.tracking.duration_ms - 執行時間（毫秒）
+ * @returns {number} returns.tracking.cost_twd - 新台幣費用
+ * @returns {string} returns.tracking.trackingId - 追蹤 ID
  * @throws {Error} API 金鑰未設定或 API 調用失敗時拋出錯誤
  *
  * @example
@@ -51,6 +56,9 @@ async function callPerplexityAPI(prompt, temperature = 0.2, maxTokens = 5000) {
   if (!apiKey) {
     throw new Error('PERPLEXITY_API_KEY 環境變數未設定');
   }
+
+  // 開始追蹤 API 呼叫
+  const tracker = tokenService.startAPICall('perplexity', 'sonar-pro');
 
   const payload = {
     model: "sonar-pro",
@@ -64,33 +72,54 @@ async function callPerplexityAPI(prompt, temperature = 0.2, maxTokens = 5000) {
     search_context_size: "high"
   };
 
-  const fetchFn = await loadFetch();
-  const response = await fetchFn('https://api.perplexity.ai/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(payload)
-  });
+  try {
+    const fetchFn = await loadFetch();
+    const response = await fetchFn('https://api.perplexity.ai/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('Perplexity API 錯誤:', response.status, errorText);
-    throw new Error(`Perplexity API 調用失敗: HTTP ${response.status}`);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Perplexity API 錯誤:', response.status, errorText);
+      throw new Error(`Perplexity API 調用失敗: HTTP ${response.status}`);
+    }
+
+    const responseData = await response.json();
+
+    // 記錄完整的原始 API 回應
+    console.log('=== Perplexity API 完整原始回應 ===');
+    console.log('時間戳記:', new Date().toISOString());
+    console.log('追蹤 ID:', tracker.trackingId);
+    console.log('完整回應內容:');
+    console.log(JSON.stringify(responseData, null, 2));
+    console.log('=== Perplexity API 原始回應結束 ===');
+
+    if (!responseData.choices || !responseData.choices[0] || !responseData.choices[0].message) {
+      console.error('Perplexity API 回應格式異常:', responseData);
+      throw new Error('Perplexity API 回應格式錯誤');
+    }
+
+    // 結束追蹤並計算費用
+    const usage = responseData.usage || { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
+    const tracking = tokenService.endAPICall(tracker, usage);
+
+    return {
+      content: responseData.choices[0].message.content,
+      usage: usage,
+      tracking: tracking
+    };
+  } catch (error) {
+    // 如果發生錯誤，仍然記錄追蹤資訊（但費用為 0）
+    const errorUsage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
+    const tracking = tokenService.endAPICall(tracker, errorUsage);
+    console.error('Perplexity API 追蹤錯誤:', tracking);
+    throw error;
   }
-
-  const responseData = await response.json();
-
-  if (!responseData.choices || !responseData.choices[0] || !responseData.choices[0].message) {
-    console.error('Perplexity API 回應格式異常:', responseData);
-    throw new Error('Perplexity API 回應格式錯誤');
-  }
-
-  return {
-    content: responseData.choices[0].message.content,
-    usage: responseData.usage || null
-  };
 }
 
 /**
@@ -107,7 +136,14 @@ async function callPerplexityAPI(prompt, temperature = 0.2, maxTokens = 5000) {
  * @param {number} [maxTokens=5000] - 最大回應 Token 數量（參考值）
  * @returns {Promise<Object>} API 回應結果
  * @returns {string} returns.content - AI 生成的回應內容
- * @returns {Object|null} returns.usage - Token 使用量統計（如果可用）
+ * @returns {Object} returns.usage - Token 使用量統計（實際或估算）
+ * @returns {number} returns.usage.prompt_tokens - 輸入 Token 數量
+ * @returns {number} returns.usage.completion_tokens - 輸出 Token 數量
+ * @returns {number} returns.usage.total_tokens - 總 Token 數量
+ * @returns {Object} returns.tracking - API 呼叫追蹤資訊
+ * @returns {number} returns.tracking.duration_ms - 執行時間（毫秒）
+ * @returns {number} returns.tracking.cost_twd - 新台幣費用
+ * @returns {string} returns.tracking.trackingId - 追蹤 ID
  * @throws {Error} API 金鑰未設定或 API 調用失敗時拋出錯誤
  *
  * @example
@@ -119,6 +155,9 @@ async function callGeminiAPI(prompt, model = 'gemini-2.5-flash', temperature = 0
   if (!apiKey) {
     throw new Error('GEMINI_API_KEY 環境變數未設定');
   }
+
+  // 開始追蹤 API 呼叫
+  const tracker = tokenService.startAPICall('gemini', model);
 
   try {
     // 初始化 GoogleGenAI 客戶端，從環境變數自動取得 API Key
@@ -141,19 +180,41 @@ async function callGeminiAPI(prompt, model = 'gemini-2.5-flash', temperature = 0
 
     console.log('Gemini API 調用成功');
 
+    // 記錄完整的原始 API 回應
+    console.log('=== Gemini API 完整原始回應 ===');
+    console.log('時間戳記:', new Date().toISOString());
+    console.log('追蹤 ID:', tracker.trackingId);
+    console.log('完整回應內容:');
+    console.log(JSON.stringify(response, null, 2));
+    console.log('=== Gemini API 原始回應結束 ===');
+
     // 檢查回應是否有效
     if (!response || !response.text) {
       console.error('Gemini API 回應格式異常:', response);
       throw new Error('Gemini API 回應格式錯誤：無法獲取文本內容');
     }
 
+    // 結束追蹤並計算費用
+    // 注意：Gemini SDK 可能不提供詳細的 usage 統計，需要估算
+    const estimatedUsage = response.usage || {
+      prompt_tokens: Math.ceil(prompt.length / 4), // 估算：約4字符=1token
+      completion_tokens: Math.ceil(response.text.length / 4),
+      total_tokens: Math.ceil((prompt.length + response.text.length) / 4)
+    };
+    const tracking = tokenService.endAPICall(tracker, estimatedUsage);
+
     return {
       content: response.text,
-      usage: response.usage || null // 如果 SDK 提供使用統計則包含
+      usage: estimatedUsage,
+      tracking: tracking
     };
 
   } catch (error) {
     console.error('Gemini API 調用失敗:', error);
+    // 如果發生錯誤，仍然記錄追蹤資訊（但費用為 0）
+    const errorUsage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
+    const tracking = tokenService.endAPICall(tracker, errorUsage);
+    console.error('Gemini API 追蹤錯誤:', tracking);
     throw new Error(`Gemini API 調用失敗: ${error.message}`);
   }
 }
@@ -171,7 +232,14 @@ async function callGeminiAPI(prompt, model = 'gemini-2.5-flash', temperature = 0
  * @param {string} [systemPrompt=''] - 系統提示詞（developer role）
  * @returns {Promise<Object>} API 回應結果
  * @returns {string} returns.content - AI 生成的回應內容
- * @returns {Object|null} returns.usage - Token 使用量統計
+ * @returns {Object} returns.usage - Token 使用量統計
+ * @returns {number} returns.usage.prompt_tokens - 輸入 Token 數量
+ * @returns {number} returns.usage.completion_tokens - 輸出 Token 數量
+ * @returns {number} returns.usage.total_tokens - 總 Token 數量
+ * @returns {Object} returns.tracking - API 呼叫追蹤資訊
+ * @returns {number} returns.tracking.duration_ms - 執行時間（毫秒）
+ * @returns {number} returns.tracking.cost_twd - 新台幣費用
+ * @returns {string} returns.tracking.trackingId - 追蹤 ID
  * @throws {Error} API 金鑰未設定或 API 調用失敗時拋出錯誤
  */
 async function callGPT5MiniAPI(prompt, systemPrompt = '') {
@@ -179,6 +247,9 @@ async function callGPT5MiniAPI(prompt, systemPrompt = '') {
   if (!apiKey) {
     throw new Error('OPENAI_API_KEY 環境變數未設定');
   }
+
+  // 開始追蹤 API 呼叫
+  const tracker = tokenService.startAPICall('gpt', 'gpt-5-mini-2025-08-07');
 
   try {
     // GPT-5-mini 的消息格式
@@ -240,18 +311,35 @@ async function callGPT5MiniAPI(prompt, systemPrompt = '') {
 
     console.log('GPT-5-mini API 調用成功');
 
+    // 記錄完整的原始 API 回應
+    console.log('=== GPT-5-mini API 完整原始回應 ===');
+    console.log('時間戳記:', new Date().toISOString());
+    console.log('追蹤 ID:', tracker.trackingId);
+    console.log('完整回應內容:');
+    console.log(JSON.stringify(responseData, null, 2));
+    console.log('=== GPT-5-mini API 原始回應結束 ===');
+
     if (!responseData.choices || !responseData.choices[0] || !responseData.choices[0].message) {
       console.error('GPT-5-mini API 回應格式異常:', responseData);
       throw new Error('GPT-5-mini API 回應格式錯誤');
     }
 
+    // 結束追蹤並計算費用
+    const usage = responseData.usage || { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
+    const tracking = tokenService.endAPICall(tracker, usage);
+
     return {
       content: responseData.choices[0].message.content,
-      usage: responseData.usage || null
+      usage: usage,
+      tracking: tracking
     };
 
   } catch (error) {
     console.error('GPT-5-mini API 調用失敗:', error);
+    // 如果發生錯誤，仍然記錄追蹤資訊（但費用為 0）
+    const errorUsage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
+    const tracking = tokenService.endAPICall(tracker, errorUsage);
+    console.error('GPT-5-mini API 追蹤錯誤:', tracking);
     throw new Error(`GPT-5-mini API 調用失敗: ${error.message}`);
   }
 }
@@ -270,7 +358,14 @@ async function callGPT5MiniAPI(prompt, systemPrompt = '') {
  * @param {number} [maxTokens=5000] - 最大回應 Token 數量
  * @returns {Promise<Object>} API 回應結果
  * @returns {string} returns.content - AI 生成的回應內容
- * @returns {Object|null} returns.usage - Token 使用量統計
+ * @returns {Object} returns.usage - Token 使用量統計
+ * @returns {number} returns.usage.prompt_tokens - 輸入 Token 數量
+ * @returns {number} returns.usage.completion_tokens - 輸出 Token 數量
+ * @returns {number} returns.usage.total_tokens - 總 Token 數量
+ * @returns {Object} returns.tracking - API 呼叫追蹤資訊
+ * @returns {number} returns.tracking.duration_ms - 執行時間（毫秒）
+ * @returns {number} returns.tracking.cost_twd - 新台幣費用
+ * @returns {string} returns.tracking.trackingId - 追蹤 ID
  * @throws {Error} API 金鑰未設定或 API 調用失敗時拋出錯誤
  */
 async function callGPT41MiniAPI(prompt, systemPrompt = '', temperature = 0.2, maxTokens = 5000) {
@@ -278,6 +373,9 @@ async function callGPT41MiniAPI(prompt, systemPrompt = '', temperature = 0.2, ma
   if (!apiKey) {
     throw new Error('OPENAI_API_KEY 環境變數未設定');
   }
+
+  // 開始追蹤 API 呼叫
+  const tracker = tokenService.startAPICall('gpt', 'gpt-4.1-mini');
 
   try {
     // GPT-4.1-mini 的消息格式
@@ -342,18 +440,35 @@ async function callGPT41MiniAPI(prompt, systemPrompt = '', temperature = 0.2, ma
 
     console.log('GPT-4.1-mini API 調用成功');
 
+    // 記錄完整的原始 API 回應
+    console.log('=== GPT-4.1-mini API 完整原始回應 ===');
+    console.log('時間戳記:', new Date().toISOString());
+    console.log('追蹤 ID:', tracker.trackingId);
+    console.log('完整回應內容:');
+    console.log(JSON.stringify(responseData, null, 2));
+    console.log('=== GPT-4.1-mini API 原始回應結束 ===');
+
     if (!responseData.choices || !responseData.choices[0] || !responseData.choices[0].message) {
       console.error('GPT-4.1-mini API 回應格式異常:', responseData);
       throw new Error('GPT-4.1-mini API 回應格式錯誤');
     }
 
+    // 結束追蹤並計算費用
+    const usage = responseData.usage || { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
+    const tracking = tokenService.endAPICall(tracker, usage);
+
     return {
       content: responseData.choices[0].message.content,
-      usage: responseData.usage || null
+      usage: usage,
+      tracking: tracking
     };
 
   } catch (error) {
     console.error('GPT-4.1-mini API 調用失敗:', error);
+    // 如果發生錯誤，仍然記錄追蹤資訊（但費用為 0）
+    const errorUsage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
+    const tracking = tokenService.endAPICall(tracker, errorUsage);
+    console.error('GPT-4.1-mini API 追蹤錯誤:', tracking);
     throw new Error(`GPT-4.1-mini API 調用失敗: ${error.message}`);
   }
 }
@@ -417,10 +532,16 @@ async function callGPTAPI(prompt, model = 'gpt-5-mini-2025-08-07', temperature =
  * @returns {string} returns.content - AI 生成的回應內容
  * @returns {string} returns.provider - 使用的供應商
  * @returns {string} returns.model - 使用的模型
- * @returns {Object|null} returns.usage - Token 使用量統計
+ * @returns {Object} returns.usage - Token 使用量統計
  * @returns {number} returns.usage.prompt_tokens - 輸入 Token 數量
  * @returns {number} returns.usage.completion_tokens - 輸出 Token 數量
  * @returns {number} returns.usage.total_tokens - 總 Token 數量
+ * @returns {Object} returns.tracking - API 呼叫追蹤資訊
+ * @returns {number} returns.tracking.duration_ms - 執行時間（毫秒）
+ * @returns {number} returns.tracking.cost_twd - 新台幣費用
+ * @returns {string} returns.tracking.trackingId - 追蹤 ID
+ * @returns {string} returns.tracking.apiName - API 名稱
+ * @returns {string} returns.tracking.model - 模型名稱
  *
  * @throws {HttpsError} invalid-argument - 提示詞為空或無效、供應商不支援
  * @throws {HttpsError} internal - API 金鑰未設定或服務錯誤
@@ -531,12 +652,14 @@ exports.callLLMAPI = onCall({
 
     // 5. 記錄使用統計
     console.log(`${provider} (${actualModel}) 使用統計:`, result.usage || '無使用資訊');
+    console.log(`${provider} (${actualModel}) 追蹤資訊:`, result.tracking || '無追蹤資訊');
 
     return {
       content: result.content,
       provider: provider,
       model: actualModel,
-      usage: result.usage
+      usage: result.usage,
+      tracking: result.tracking
     };
 
   } catch (error) {
