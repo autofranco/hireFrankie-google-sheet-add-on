@@ -301,10 +301,26 @@ const EmailService = {
         this.batchGenerateNextMails(needsGeneration);
       }
 
+      // 檢查退信狀態
+      console.log('開始檢查退信狀態...');
+      const bounceResult = BounceDetectionService.checkAllRunningLeadsForBounces();
+      if (bounceResult.bouncesFound > 0) {
+        console.log(`發現 ${bounceResult.bouncesFound} 個退信`);
+      }
+
+      // 更新統計資料到 R1/S1/T1
+      console.log('更新總覽統計資料...');
+      const statsResult = AnalyticsService.updateSummaryStatistics();
+      if (statsResult.success) {
+        console.log('統計資料更新成功');
+      } else {
+        console.error('統計資料更新失敗:', statsResult.error);
+      }
+
       console.log(`=== 全域郵件檢查完成 ===`);
       console.log(`檢查了 ${checkedCount} 個潛在客戶，發送了 ${sentCount} 封郵件`);
 
-      return { checked: checkedCount, sent: sentCount };
+      return { checked: checkedCount, sent: sentCount, bounceResult: bounceResult, statsResult: statsResult };
       
     } catch (error) {
       console.error('全域郵件檢查時發生錯誤:', error);

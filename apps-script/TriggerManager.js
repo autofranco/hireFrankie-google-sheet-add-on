@@ -228,6 +228,24 @@ const TriggerManager = {
 
 
   /**
+   * 清理退信檢測觸發器（退信檢測已整合至 checkAndSendMails 中）
+   */
+  cleanupBounceDetectionTriggers() {
+    const triggers = this.getAllTriggers();
+    let deletedCount = 0;
+
+    triggers.forEach(trigger => {
+      if (trigger.getHandlerFunction() === 'checkAllRunningLeadsForBounces') {
+        this.deleteTrigger(trigger);
+        console.log('已刪除多餘的退信檢測觸發器（已整合至全域觸發器）');
+        deletedCount++;
+      }
+    });
+
+    return deletedCount;
+  },
+
+  /**
    * 獲取觸發器統計資訊
    */
   getTriggerStats() {
@@ -235,13 +253,15 @@ const TriggerManager = {
     const globalTriggers = triggers.filter(t => t.getHandlerFunction() === 'checkAndSendMails').length;
     const replyTriggers = triggers.filter(t => t.getHandlerFunction() === 'checkAllRunningLeadsForReplies').length;
     const pixelTriggers = triggers.filter(t => t.getHandlerFunction() === 'checkPixelOpens').length;
+    const bounceTriggers = triggers.filter(t => t.getHandlerFunction() === 'checkAllRunningLeadsForBounces').length;
 
     return {
       total: triggers.length,
       globalTriggers,
       replyTriggers,
       pixelTriggers,
-      others: triggers.length - globalTriggers - replyTriggers - pixelTriggers
+      bounceTriggers,
+      others: triggers.length - globalTriggers - replyTriggers - pixelTriggers - bounceTriggers
     };
   }
 };

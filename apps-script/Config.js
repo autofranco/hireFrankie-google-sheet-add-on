@@ -25,7 +25,8 @@ const COLUMNS = {
   SCHEDULE_3: 13,   // N: 3rd mail schedule
   SEND_NOW: 14,     // O: send now 按鈕
   STATUS: 15,       // P: status 狀態
-  INFO: 16          // Q: info 詳細訊息 (原 Processed)
+  INFO: 16,         // Q: info 詳細訊息 (原 Processed)
+  BOUNCE_STATUS: 17 // R: 退信狀態 (bounce tracking)
 };
 
 // 其他配置常量
