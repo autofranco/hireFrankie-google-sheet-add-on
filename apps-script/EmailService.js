@@ -57,19 +57,85 @@ const EmailService = {
   sendEmail(email, firstName, content, subject, rowIndex = null, emailType = null) {
     // 使用 Utils 函數解析郵件內容
     const parsed = Utils.parseEmailContent(content);
-    
+
     const finalSubject = parsed.subject || subject || `來自業務團隊的訊息 - ${firstName}`;
-    const finalBody = parsed.body || content;
-    
-    // 發送郵件
-    GmailApp.sendEmail(email, finalSubject, finalBody);
-    
+    let finalBody = parsed.body || content;
+
+    // 如果有提供行索引和郵件類型，嵌入追蹤像素
+    if (rowIndex && emailType) {
+      finalBody = this.addPixelTracking(finalBody, rowIndex, emailType);
+    }
+
+    // 發送郵件（使用 HTML 格式支援像素追蹤）
+    GmailApp.sendEmail(email, finalSubject, '', {
+      htmlBody: finalBody
+    });
+
     // 記錄發送的郵件信息用於回復檢測
     if (rowIndex && emailType) {
       this.recordSentEmail(email, finalSubject, rowIndex, emailType);
     }
-    
+
     console.log(`郵件已發送: ${finalSubject} -> ${email}`);
+  },
+
+  /**
+   * 在郵件內容中添加追蹤像素
+   * @param {string} body - 郵件內容
+   * @param {number} rowIndex - 行索引
+   * @param {string} emailType - 郵件類型 (mail1, mail2, mail3)
+   * @returns {string} 包含追蹤像素的 HTML 郵件內容
+   */
+  addPixelTracking(body, rowIndex, emailType) {
+    try {
+      // 獲取當前 Spreadsheet ID
+      const spreadsheetId = SpreadsheetApp.getActiveSpreadsheet().getId();
+
+      // Firebase Functions 像素追蹤端點 URL
+      const pixelUrl = `https://asia-east1-auto-lead-warmer-mvp.cloudfunctions.net/pixelTracker?id=${spreadsheetId}&row=${rowIndex}&type=${emailType}`;
+
+      // 創建追蹤像素 HTML
+      const pixelHtml = `<img src="${pixelUrl}" width="1" height="1" style="display:none; visibility:hidden;" alt="">`;
+
+      // 將純文字內容轉換為 HTML 格式
+      let htmlBody = body;
+
+      // 如果內容不包含 HTML 標籤，進行基本的文字到 HTML 轉換
+      if (!body.includes('<html>') && !body.includes('<body>')) {
+        // 將換行符轉換為 <br> 標籤
+        htmlBody = body.replace(/\n/g, '<br>');
+
+        // 包裝在基本的 HTML 結構中
+        htmlBody = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+  ${htmlBody}
+  ${pixelHtml}
+</body>
+</html>`;
+      } else {
+        // 如果已經是 HTML 格式，在 </body> 前插入像素
+        if (htmlBody.includes('</body>')) {
+          htmlBody = htmlBody.replace('</body>', `  ${pixelHtml}\n</body>`);
+        } else {
+          // 如果沒有 </body> 標籤，直接在末尾添加
+          htmlBody += pixelHtml;
+        }
+      }
+
+      console.log(`已添加追蹤像素: ${emailType} -> Row ${rowIndex}`);
+      return htmlBody;
+
+    } catch (error) {
+      console.error('添加追蹤像素時發生錯誤:', error);
+      // 如果發生錯誤，返回原始內容，不影響郵件發送
+      return body;
+    }
   },
 
   /**

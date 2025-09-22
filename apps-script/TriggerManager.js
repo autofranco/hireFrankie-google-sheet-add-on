@@ -72,10 +72,10 @@ const TriggerManager = {
     try {
       // 檢查是否已存在回覆檢測觸發器
       const existingTriggers = this.getAllTriggers();
-      const replyTriggerExists = existingTriggers.some(trigger => 
+      const replyTriggerExists = existingTriggers.some(trigger =>
         trigger.getHandlerFunction() === 'checkAllRunningLeadsForReplies'
       );
-      
+
       if (!replyTriggerExists) {
         console.log('創建回覆檢測觸發器（每小時執行一次）');
         ScriptApp.newTrigger('checkAllRunningLeadsForReplies')
@@ -93,6 +93,33 @@ const TriggerManager = {
   },
 
   /**
+   * 創建像素追蹤觸發器（每小時執行一次）
+   */
+  createPixelTrackingTrigger() {
+    try {
+      // 檢查是否已存在像素追蹤觸發器
+      const existingTriggers = this.getAllTriggers();
+      const pixelTriggerExists = existingTriggers.some(trigger =>
+        trigger.getHandlerFunction() === 'checkPixelOpens'
+      );
+
+      if (!pixelTriggerExists) {
+        console.log('創建像素追蹤觸發器（每小時執行一次）');
+        ScriptApp.newTrigger('checkPixelOpens')
+          .timeBased()
+          .everyHours(1)
+          .create();
+        console.log('✅ 像素追蹤觸發器創建成功');
+      } else {
+        console.log('像素追蹤觸發器已存在');
+      }
+    } catch (error) {
+      console.error('創建像素追蹤觸發器時發生錯誤:', error);
+      throw new Error(`像素追蹤觸發器創建失敗: ${error.message}`);
+    }
+  },
+
+  /**
    * 刪除回覆檢測觸發器
    */
   deleteReplyDetectionTrigger() {
@@ -101,6 +128,19 @@ const TriggerManager = {
       if (trigger.getHandlerFunction() === 'checkAllRunningLeadsForReplies') {
         this.deleteTrigger(trigger);
         console.log('已刪除回覆檢測觸發器');
+      }
+    });
+  },
+
+  /**
+   * 刪除像素追蹤觸發器
+   */
+  deletePixelTrackingTrigger() {
+    const triggers = this.getAllTriggers();
+    triggers.forEach(trigger => {
+      if (trigger.getHandlerFunction() === 'checkPixelOpens') {
+        this.deleteTrigger(trigger);
+        console.log('已刪除像素追蹤觸發器');
       }
     });
   },
@@ -144,6 +184,16 @@ const TriggerManager = {
         console.log('刪除多餘的回覆檢測觸發器');
       }
     }
+
+    // 確保只有一個像素追蹤觸發器
+    const pixelTriggers = triggers.filter(t => t.getHandlerFunction() === 'checkPixelOpens');
+    if (pixelTriggers.length > 1) {
+      for (let i = 1; i < pixelTriggers.length; i++) {
+        this.deleteTrigger(pixelTriggers[i]);
+        deletedCount++;
+        console.log('刪除多餘的像素追蹤觸發器');
+      }
+    }
     
     if (deletedCount > 0) {
       console.log(`清理完成：刪除了 ${deletedCount} 個多餘觸發器`);
@@ -158,19 +208,20 @@ const TriggerManager = {
   deleteAllLeadWarmerTriggers() {
     const triggers = this.getAllTriggers();
     let deletedCount = 0;
-    
+
     triggers.forEach(trigger => {
       const handlerFunction = trigger.getHandlerFunction();
-      if (handlerFunction === 'checkAndSendMails' || 
+      if (handlerFunction === 'checkAndSendMails' ||
           handlerFunction === 'sendScheduledEmail' ||
           handlerFunction === 'checkAllRunningLeadsForReplies' ||
+          handlerFunction === 'checkPixelOpens' ||
           handlerFunction === 'onEdit') {
         this.deleteTrigger(trigger);
         console.log(`已刪除觸發器: ${handlerFunction}`);
         deletedCount++;
       }
     });
-    
+
     console.log(`總共刪除了 ${deletedCount} 個觸發器`);
     return deletedCount;
   },
@@ -183,12 +234,14 @@ const TriggerManager = {
     const triggers = this.getAllTriggers();
     const globalTriggers = triggers.filter(t => t.getHandlerFunction() === 'checkAndSendMails').length;
     const replyTriggers = triggers.filter(t => t.getHandlerFunction() === 'checkAllRunningLeadsForReplies').length;
-    
+    const pixelTriggers = triggers.filter(t => t.getHandlerFunction() === 'checkPixelOpens').length;
+
     return {
       total: triggers.length,
-      globalTriggers, 
+      globalTriggers,
       replyTriggers,
-      others: triggers.length - globalTriggers - replyTriggers
+      pixelTriggers,
+      others: triggers.length - globalTriggers - replyTriggers - pixelTriggers
     };
   }
 };

@@ -140,26 +140,45 @@ exports.getTokenSummary = getTokenSummary;
  */
 
 /**
+ * === Pixel Tracking Functions ===
+ *
+ * Gmail 像素追蹤功能，用於檢測收件者開信狀態
+ * 包含像素端點和開信記錄查詢 API
+ */
+
+/**
+ * 像素追蹤端點
+ * @see ./src/pixel-service.js#pixelTracker
+ */
+exports.pixelTracker = require('./src/pixel-service').pixelTracker;
+
+/**
+ * 獲取像素開信記錄
+ * @see ./src/pixel-service.js#getPixelOpens
+ */
+exports.getPixelOpens = require('./src/pixel-service').getPixelOpens;
+
+/**
  * === System Health Check Function ===
- * 
+ *
  * 系統健康狀態檢查端點，用於監控服務可用性
- * 
+ *
  * @function healthCheck
  * @async
  * @param {Object} req - Express 請求物件
  * @param {Object} res - Express 回應物件
- * 
+ *
  * @returns {Object} 健康狀態資訊
  * @returns {string} returns.status - 服務狀態 ('ok')
  * @returns {string} returns.timestamp - 當前 ISO 時間戳
  * @returns {string} returns.version - 服務版本號
  * @returns {string} returns.project - Firebase 專案 ID
  * @returns {string} returns.region - 部署區域
- * 
+ *
  * @example
  * // HTTP GET 請求
  * curl https://asia-east1-auto-lead-warmer-mvp.cloudfunctions.net/healthCheck
- * 
+ *
  * // 回應範例
  * {
  *   "status": "ok",

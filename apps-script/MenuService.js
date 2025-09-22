@@ -223,6 +223,55 @@ const MenuService = {
       console.error('手動測試回覆檢測失敗:', error);
       SpreadsheetApp.getUi().alert('測試失敗', `回覆檢測測試失敗: ${error.message}`, SpreadsheetApp.getUi().ButtonSet.OK);
     }
+  },
+
+  /**
+   * 手動測試像素追蹤功能
+   */
+  testPixelTrackingManually() {
+    try {
+      return PixelTrackingService.testPixelTracking();
+    } catch (error) {
+      console.error('測試像素追蹤功能時發生錯誤:', error);
+      SpreadsheetApp.getUi().alert('測試錯誤', `像素追蹤測試失敗：${error.message}`, SpreadsheetApp.getUi().ButtonSet.OK);
+      return { error: error.message };
+    }
+  },
+
+  /**
+   * 顯示像素追蹤統計
+   */
+  showPixelTrackingStats() {
+    try {
+      const stats = PixelTrackingService.getPixelTrackingStats();
+
+      let message = `📊 像素追蹤統計報告：\n\n`;
+
+      if (stats.error) {
+        message += `❌ 錯誤：${stats.error}`;
+      } else {
+        message += `📧 總發送數：${stats.totalRows} 個潛在客戶\n`;
+        message += `👀 已開信數：${stats.openedCount} 人\n`;
+        message += `💬 已回信數：${stats.repliedCount} 人\n`;
+        message += `📈 開信率：${stats.openRate}%\n\n`;
+
+        if (stats.totalRows > 0) {
+          const replyRate = (stats.repliedCount / stats.totalRows * 100).toFixed(1);
+          message += `💌 回信率：${replyRate}%`;
+        } else {
+          message += `尚無發送記錄`;
+        }
+      }
+
+      SpreadsheetApp.getUi().alert('像素追蹤統計', message, SpreadsheetApp.getUi().ButtonSet.OK);
+
+      return stats;
+
+    } catch (error) {
+      console.error('顯示像素追蹤統計時發生錯誤:', error);
+      SpreadsheetApp.getUi().alert('統計錯誤', `無法獲取像素追蹤統計：${error.message}`, SpreadsheetApp.getUi().ButtonSet.OK);
+      return { error: error.message };
+    }
   }
 };
 
@@ -249,4 +298,12 @@ function testGlobalEmailCheckManually() {
 
 function testReplyDetectionManually() {
   return MenuService.testReplyDetectionManually();
+}
+
+function testPixelTrackingManually() {
+  return MenuService.testPixelTrackingManually();
+}
+
+function showPixelTrackingStats() {
+  return MenuService.showPixelTrackingStats();
 }

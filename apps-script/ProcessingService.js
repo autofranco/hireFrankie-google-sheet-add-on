@@ -125,6 +125,12 @@ const ProcessingService = {
     } catch (error) {
       console.error('回覆檢測觸發器創建失敗，但繼續執行:', error);
     }
+
+    try {
+      TriggerManager.createPixelTrackingTrigger();
+    } catch (error) {
+      console.error('像素追蹤觸發器創建失敗，但繼續執行:', error);
+    }
     
     // onEdit 是 Google Sheets 內建的 simple trigger，無需手動創建
   },
