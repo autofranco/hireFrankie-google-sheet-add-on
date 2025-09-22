@@ -368,6 +368,17 @@ const MenuService = {
         message += `\n\n💡 說明：統計數據是基於 info 欄位的歷史記錄，檢查結果顯示的是新發現的開信/回覆`;
       }
 
+      // 更新統計儀表板
+      console.log('更新統計儀表板...');
+      const dashboardResult = AnalyticsService.updateSummaryStatistics();
+      if (dashboardResult.success) {
+        console.log('統計儀表板更新成功');
+        message += `\n\n📊 統計儀表板已更新 (請查看 R1/S1/T1 儲存格)`;
+      } else {
+        console.error('統計儀表板更新失敗:', dashboardResult.error);
+        message += `\n\n⚠️ 統計儀表板更新失敗`;
+      }
+
       ui.alert('開信與回覆檢查', message, ui.ButtonSet.OK);
 
       console.log('=== 開信與回覆檢查完成 ===');

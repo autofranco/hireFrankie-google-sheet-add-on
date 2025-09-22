@@ -73,7 +73,16 @@ function setupHeadersAndFormat() {
     // 然後執行格式化
     SheetService.formatAllLeadRows();
 
-    SpreadsheetApp.getUi().alert('✅ 初始設置完成！', '表頭設置和格式化已完成，可以開始使用 Auto Lead Warmer。', SpreadsheetApp.getUi().ButtonSet.OK);
+    // 初始化統計資料儀表板
+    console.log('初始化統計資料儀表板...');
+    const statsResult = AnalyticsService.updateSummaryStatistics();
+    if (statsResult.success) {
+      console.log('統計資料儀表板初始化成功');
+    } else {
+      console.error('統計資料儀表板初始化失敗:', statsResult.error);
+    }
+
+    SpreadsheetApp.getUi().alert('✅ 初始設置完成！', '表頭設置和格式化已完成，統計儀表板已初始化，可以開始使用 Auto Lead Warmer。', SpreadsheetApp.getUi().ButtonSet.OK);
 
   } catch (error) {
     console.error('初始設置和格式化失敗:', error);
