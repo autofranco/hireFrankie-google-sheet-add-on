@@ -1,30 +1,114 @@
-# Firebase Functions - HireFrankie Backend
+# CLAUDE.md - Auto Lead Warmer Firebase Backend
 
-> AI 驅動的潛在客戶分析和內容生成後端服務
+> **Documentation Version**: 2.0
+> **Last Updated**: 2025-09-22
+> **Project**: Auto Lead Warmer - Firebase Functions Backend
+> **Description**: AI-driven lead analysis and content generation backend services
+> **Features**: Multi-LLM API integration, user management, token tracking, decoupling architecture
 
-## 📋 項目概述
+This file provides essential guidance to Claude Code (claude.ai/code) when working with the Firebase Functions backend of the Auto Lead Warmer system.
 
-HireFrankie Firebase Functions 為 Auto Lead Warmer 系統提供強大的後端 AI 服務，包括多 LLM 供應商支持、用戶管理、Token 追蹤等核心功能。
+## 🚨 CRITICAL RULES - READ FIRST
 
-### 核心服務
-- 🤖 多 LLM API 統一調用 (Perplexity, Gemini, OpenAI)
-- 👥 用戶認證和使用量管理
-- 📊 Token 消耗統計和成本追蹤
-- 🔒 安全的 API 金鑰管理
-- 🌏 區域化部署 (asia-east1)
+> **⚠️ RULE ADHERENCE SYSTEM ACTIVE ⚠️**
+> **Claude Code must explicitly acknowledge these rules at task start**
+> **These rules override all other instructions and must ALWAYS be followed:**
 
-### 技術架構
-- **Runtime**: Node.js 20
-- **Framework**: Firebase Functions v2
-- **Authentication**: Apps Script JWT + 用戶驗證
-- **Storage**: Google Sheets (用戶數據)
-- **Monitoring**: Firebase Console + Stackdriver
+### 🔄 **RULE ACKNOWLEDGMENT REQUIRED**
+> **Before starting ANY task, Claude Code must respond with:**
+> "✅ CRITICAL RULES ACKNOWLEDGED - I will follow all prohibitions and requirements listed in CLAUDE.md"
+
+### ❌ ABSOLUTE PROHIBITIONS
+- **NEVER** create new files in root directory → use proper module structure
+- **NEVER** write output files directly to root directory → use designated output folders
+- **NEVER** create documentation files (.md) unless explicitly requested by user
+- **NEVER** use git commands with -i flag (interactive mode not supported)
+- **NEVER** use `find`, `grep`, `cat`, `head`, `tail`, `ls` commands → use Read, LS, Grep, Glob tools instead
+- **NEVER** create duplicate files (service_v2.js, enhanced_xyz.js, utils_new.js) → ALWAYS extend existing files
+- **NEVER** create multiple implementations of same concept → single source of truth
+- **NEVER** copy-paste code blocks → extract into shared utilities/functions
+- **NEVER** hardcode values that should be configurable → use config files/environment variables
+- **NEVER** use naming like enhanced_, improved_, new_, v2_ → extend original files instead
+- **NEVER** create tightly coupled modules → always design for decoupling
+- **NEVER** leave dead code → remove unused functions after changes
+- **NEVER** hardcode API keys → use environment variables and Firebase config
+
+### 📝 MANDATORY REQUIREMENTS
+- **COMMIT** after every completed task/phase - no exceptions
+- **GITHUB BACKUP** - Push to GitHub after every commit to maintain backup: `git push origin main`
+- **USE TASK AGENTS** for all long-running operations (>30 seconds) - Bash commands stop when context switches
+- **TODOWRITE** for complex tasks (3+ steps) → parallel agents → git checkpoints → test validation
+- **READ FILES FIRST** before editing - Edit/Write tools will fail if you didn't read the file first
+- **DEBT PREVENTION** - Before creating new files, check for existing similar functionality to extend
+- **SINGLE SOURCE OF TRUTH** - One authoritative implementation per feature/concept
+- **DECOUPLING** - Design all modules with clear interfaces and minimal dependencies
+- **CODE CLEANUP** - After changes, verify and remove any unused functions/imports
+- **ENVIRONMENT VARIABLES** - All API keys and secrets must use Firebase config
+- **ERROR HANDLING** - Comprehensive error handling for all API calls and operations
+
+### ⚡ EXECUTION PATTERNS
+- **PARALLEL TASK AGENTS** - Launch multiple Task agents simultaneously for maximum efficiency
+- **SYSTEMATIC WORKFLOW** - TodoWrite → Parallel agents → Git checkpoints → GitHub backup → Test validation
+- **GITHUB BACKUP WORKFLOW** - After every commit: `git push origin main` to maintain GitHub backup
+- **BACKGROUND PROCESSING** - ONLY Task agents can run true background operations
+
+### 🔍 MANDATORY PRE-TASK COMPLIANCE CHECK
+> **STOP: Before starting any task, Claude Code must explicitly verify ALL points:**
+
+**Step 1: Rule Acknowledgment**
+- [ ] ✅ I acknowledge all critical rules in CLAUDE.md and will follow them
+
+**Step 2: Task Analysis**
+- [ ] Will this create files in root? → If YES, use proper module structure instead
+- [ ] Will this take >30 seconds? → If YES, use Task agents not Bash
+- [ ] Is this 3+ steps? → If YES, use TodoWrite breakdown first
+- [ ] Am I about to use grep/find/cat? → If YES, use proper tools instead
+
+**Step 3: Technical Debt Prevention (MANDATORY SEARCH FIRST)**
+- [ ] **SEARCH FIRST**: Use Grep pattern="<functionality>.*<keyword>" to find existing implementations
+- [ ] **CHECK EXISTING**: Read any found files to understand current functionality
+- [ ] Does similar functionality already exist? → If YES, extend existing code
+- [ ] Am I creating a duplicate class/manager? → If YES, consolidate instead
+- [ ] Will this create multiple sources of truth? → If YES, redesign approach
+- [ ] Have I searched for existing implementations? → Use Grep/Glob tools first
+- [ ] Can I extend existing code instead of creating new? → Prefer extension over creation
+- [ ] Am I about to copy-paste code? → Extract to shared utility instead
+
+**Step 4: Decoupling Verification**
+- [ ] Does this create tight coupling between modules? → If YES, add abstraction layer
+- [ ] Are dependencies clearly defined? → If NO, create proper interfaces
+- [ ] Can this module be tested in isolation? → If NO, reduce dependencies
+- [ ] Am I directly accessing external APIs? → If YES, wrap in service layer
+
+**Step 5: Code Cleanup Planning**
+- [ ] What functions might become unused after this change?
+- [ ] Are there imports that will no longer be needed?
+- [ ] Can any existing code be simplified or removed?
+- [ ] Will this change make any utility functions obsolete?
+
+**Step 6: Session Management**
+- [ ] Is this a long/complex task? → If YES, plan context checkpoints
+- [ ] Have I been working >1 hour? → If YES, consider /compact or session break
+
+> **⚠️ DO NOT PROCEED until all checkboxes are explicitly verified**
 
 ---
 
-## 🏗️ 系統架構
+## 📋 PROJECT OVERVIEW
 
-### 服務分層
+Auto Lead Warmer Firebase Functions provides the AI-powered backend services for the lead nurturing automation system. It offers unified multi-LLM API integration, user management, token tracking, and pixel tracking services for the Google Apps Script frontend.
+
+### 🎯 **CORE SERVICES**
+- 🤖 **Multi-LLM API Integration**: Unified access to Perplexity, Gemini, and OpenAI services
+- 👥 **User Authentication & Management**: User verification and usage tracking
+- 📊 **Token Consumption Analytics**: Cost tracking and usage statistics
+- 🔒 **Secure API Key Management**: Environment-based configuration
+- 🌏 **Regional Deployment**: Optimized asia-east1 deployment
+- 📈 **Pixel Tracking**: Email open detection and analytics
+
+### 🏗️ **SYSTEM ARCHITECTURE**
+
+#### **Service Layer Architecture**
 ```
 ┌─────────────────────────────────────────┐
 │           Apps Script Client            │
@@ -41,88 +125,97 @@ HireFrankie Firebase Functions 為 Auto Lead Warmer 系統提供強大的後端 
 └─────────────────────────────────────────┘
 ```
 
-### API 架構模式
+#### **Technology Stack**
+- **Runtime**: Node.js 20
+- **Framework**: Firebase Functions v2
+- **Authentication**: Apps Script JWT + User verification
+- **Storage**: Google Sheets (user data), Firestore (pixel tracking)
+- **Monitoring**: Firebase Console + Stackdriver
+- **Region**: asia-east1 (optimized for Taiwan/Asia)
+
+### **API Architecture Pattern**
 ```javascript
-// 統一調用入口
+// Unified API call entry point
 exports.callLLMAPI = onCall({
   region: 'asia-east1',
   memory: '256MiB',
   timeoutSeconds: 120
 }, async (request) => {
-  // 用戶驗證 → 供應商路由 → API 調用 → 使用量追蹤
+  // User verification → Provider routing → API call → Usage tracking
 });
 ```
 
 ---
 
-## 📁 項目結構
+## 📁 PROJECT STRUCTURE
 
-### 🔧 核心文件
+### 🔧 **Core Configuration Files**
 ```
 firebase/
-├── firebase.json             # Firebase 項目配置
-├── .firebaserc              # 部署目標配置
-├── firestore.rules          # Firestore 安全規則（未使用）
-└── firestore.indexes.json   # Firestore 索引（未使用）
+├── firebase.json             # Firebase project configuration
+├── .firebaserc              # Deployment target configuration
+├── firestore.rules          # Firestore security rules
+└── firestore.indexes.json   # Firestore indexing configuration
 ```
 
-### 🎯 Functions 目錄
+### 🎯 **Functions Directory**
 ```
 functions/
-├── index.js                 # 主入口和函數導出
-├── package.json             # 依賴管理和腳本
-├── build.js                 # 構建腳本
-├── .env                     # 環境變數配置
-├── .mocharc.json           # 測試配置
-└── CLAUDE.md               # 本開發文檔
+├── index.js                 # Main entry point and function exports
+├── package.json             # Dependency management and scripts
+├── build.js                 # Build script
+├── .env                     # Environment variable configuration
+├── .mocharc.json           # Testing configuration
+└── CLAUDE.md               # This development documentation
 ```
 
-### 🧩 核心服務模組
+### 🧩 **Core Service Modules**
 ```
 src/
-├── llm-service.js           # LLM API 統一調用服務
-├── user-service.js          # 用戶管理和認證
-├── token-service.js         # Token 計算和追蹤
-└── cost-service.js          # 成本分析和報告
+├── llm-service.js           # LLM API unified calling service
+├── user-service.js          # User management and authentication
+├── token-service.js         # Token calculation and tracking
+├── cost-service.js          # Cost analysis and reporting
+└── pixel-service.js         # Email pixel tracking service
 ```
 
 ---
 
-## ⚙️ 開發環境設置
+## ⚙️ DEVELOPMENT ENVIRONMENT SETUP
 
-### 環境準備
+### **Environment Prerequisites**
 ```bash
-# 安裝 Firebase CLI
+# Install Firebase CLI
 npm install -g firebase-tools
 
-# 登入 Firebase
+# Authenticate with Firebase
 firebase login
 
-# 初始化項目
+# Initialize project
 firebase init functions
 
-# 切換到 functions 目錄
+# Switch to functions directory
 cd functions
 ```
 
-### 本地開發
+### **Local Development Workflow**
 ```bash
-# 安裝依賴
+# Install dependencies
 npm install
 
-# 本地模擬器運行
+# Run local emulator
 npm run serve
 
-# 運行測試
+# Run tests
 npm test
 
-# 測試覆蓋率
+# Generate test coverage
 npm run test:coverage
 ```
 
-### 環境變數配置
+### **Environment Variable Configuration**
 ```bash
-# 設置 API 金鑰
+# Set API keys using Firebase config
 firebase functions:config:set \
   perplexity.api_key="YOUR_KEY" \
   gemini.api_key="YOUR_KEY" \
@@ -131,158 +224,273 @@ firebase functions:config:set \
 
 ---
 
-## 🔌 API 服務詳解
+## 🔌 API SERVICE DOCUMENTATION
 
-### 1. 統一 LLM API 調用
+### **1. Unified LLM API Calling**
 ```javascript
 /**
- * 主要入口點 - 統一 LLM API 調用
+ * Main entry point - Unified LLM API calling
  * @param {Object} request.data
- * @param {string} request.data.prompt - AI 提示詞
- * @param {string} request.data.provider - 供應商 (perplexity|gemini|gpt)
- * @param {string} request.data.model - 模型名稱
- * @param {number} request.data.temperature - 創意程度 (0-2)
- * @param {number} request.data.maxTokens - 最大 Token 數
+ * @param {string} request.data.prompt - AI prompt
+ * @param {string} request.data.provider - Provider (perplexity|gemini|gpt)
+ * @param {string} request.data.model - Model name
+ * @param {number} request.data.temperature - Creativity level (0-2)
+ * @param {number} request.data.maxTokens - Maximum token count
  */
 exports.callLLMAPI = onCall({...}, async (request) => {
-  // 實現統一的 LLM 調用邏輯
+  // Unified LLM calling logic implementation
 });
 ```
 
-### 2. 供應商特定服務
+### **2. Provider-Specific Services**
 
-#### Perplexity API
+#### **Perplexity API Integration**
 ```javascript
-// 搜索增強生成，適合需要最新資訊的查詢
+// Search-enhanced generation, suitable for queries requiring latest information
 async function callPerplexityAPI(prompt, temperature = 0.2, maxTokens = 5000) {
-  // 使用 Sonar Pro 模型進行高精度推理
-  // 支援即時網路搜索
+  // Uses Sonar Pro model for high-precision inference
+  // Supports real-time web search
 }
 ```
 
-#### Google Gemini API
+#### **Google Gemini API Integration**
 ```javascript
-// 使用官方 @google/genai SDK
+// Uses official @google/genai SDK
 async function callGeminiAPI(prompt, model = 'gemini-2.5-flash') {
-  // 關閉 thinking 模式以加速回應
-  // 支援多模態輸入
+  // Thinking mode disabled for faster response
+  // Supports multimodal input
 }
 ```
 
-#### OpenAI API
+#### **OpenAI API Integration**
 ```javascript
-// 支援 GPT-5-mini 和 GPT-4.1-mini
+// Supports GPT-5-mini and GPT-4.1-mini
 async function callGPTAPI(prompt, model = 'gpt-5-mini-2025-08-07') {
-  // 自動路由到對應的 API 實現
-  // 處理不同模型的參數限制
+  // Auto-routes to corresponding API implementation
+  // Handles different model parameter limitations
 }
 ```
 
-### 3. 用戶管理服務
+### **3. User Management Services**
 ```javascript
 /**
- * 用戶認證和付費狀態檢查
+ * User authentication and payment status verification
  */
 exports.createUser = onCall({...}, async (request) => {
-  // 創建新用戶記錄
+  // Create new user record
 });
 
 exports.getUserInfo = onCall({...}, async (request) => {
-  // 獲取用戶資訊和使用量
+  // Get user information and usage statistics
 });
 
 exports.updateUserUsage = onCall({...}, async (request) => {
-  // 更新用戶 Token 使用量
+  // Update user token usage
 });
 ```
 
-### 4. 測試服務
+### **4. Pixel Tracking Services**
 ```javascript
-// 各供應商連接測試
-exports.testPerplexity = onCall({...}, testConnection);
-exports.testGemini = onCall({...}, testConnection);
-exports.testGPT5Mini = onCall({...}, testConnection);
+/**
+ * Email pixel tracking for open detection
+ */
+exports.pixelTracker = onRequest({...}, async (req, res) => {
+  // Handle pixel tracking requests and return 1x1 transparent GIF
+});
+
+exports.getPixelOpens = onCall({...}, async (request) => {
+  // Retrieve pixel open records for Apps Script
+});
 ```
 
 ---
 
-## 🔒 安全和權限管理
+## 🔄 **DECOUPLING PRINCIPLES**
 
-### 環境變數安全
+### **Service Layer Separation**
 ```javascript
-// 使用 Firebase Config 管理敏感資訊
-const apiKey = process.env.PERPLEXITY_API_KEY;
-if (!apiKey) {
-  throw new Error('API_KEY 環境變數未設定');
+// ✅ CORRECT: Decoupled service design
+class LLMService {
+  constructor(apiClients, tokenService, userService) {
+    this.apiClients = apiClients;
+    this.tokenService = tokenService;
+    this.userService = userService;
+  }
+
+  async callAPI(provider, prompt, options) {
+    // Clear interface, testable in isolation
+    const client = this.apiClients[provider];
+    return await client.call(prompt, options);
+  }
+}
+
+// ❌ WRONG: Tightly coupled direct access
+class LLMService {
+  async callAPI(provider, prompt) {
+    const apiKey = process.env.PERPLEXITY_API_KEY; // Direct env access
+    const response = await fetch('https://api.perplexity.ai/...'); // Direct API call
+  }
 }
 ```
 
-### 用戶認證流程
+### **Provider Abstraction**
 ```javascript
-// 1. 驗證來源（Apps Script）
+// ✅ CORRECT: Provider interface abstraction
+class ProviderInterface {
+  constructor(apiKey, config) {
+    this.apiKey = apiKey;
+    this.config = config;
+  }
+
+  async callAPI(prompt, options) {
+    // Abstract interface implementation
+  }
+
+  parseResponse(response) {
+    // Standardized response parsing
+  }
+}
+
+class PerplexityProvider extends ProviderInterface {
+  async callAPI(prompt, options) {
+    // Perplexity-specific implementation
+  }
+}
+```
+
+### **Configuration Management**
+```javascript
+// ✅ CORRECT: Centralized configuration
+class ConfigService {
+  static getAPIKey(provider) {
+    const config = functions.config();
+    return config[provider]?.api_key;
+  }
+
+  static getModelConfig(provider, model) {
+    return MODEL_CONFIGS[provider][model];
+  }
+}
+
+// ❌ WRONG: Scattered configuration
+const perplexityKey = process.env.PERPLEXITY_API_KEY; // Scattered across files
+const geminiKey = functions.config().gemini.api_key;  // Inconsistent access
+```
+
+---
+
+## 🧹 **CODE CLEANUP REQUIREMENTS**
+
+### **Post-Deployment Cleanup Checklist**
+```javascript
+// After making changes, ALWAYS verify:
+// 1. Are there unused function exports?
+// 2. Can any require() statements be removed?
+// 3. Are there obsolete utility functions?
+// 4. Can any environment variables be consolidated?
+
+// ✅ CORRECT: Clean up after refactoring
+// OLD: Separate functions for each provider
+exports.callPerplexityAPI = onCall({...}, async (request) => { /* ... */ });
+exports.callGeminiAPI = onCall({...}, async (request) => { /* ... */ });
+exports.callOpenAIAPI = onCall({...}, async (request) => { /* ... */ });
+
+// NEW: Unified function
+exports.callLLMAPI = onCall({...}, async (request) => { /* ... */ });
+// CLEANUP: Remove the three old function exports ← MANDATORY
+```
+
+### **Function Export Analysis**
+```javascript
+// Before removing any exported function, verify:
+// 1. Search Apps Script codebase for function calls
+// 2. Check if used in APIService.js
+// 3. Verify not used in testing code
+// 4. Confirm not referenced in documentation
+
+// Use Grep tool to search for function usage:
+// Grep(pattern="functionName", path="../apps-script", output_mode="files_with_matches")
+```
+
+---
+
+## 🔒 SECURITY & PERMISSIONS MANAGEMENT
+
+### **Environment Variable Security**
+```javascript
+// ✅ CORRECT: Use Firebase Config for sensitive information
+const apiKey = functions.config().perplexity.api_key;
+if (!apiKey) {
+  throw new Error('API_KEY environment variable not set');
+}
+```
+
+### **User Authentication Flow**
+```javascript
+// 1. Verify source (Apps Script)
 const { auth } = context;
 if (!auth || !auth.uid) {
-  throw new HttpsError('unauthenticated', '用戶未登入');
+  throw new HttpsError('unauthenticated', 'User not authenticated');
 }
 
-// 2. 檢查付費狀態
+// 2. Check payment status
 const userInfo = await getUserPaymentStatus(email);
 if (!userInfo.isPaid) {
-  throw new HttpsError('permission-denied', '需要付費訂閱');
+  throw new HttpsError('permission-denied', 'Paid subscription required');
 }
 ```
 
-### API 調用限制
+### **API Call Rate Limiting**
 ```javascript
-// Rate Limiting 和使用量控制
+// Rate limiting and usage control
 const dailyLimit = 10000; // Tokens per day
 if (currentUsage + requestTokens > dailyLimit) {
-  throw new HttpsError('resource-exhausted', '每日使用量已達上限');
+  throw new HttpsError('resource-exhausted', 'Daily usage limit exceeded');
 }
 ```
 
 ---
 
-## 📊 監控和日誌
+## 📊 MONITORING & LOGGING
 
-### 日誌策略
+### **Logging Strategy**
 ```javascript
-// 結構化日誌記錄
-console.log('=== LLM API 調用開始 ===');
-console.log('用戶:', email);
-console.log('供應商:', provider);
-console.log('模型:', model);
-console.log('提示詞長度:', prompt.length);
+// Structured logging
+console.log('=== LLM API Call Started ===');
+console.log('User:', email);
+console.log('Provider:', provider);
+console.log('Model:', model);
+console.log('Prompt length:', prompt.length);
 
-// 性能監控
+// Performance monitoring
 const startTime = Date.now();
 const result = await apiCall();
 const duration = Date.now() - startTime;
-console.log(`API 調用耗時: ${duration}ms`);
+console.log(`API call duration: ${duration}ms`);
 ```
 
-### 錯誤處理
+### **Error Handling**
 ```javascript
 try {
   const result = await callLLMAPI(prompt, provider, model);
   return result;
 } catch (error) {
-  console.error(`${provider} API 調用失敗:`, error);
+  console.error(`${provider} API call failed:`, error);
 
-  // 分類錯誤類型
+  // Categorize error types
   if (error.status === 429) {
-    throw new HttpsError('resource-exhausted', 'API 調用頻率超限');
+    throw new HttpsError('resource-exhausted', 'API call rate limit exceeded');
   } else if (error.status === 401) {
-    throw new HttpsError('permission-denied', 'API 金鑰無效');
+    throw new HttpsError('permission-denied', 'Invalid API key');
   } else {
-    throw new HttpsError('internal', '服務暫時不可用');
+    throw new HttpsError('internal', 'Service temporarily unavailable');
   }
 }
 ```
 
-### 使用量統計
+### **Usage Statistics**
 ```javascript
-// Token 消耗追蹤
+// Token consumption tracking
 const tokenUsage = {
   provider: provider,
   model: model,
@@ -297,40 +505,40 @@ await updateUserUsage(email, tokenUsage);
 
 ---
 
-## 🚀 部署和維護
+## 🚀 DEPLOYMENT & MAINTENANCE
 
-### 部署流程
+### **Deployment Process**
 ```bash
-# 1. 構建項目
+# 1. Build project
 npm run build
 
-# 2. 部署到 Firebase
+# 2. Deploy to Firebase
 firebase deploy --only functions
 
-# 3. 檢查部署狀態
+# 3. Check deployment status
 firebase functions:log
 
-# 4. 監控性能
+# 4. Monitor performance
 firebase console
 ```
 
-### 環境管理
+### **Environment Management**
 ```bash
-# 開發環境
+# Development environment
 firebase use development
 firebase deploy --only functions
 
-# 生產環境
+# Production environment
 firebase use production
 firebase deploy --only functions
 ```
 
-### 版本管理
+### **Version Management**
 ```javascript
-// package.json 版本追蹤
+// package.json version tracking
 {
   "name": "functions",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "engines": {
     "node": "20"
   }
@@ -339,25 +547,25 @@ firebase deploy --only functions
 
 ---
 
-## 🛠️ Claude 開發最佳實踐
+## 🛠️ DEVELOPMENT BEST PRACTICES
 
-### ✅ 推薦做法
+### ✅ **Recommended Practices**
 
-#### 錯誤處理
+#### **Error Handling**
 ```javascript
-// 完整的錯誤處理鏈
+// Complete error handling chain
 try {
   const result = await apiCall();
   return { success: true, data: result };
 } catch (error) {
-  console.error('API 調用失敗:', error);
+  console.error('API call failed:', error);
   return { success: false, error: error.message };
 }
 ```
 
-#### 異步操作
+#### **Asynchronous Operations**
 ```javascript
-// 正確的異步處理
+// Correct asynchronous handling
 const result = await Promise.all([
   callPerplexityAPI(prompt1),
   callGeminiAPI(prompt2),
@@ -365,46 +573,46 @@ const result = await Promise.all([
 ]);
 ```
 
-#### 資源管理
+#### **Resource Management**
 ```javascript
-// 適當的記憶體和超時設置
+// Appropriate memory and timeout settings
 exports.heavyTask = onCall({
   memory: '512MiB',
   timeoutSeconds: 300,
   region: 'asia-east1'
 }, async (request) => {
-  // 處理大型任務
+  // Handle large tasks
 });
 ```
 
-### ❌ 避免做法
+### ❌ **Practices to Avoid**
 
 ```javascript
-// ❌ 硬編碼 API 金鑰
+// ❌ Hardcoded API keys
 const apiKey = "sk-12345...";
 
-// ❌ 忽略錯誤處理
-const result = callAPI(); // 可能導致 Functions 崩潰
+// ❌ Ignoring error handling
+const result = callAPI(); // May cause Functions to crash
 
-// ❌ 超出時間限制
-// 不要在單個 Function 中執行超過 9 分鐘的任務
+// ❌ Exceeding time limits
+// Don't execute tasks longer than 9 minutes in a single Function
 
-// ❌ 忽略記憶體限制
-// 避免在 256MB 限制下處理大型數據集
+// ❌ Ignoring memory limits
+// Avoid processing large datasets under 256MB limit
 ```
 
-### 性能優化
+### **Performance Optimization**
 ```javascript
-// 1. 善用緩存
+// 1. Utilize caching
 const cache = new Map();
 if (cache.has(key)) {
   return cache.get(key);
 }
 
-// 2. 批量處理
-const batch = requests.slice(0, 10); // 限制並發數量
+// 2. Batch processing
+const batch = requests.slice(0, 10); // Limit concurrent requests
 
-// 3. 早期返回
+// 3. Early return
 if (!isValid(input)) {
   return { error: 'Invalid input' };
 }
@@ -412,23 +620,23 @@ if (!isValid(input)) {
 
 ---
 
-## 🧪 測試策略
+## 🧪 TESTING STRATEGY
 
-### 單元測試
+### **Unit Testing**
 ```bash
-# 運行所有測試
+# Run all tests
 npm test
 
-# 監控模式
+# Watch mode
 npm run test:watch
 
-# 覆蓋率報告
+# Coverage report
 npm run test:coverage
 ```
 
-### 集成測試
+### **Integration Testing**
 ```javascript
-// 測試 LLM API 集成
+// Test LLM API integration
 describe('LLM API Integration', () => {
   it('should call Perplexity API successfully', async () => {
     const result = await callPerplexityAPI('test prompt');
@@ -437,9 +645,9 @@ describe('LLM API Integration', () => {
 });
 ```
 
-### 負載測試
+### **Load Testing**
 ```javascript
-// 測試 API 負載能力
+// Test API load capacity
 const concurrentRequests = 10;
 const promises = Array(concurrentRequests).fill(null).map(() =>
   callLLMAPI('test', 'perplexity', 'sonar-pro')
@@ -449,42 +657,78 @@ const results = await Promise.all(promises);
 
 ---
 
-## 📈 成本優化
+## 📈 COST OPTIMIZATION
 
-### Token 使用優化
+### **Token Usage Optimization**
 ```javascript
-// 1. 智能提示詞截斷
+// 1. Smart prompt truncation
 const truncatedPrompt = prompt.length > 4000 ?
   prompt.substring(0, 4000) + '...' : prompt;
 
-// 2. 模型選擇策略
+// 2. Model selection strategy
 const model = complexity > 0.8 ? 'sonar-pro' : 'sonar';
 
-// 3. 緩存常用結果
+// 3. Cache common results
 const cacheKey = `${provider}_${hashPrompt(prompt)}`;
 ```
 
-### 供應商成本分析
+### **Provider Cost Analysis**
 ```javascript
-// 成本比較和路由
+// Cost comparison and routing
 const costPerToken = {
   'perplexity-sonar': 0.0001,
   'gemini-2.5-flash': 0.00005,
   'gpt-5-mini': 0.00015
 };
 
-// 選擇最經濟的供應商
+// Select most economical provider
 const optimal = findOptimalProvider(prompt, requirements);
 ```
 
 ---
 
-## 🔧 LLM 服務實現詳解
+## 🚨 TECHNICAL DEBT PREVENTION
 
-### Perplexity API 整合
+### ❌ **WRONG APPROACH (Creates Technical Debt)**
+```javascript
+// Creating new file without searching first
+Write(file_path="new_llm_service.js", content="...")
+```
+
+### ✅ **CORRECT APPROACH (Prevents Technical Debt)**
+```javascript
+// 1. SEARCH FIRST
+Grep(pattern="llm.*service", glob="*.js")
+// 2. READ EXISTING FILES
+Read(file_path="src/llm-service.js")
+// 3. EXTEND EXISTING FUNCTIONALITY
+Edit(file_path="src/llm-service.js", old_string="...", new_string="...")
+```
+
+### 🧹 **DEBT PREVENTION WORKFLOW**
+
+#### **Before Creating ANY New File:**
+1. **🔍 Search First** - Use Grep/Glob to find existing implementations
+2. **📋 Analyze Existing** - Read and understand current patterns
+3. **🤔 Decision Tree**: Can extend existing? → DO IT | Must create new? → Document why
+4. **✅ Follow Patterns** - Use established project patterns
+5. **📈 Validate** - Ensure no duplication or technical debt
+
+#### **After Making ANY Changes:**
+1. **🔍 Function Analysis** - Identify potentially unused functions
+2. **📋 Usage Search** - Use Grep to find all function references
+3. **🧹 Cleanup** - Remove confirmed unused code
+4. **✅ Verification** - Ensure no broken dependencies
+5. **📈 Consolidation** - Merge similar functionality where possible
+
+---
+
+## 🔧 LLM SERVICE IMPLEMENTATION DETAILS
+
+### **Perplexity API Integration**
 ```javascript
 async function callPerplexityAPI(prompt, temperature = 0.2, maxTokens = 5000) {
-  const apiKey = process.env.PERPLEXITY_API_KEY;
+  const apiKey = functions.config().perplexity.api_key;
 
   const requestBody = {
     model: 'sonar-pro',
@@ -519,11 +763,11 @@ async function callPerplexityAPI(prompt, temperature = 0.2, maxTokens = 5000) {
 }
 ```
 
-### Gemini API 整合
+### **Gemini API Integration**
 ```javascript
 async function callGeminiAPI(prompt, model = 'gemini-2.5-flash') {
   const { GoogleGenerativeAI } = require('@google/genai');
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = functions.config().gemini.api_key;
 
   const genAI = new GoogleGenerativeAI(apiKey);
   const generativeModel = genAI.getGenerativeModel({
@@ -553,10 +797,10 @@ async function callGeminiAPI(prompt, model = 'gemini-2.5-flash') {
 }
 ```
 
-### OpenAI GPT API 整合
+### **OpenAI GPT API Integration**
 ```javascript
 async function callGPTAPI(prompt, model = 'gpt-5-mini-2025-08-07', temperature, maxTokens) {
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = functions.config().openai.api_key;
 
   const requestBody = {
     model: model,
@@ -572,14 +816,14 @@ async function callGPTAPI(prompt, model = 'gpt-5-mini-2025-08-07', temperature, 
     ]
   };
 
-  // GPT-5-mini 特殊處理
+  // GPT-5-mini special handling
   if (model === 'gpt-5-mini-2025-08-07') {
-    // GPT-5-mini 不支援 temperature 和 top_p 參數
+    // GPT-5-mini doesn't support temperature and top_p parameters
     if (maxTokens) {
       requestBody.max_completion_tokens = maxTokens;
     }
   } else {
-    // 其他 GPT 模型支援完整參數
+    // Other GPT models support full parameters
     if (temperature !== undefined) {
       requestBody.temperature = temperature;
     }
@@ -603,96 +847,58 @@ async function callGPTAPI(prompt, model = 'gpt-5-mini-2025-08-07', temperature, 
 
 ---
 
-## 📚 相關資源
+## 🔍 TROUBLESHOOTING
 
-### 官方文檔
-- [Firebase Functions 文檔](https://firebase.google.com/docs/functions)
-- [Google Cloud Functions 文檔](https://cloud.google.com/functions/docs)
-- [Node.js Runtime 文檔](https://firebase.google.com/docs/functions/manage-functions#set_nodejs_version)
+### **Common Issues**
 
-### API 文檔
-- [Perplexity API](https://docs.perplexity.ai/)
-- [Google Gemini API](https://ai.google.dev/docs)
-- [OpenAI API](https://platform.openai.com/docs)
-
-### 內部文檔
-- `../apps-script/CLAUDE.md` - 前端開發文檔
-- `../spec.md` - 產品需求規格
-
----
-
-## 🔍 故障排除
-
-### 常見問題
-
-#### 部署失敗
+#### **Deployment Failures**
 ```bash
-# 檢查 Node.js 版本
-node --version  # 應該是 v20.x
+# Check Node.js version
+node --version  # Should be v20.x
 
-# 清除依賴重新安裝
+# Clear dependencies and reinstall
 rm -rf node_modules package-lock.json
 npm install
 ```
 
-#### API 調用超時
+#### **API Call Timeouts**
 ```javascript
-// 增加超時時間
+// Increase timeout
 exports.longRunningTask = onCall({
-  timeoutSeconds: 300  // 5 分鐘
+  timeoutSeconds: 300  // 5 minutes
 }, async (request) => {
-  // 長時間運行的任務
+  // Long-running task
 });
 ```
 
-#### 記憶體不足
+#### **Memory Issues**
 ```javascript
-// 增加記憶體配置
+// Increase memory configuration
 exports.memoryIntensiveTask = onCall({
-  memory: '1GiB'  // 最大 8GiB
+  memory: '1GiB'  // Maximum 8GiB
 }, async (request) => {
-  // 記憶體密集型任務
+  // Memory-intensive task
 });
 ```
 
-#### API 金鑰問題
+#### **API Key Issues**
 ```bash
-# 檢查環境變數
+# Check environment variables
 firebase functions:config:get
 
-# 重新設置 API 金鑰
-firebase functions:config:set openai.api_key="新的金鑰"
+# Reset API key
+firebase functions:config:set openai.api_key="new_key"
 ```
 
 ---
 
-## 🚦 開發工作流程
-
-### 本地開發循環
-```bash
-# 1. 啟動模擬器
-npm run serve
-
-# 2. 測試功能
-curl -X POST http://localhost:5001/PROJECT_ID/asia-east1/callLLMAPI \
-  -H "Content-Type: application/json" \
-  -d '{"data": {"prompt": "test", "provider": "gemini"}}'
-
-# 3. 查看日誌
-firebase emulators:logs
-
-# 4. 修改代碼並重新啟動
-```
-
-### 部署檢查清單
-- [ ] 所有測試通過
-- [ ] 環境變數已設置
-- [ ] 記憶體和超時設置合理
-- [ ] 錯誤處理完善
-- [ ] 日誌記錄充分
-- [ ] 成本控制機制已實現
+**⚠️ Prevention is better than consolidation - build clean from the start.**
+**🎯 Focus on single source of truth and extending existing functionality.**
+**🔄 Always design for decoupling and maintainability.**
+**🧹 Clean up code after every change - remove what's no longer needed.**
+**🔒 Secure all API keys and sensitive information through environment variables.**
 
 ---
 
-*最後更新: 2025-09-21*
-*版本: v1.2.0*
+*Last Updated: 2025-09-22*
+*Version: v2.0*

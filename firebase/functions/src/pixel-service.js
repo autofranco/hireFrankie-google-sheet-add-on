@@ -169,11 +169,11 @@ exports.getPixelOpens = onCall({
     console.log(`查詢像素開信記錄: ${spreadsheetId}`);
 
     // 查詢未處理的開信記錄
+    // 注意：orderBy 需要複合索引，暫時移除以避免索引錯誤
     const query = admin.firestore()
       .collection('pixel_opens')
       .where('spreadsheetId', '==', spreadsheetId)
       .where('processed', '==', false)
-      .orderBy('openedTime', 'desc')
       .limit(limit);
 
     const snapshot = await query.get();

@@ -6,10 +6,15 @@ service cloud.firestore {
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
-    
+
+    // 像素追蹤記錄 - 允許完全公開訪問（支援 Firebase Admin SDK）
+    match /pixel_opens/{docId} {
+      allow read, write: if true;
+    }
+
     // 管理員可以存取所有資料 (可選)
     match /{document=**} {
-      allow read, write: if request.auth != null && 
+      allow read, write: if request.auth != null &&
         resource.data.role == 'admin';
     }
   }

@@ -13,6 +13,24 @@
           "order": "ASCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "pixel_opens",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "spreadsheetId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "processed",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "openedTime",
+          "order": "DESCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": []

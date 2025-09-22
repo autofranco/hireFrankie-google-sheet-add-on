@@ -1,30 +1,111 @@
-# Apps Script - Auto Lead Warmer
+# CLAUDE.md - Auto Lead Warmer Apps Script
 
-> Google Apps Script 潛在客戶自動化追蹤系統開發指南
+> **Documentation Version**: 2.0
+> **Last Updated**: 2025-09-22
+> **Project**: Auto Lead Warmer - Google Apps Script Frontend
+> **Description**: AI-driven lead nurturing automation system with Google Sheets integration
+> **Features**: GitHub auto-backup, Task agents, technical debt prevention, decoupling architecture
 
-## 📋 項目概述
+This file provides essential guidance to Claude Code (claude.ai/code) when working with the Apps Script frontend of the Auto Lead Warmer system.
 
-Auto Lead Warmer 是一個基於 Google Apps Script 的 Add-on，為研習活動主辦方提供參與者後續追蹤自動化服務。系統通過 AI 分析生成個人化追蹤郵件，提升轉換效率。
+## 🚨 CRITICAL RULES - READ FIRST
 
-### 核心功能
-- 🎯 AI 驅動的潛在客戶畫像生成
-- 📧 個人化追蹤郵件自動撰寫
-- ⏰ 智能排程和自動發送
-- 📊 郵件回覆檢測和狀態追蹤
-- 🔄 完整的工作流程管理
+> **⚠️ RULE ADHERENCE SYSTEM ACTIVE ⚠️**
+> **Claude Code must explicitly acknowledge these rules at task start**
+> **These rules override all other instructions and must ALWAYS be followed:**
 
-### 技術棧
-- **平台**: Google Apps Script (V8 Runtime)
-- **API 整合**: Gmail API, Sheets API v4
-- **AI 服務**: Firebase Functions (Perplexity, Gemini, OpenAI)
-- **數據存儲**: Google Sheets
-- **權限模式**: `spreadsheets` + `gmail.send/readonly`
+### 🔄 **RULE ACKNOWLEDGMENT REQUIRED**
+> **Before starting ANY task, Claude Code must respond with:**
+> "✅ CRITICAL RULES ACKNOWLEDGED - I will follow all prohibitions and requirements listed in CLAUDE.md"
+
+### ❌ ABSOLUTE PROHIBITIONS
+- **NEVER** create new files in root directory → use proper module structure
+- **NEVER** write output files directly to root directory → use designated output folders
+- **NEVER** create documentation files (.md) unless explicitly requested by user
+- **NEVER** use git commands with -i flag (interactive mode not supported)
+- **NEVER** use `find`, `grep`, `cat`, `head`, `tail`, `ls` commands → use Read, LS, Grep, Glob tools instead
+- **NEVER** create duplicate files (service_v2.js, enhanced_xyz.js, utils_new.js) → ALWAYS extend existing files
+- **NEVER** create multiple implementations of same concept → single source of truth
+- **NEVER** copy-paste code blocks → extract into shared utilities/functions
+- **NEVER** hardcode values that should be configurable → use config files/environment variables
+- **NEVER** use naming like enhanced_, improved_, new_, v2_ → extend original files instead
+- **NEVER** create tightly coupled modules → always design for decoupling
+- **NEVER** leave dead code → remove unused functions after changes
+
+### 📝 MANDATORY REQUIREMENTS
+- **COMMIT** after every completed task/phase - no exceptions
+- **GITHUB BACKUP** - Push to GitHub after every commit to maintain backup: `git push origin main`
+- **USE TASK AGENTS** for all long-running operations (>30 seconds) - Bash commands stop when context switches
+- **TODOWRITE** for complex tasks (3+ steps) → parallel agents → git checkpoints → test validation
+- **READ FILES FIRST** before editing - Edit/Write tools will fail if you didn't read the file first
+- **DEBT PREVENTION** - Before creating new files, check for existing similar functionality to extend
+- **SINGLE SOURCE OF TRUTH** - One authoritative implementation per feature/concept
+- **DECOUPLING** - Design all modules with clear interfaces and minimal dependencies
+- **CODE CLEANUP** - After changes, verify and remove any unused functions/imports
+
+### ⚡ EXECUTION PATTERNS
+- **PARALLEL TASK AGENTS** - Launch multiple Task agents simultaneously for maximum efficiency
+- **SYSTEMATIC WORKFLOW** - TodoWrite → Parallel agents → Git checkpoints → GitHub backup → Test validation
+- **GITHUB BACKUP WORKFLOW** - After every commit: `git push origin main` to maintain GitHub backup
+- **BACKGROUND PROCESSING** - ONLY Task agents can run true background operations
+
+### 🔍 MANDATORY PRE-TASK COMPLIANCE CHECK
+> **STOP: Before starting any task, Claude Code must explicitly verify ALL points:**
+
+**Step 1: Rule Acknowledgment**
+- [ ] ✅ I acknowledge all critical rules in CLAUDE.md and will follow them
+
+**Step 2: Task Analysis**
+- [ ] Will this create files in root? → If YES, use proper module structure instead
+- [ ] Will this take >30 seconds? → If YES, use Task agents not Bash
+- [ ] Is this 3+ steps? → If YES, use TodoWrite breakdown first
+- [ ] Am I about to use grep/find/cat? → If YES, use proper tools instead
+
+**Step 3: Technical Debt Prevention (MANDATORY SEARCH FIRST)**
+- [ ] **SEARCH FIRST**: Use Grep pattern="<functionality>.*<keyword>" to find existing implementations
+- [ ] **CHECK EXISTING**: Read any found files to understand current functionality
+- [ ] Does similar functionality already exist? → If YES, extend existing code
+- [ ] Am I creating a duplicate class/manager? → If YES, consolidate instead
+- [ ] Will this create multiple sources of truth? → If YES, redesign approach
+- [ ] Have I searched for existing implementations? → Use Grep/Glob tools first
+- [ ] Can I extend existing code instead of creating new? → Prefer extension over creation
+- [ ] Am I about to copy-paste code? → Extract to shared utility instead
+
+**Step 4: Decoupling Verification**
+- [ ] Does this create tight coupling between modules? → If YES, add abstraction layer
+- [ ] Are dependencies clearly defined? → If NO, create proper interfaces
+- [ ] Can this module be tested in isolation? → If NO, reduce dependencies
+- [ ] Am I directly accessing external APIs? → If YES, wrap in service layer
+
+**Step 5: Code Cleanup Planning**
+- [ ] What functions might become unused after this change?
+- [ ] Are there imports that will no longer be needed?
+- [ ] Can any existing code be simplified or removed?
+- [ ] Will this change make any utility functions obsolete?
+
+**Step 6: Session Management**
+- [ ] Is this a long/complex task? → If YES, plan context checkpoints
+- [ ] Have I been working >1 hour? → If YES, consider /compact or session break
+
+> **⚠️ DO NOT PROCEED until all checkboxes are explicitly verified**
 
 ---
 
-## 🏗️ 架構設計
+## 📋 PROJECT OVERVIEW
 
-### 分層架構
+Auto Lead Warmer is an AI-powered Google Apps Script add-on that automates lead nurturing for seminar and event organizers. The system generates personalized follow-up emails using AI analysis and manages the entire outreach workflow through Google Sheets.
+
+### 🎯 **CORE FEATURES**
+- 🤖 **AI-Driven Lead Profiling**: Generate detailed customer profiles using Perplexity, Gemini, and OpenAI
+- 📧 **Personalized Email Generation**: Create targeted follow-up emails based on lead analysis
+- ⏰ **Intelligent Scheduling**: Automated email sending with optimal timing
+- 📊 **Reply Detection**: Monitor and track email responses automatically
+- 🔄 **Workflow Management**: Complete lead lifecycle management through Google Sheets UI
+- 📈 **Pixel Tracking**: Email open detection for engagement analytics
+
+### 🏗️ **SYSTEM ARCHITECTURE**
+
+#### **Layered Architecture**
 ```
 ┌─────────────────────────────────────────┐
 │              User Interface             │
@@ -41,80 +122,122 @@ Auto Lead Warmer 是一個基於 Google Apps Script 的 Add-on，為研習活動
 └─────────────────────────────────────────┘
 ```
 
-### 權限策略
-- **spreadsheets**: 完整的 Google Sheets 操作權限
-- **gmail.send/readonly**: 郵件發送和回覆檢測
-- **script.external_request**: Firebase Functions API 調用
-- **userinfo.email**: 用戶身份驗證
+#### **Technology Stack**
+- **Platform**: Google Apps Script (V8 Runtime)
+- **API Integration**: Gmail API, Google Sheets API v4
+- **AI Services**: Firebase Functions (Perplexity, Gemini, OpenAI)
+- **Data Storage**: Google Sheets as database
+- **Authentication**: OAuth scopes for spreadsheets + gmail.send/readonly
 
 ---
 
-## 📁 文件結構
+## 📁 FILE STRUCTURE & ARCHITECTURE
 
-### 🔧 核心文件
+### 🔧 **Core System Files**
 ```
 apps-script/
-├── Code.js                    # 主入口和選單設置
-├── Config.js                  # 配置常數和欄位定義
-├── appsscript.json           # 權限和服務配置
-└── CLAUDE.md                 # 本開發文檔
+├── Code.js                    # Main entry point and menu setup
+├── Config.js                  # Configuration constants and column definitions
+├── appsscript.json           # OAuth permissions and service configuration
+└── CLAUDE.md                 # This development documentation
 ```
 
-### 🎯 業務邏輯
+### 🎯 **Business Logic Layer**
 ```
-├── ProcessingService.js      # 主要業務流程控制
-├── RowProcessor.js          # 單行數據處理邏輯
-├── ContentGenerator.js      # AI 內容生成服務
-└── UserInfoService.js       # 用戶資訊管理
-```
-
-### 🔗 API 服務
-```
-├── APIService.js            # 外部 API 調用封裝
-├── SheetService.js          # Google Sheets 操作
-├── EmailService.js          # 郵件發送和排程
-└── ReplyDetectionService.js # 郵件回覆檢測
+├── ProcessingService.js      # Main business workflow controller
+├── RowProcessor.js          # Individual row data processing logic
+├── ContentGenerator.js      # AI content generation service
+└── UserInfoService.js       # User information management
 ```
 
-### 🎛️ 功能模組
+### 🔗 **API Service Layer**
 ```
-├── EditHandler.js           # 表格編輯事件處理
-├── SendNowHandler.js        # 立即發送功能
-├── TriggerManager.js        # 時間觸發器管理
-├── MenuService.js           # 選單功能服務
-└── Utils.js                 # 通用工具函數
+├── APIService.js            # External API call wrapper
+├── SheetService.js          # Google Sheets operations
+├── EmailService.js          # Email sending and scheduling
+├── ReplyDetectionService.js # Email reply monitoring
+└── PixelTrackingService.js  # Email open tracking
+```
+
+### 🎛️ **Feature Modules**
+```
+├── EditHandler.js           # Spreadsheet edit event handling
+├── SendNowHandler.js        # Immediate email sending functionality
+├── TriggerManager.js        # Time-based trigger management
+├── MenuService.js           # Menu functionality service
+├── StatisticsService.js     # Analytics and reporting
+└── Utils.js                 # Common utility functions
 ```
 
 ---
 
-## ⚙️ 開發設置
+## 🔄 CORE WORKFLOWS
 
-### 環境準備
+### **1. Initial Setup Workflow**
+```javascript
+setupHeadersAndFormat()
+  ↓
+SheetService.setupHeaders() // Configure spreadsheet headers
+  ↓
+SheetService.formatAllLeadRows() // Apply formatting
+  ↓
+UserInfoService.createUserInfoSheet() // Create user config sheet
+```
+
+### **2. Lead Processing Workflow**
+```javascript
+runAutoLeadWarmer()
+  ↓
+ProcessingService.processNewLeads()
+  ↓
+RowProcessor.processRow() // Process each lead individually
+  ↓
+generateLeadsProfile() → generateMailAngles() → generateEmails()
+  ↓
+EmailService.scheduleEmails() // Set up email scheduling
+```
+
+### **3. Email Sending Workflow**
+```javascript
+[Timer Trigger] sendScheduledEmails()
+  ↓
+EmailService.checkAndSendEmails()
+  ↓
+Gmail API sending + status updates
+  ↓
+ReplyDetectionService.checkReplies() // Monitor for responses
+```
+
+---
+
+## ⚙️ DEVELOPMENT SETUP
+
+### **Environment Prerequisites**
 ```bash
-# 安裝 clasp CLI
+# Install clasp CLI for Apps Script development
 npm install -g @google/clasp
 
-# 登入 Google 帳戶
+# Authenticate with Google account
 clasp login
 
-# 克隆項目到本地
+# Clone project to local development
 clasp clone [SCRIPT_ID]
 ```
 
-### 本地開發
+### **Local Development Workflow**
 ```bash
-# 推送代碼到 Apps Script
+# Push code changes to Apps Script
 clasp push
 
-# 強制推送（包含新文件）
+# Force push including new files
 clasp push --force
 
-# 開啟線上編輯器
+# Open online Apps Script editor
 clasp open
 ```
 
-### 權限配置
-> 重要：修改權限後需要重新授權
+### **OAuth Permission Configuration**
+> **Important**: Permission changes require re-authorization
 
 ```json
 {
@@ -131,246 +254,312 @@ clasp open
 
 ---
 
-## 🔄 核心工作流程
+## 🛠️ DEVELOPMENT BEST PRACTICES
 
-### 1. 初始設置流程
+### 🔄 **DECOUPLING PRINCIPLES**
+
+#### **Service Layer Separation**
 ```javascript
-setupHeadersAndFormat()
-  ↓
-SheetService.setupHeaders() // 設置表頭
-  ↓
-SheetService.formatAllLeadRows() // 格式化
-  ↓
-UserInfoService.createUserInfoSheet() // 創建用戶資訊表
-```
+// ✅ CORRECT: Decoupled service design
+class EmailService {
+  constructor(apiService, sheetService) {
+    this.apiService = apiService;
+    this.sheetService = sheetService;
+  }
 
-### 2. 主要處理流程
-```javascript
-runAutoLeadWarmer()
-  ↓
-ProcessingService.processNewLeads()
-  ↓
-RowProcessor.processRow() // 針對每一行
-  ↓
-generateLeadsProfile() → generateMailAngles() → generateEmails()
-  ↓
-EmailService.scheduleEmails() // 設置排程
-```
-
-### 3. 郵件發送流程
-```javascript
-[定時觸發] sendScheduledEmails()
-  ↓
-EmailService.checkAndSendEmails()
-  ↓
-Gmail API 發送 + 狀態更新
-  ↓
-ReplyDetectionService.checkReplies() // 檢查回覆
-```
-
----
-
-## 🛠️ 開發最佳實踐
-
-### Claude 開發注意事項
-
-#### ✅ 推薦做法
-```javascript
-// 1. 使用服務模組化設計
-const result = ContentGenerator.generateLeadsProfile(url, position);
-
-// 2. 統一錯誤處理
-try {
-  // 業務邏輯
-} catch (error) {
-  console.error('操作失敗:', error);
-  SpreadsheetApp.getUi().alert('錯誤', error.message);
+  async sendEmail(emailData) {
+    // Clear interface, testable in isolation
+  }
 }
 
-// 3. 常數配置使用
+// ❌ WRONG: Tightly coupled direct access
+class EmailService {
+  async sendEmail(emailData) {
+    const result = APIService.callLLMAPI(); // Direct dependency
+    SpreadsheetApp.getActiveSheet(); // Hard-coded access
+  }
+}
+```
+
+#### **Interface Design**
+```javascript
+// ✅ CORRECT: Clear interface contracts
+const IContentGenerator = {
+  generateLeadsProfile: (url, position) => Promise,
+  generateMailAngles: (profile) => Promise,
+  generateEmail: (profile, angle) => Promise
+};
+
+// ❌ WRONG: Unclear responsibilities
+function doEverything(data) {
+  // Multiple responsibilities in one function
+}
+```
+
+#### **Dependency Injection**
+```javascript
+// ✅ CORRECT: Injectable dependencies
+class ProcessingService {
+  constructor(contentGenerator, emailService, sheetService) {
+    this.contentGenerator = contentGenerator;
+    this.emailService = emailService;
+    this.sheetService = sheetService;
+  }
+}
+
+// ❌ WRONG: Hard-coded dependencies
+class ProcessingService {
+  process() {
+    ContentGenerator.generate(); // Hard dependency
+  }
+}
+```
+
+### 🧹 **CODE CLEANUP REQUIREMENTS**
+
+#### **Post-Change Cleanup Checklist**
+```javascript
+// After making changes, ALWAYS verify:
+// 1. Are there unused functions?
+// 2. Can any imports be removed?
+// 3. Are there obsolete utility functions?
+// 4. Can any constants be consolidated?
+
+// ✅ CORRECT: Clean up after refactoring
+// OLD: Separate functions for each email type
+function generateFirstEmail() { /* ... */ }
+function generateSecondEmail() { /* ... */ }
+function generateThirdEmail() { /* ... */ }
+
+// NEW: Unified function
+function generateEmail(emailNumber) { /* ... */ }
+// CLEANUP: Remove the three old functions ← MANDATORY
+```
+
+#### **Function Usage Analysis**
+```javascript
+// Before removing any function, verify:
+// 1. Search codebase for all references
+// 2. Check if used in menu callbacks
+// 3. Verify not used in trigger functions
+// 4. Confirm not used in global scope
+
+// Use Grep tool to search for function usage:
+// Grep(pattern="functionName", output_mode="files_with_matches")
+```
+
+### ✅ **Recommended Practices**
+
+#### **Service Modularization**
+```javascript
+// 1. Use service-based design patterns
+const result = ContentGenerator.generateLeadsProfile(url, position);
+
+// 2. Implement comprehensive error handling
+try {
+  // Business logic
+} catch (error) {
+  console.error('Operation failed:', error);
+  SpreadsheetApp.getUi().alert('Error', error.message);
+}
+
+// 3. Use configuration constants
 const statusCell = sheet.getRange(rowIndex, COLUMNS.STATUS + 1);
 
-// 4. 狀態管理
+// 4. Implement proper state management
 SheetService.updateStatus(rowIndex, 'Processing');
 ```
 
-#### ❌ 避免做法
+#### **Performance Optimization**
 ```javascript
-// ❌ 直接操作 SpreadsheetApp 而不通過服務
-SpreadsheetApp.getActiveSheet().getRange(1,1).setValue();
-
-// ❌ 硬編碼配置
-const column = 5; // 應該使用 COLUMNS.LEADS_PROFILE
-
-// ❌ 忽略權限檢查
-Sheets.Spreadsheets.batchUpdate(); // 需要 spreadsheets 權限
-
-// ❌ 不處理異步操作
-APIService.callLLMAPI(); // 應該等待結果
-```
-
-### 調試技巧
-```javascript
-// 1. 使用 console.log 追蹤執行流程
-console.log('步驟1: 開始處理行', rowIndex);
-
-// 2. 檢查數據完整性
-if (!leadsProfile || leadsProfile.trim() === '') {
-  throw new Error('Leads Profile 生成失敗');
-}
-
-// 3. 分段測試
-const isDevelopment = false; // 設置為 true 進行測試
-```
-
-### 性能優化
-```javascript
-// 1. 批量操作
+// 1. Batch operations for efficiency
 const values = sheet.getRange(1, 1, lastRow, lastCol).getValues();
 
-// 2. 減少 API 調用
-SpreadsheetApp.flush(); // 控制刷新時機
+// 2. Control API call frequency
+SpreadsheetApp.flush(); // Control refresh timing
 
-// 3. 緩存常用數據
-const userInfo = UserInfoService.getUserInfo(); // 一次獲取
+// 3. Cache frequently accessed data
+const userInfo = UserInfoService.getUserInfo(); // Single retrieval
 ```
 
----
+### ❌ **Practices to Avoid**
 
-## 🔍 測試和調試
-
-### 手動測試流程
-1. **初始設置測試**: 確認表頭設置和格式化
-2. **API 測試**: 驗證 Firebase Functions 連接
-3. **郵件測試**: 使用測試郵箱驗證發送功能
-4. **觸發器測試**: 檢查定時任務執行
-
-### 常見問題排除
-
-#### 權限問題
-```
-錯誤: 權限不足
-解決: 檢查 appsscript.json 權限配置，重新授權
-```
-
-#### API 調用失敗
-```
-錯誤: Firebase Functions 調用超時
-解決: 檢查網路連接和 API 金鑰配置
-```
-
-#### 觸發器問題
-```
-錯誤: 郵件未按時發送
-解決: 檢查觸發器設置和 GMT 時區配置
-```
-
----
-
-## 📊 監控和維護
-
-### 日誌檢查
 ```javascript
-// Apps Script 執行記錄
-console.log() 輸出 → Stackdriver Logging
+// ❌ Direct SpreadsheetApp access without service layer
+SpreadsheetApp.getActiveSheet().getRange(1,1).setValue();
 
-// 錯誤追蹤
-catch (error) {
-  console.error('詳細錯誤:', error);
+// ❌ Hard-coded configuration values
+const column = 5; // Should use COLUMNS.LEADS_PROFILE
+
+// ❌ Ignoring permission requirements
+Sheets.Spreadsheets.batchUpdate(); // Requires spreadsheets permission
+
+// ❌ Not handling asynchronous operations properly
+APIService.callLLMAPI(); // Should await the result
+
+// ❌ Creating tight coupling between modules
+class ServiceA {
+  method() {
+    ServiceB.directCall(); // Should use interface
+  }
 }
 ```
 
-### 性能監控
-- 檢查 API 調用次數和響應時間
-- 監控觸發器執行頻率
-- 追蹤用戶操作統計
+---
 
-### 定期維護
-- 清理過期的觸發器
-- 更新 API 金鑰和權限
-- 檢查第三方服務狀態
+## 🔍 TESTING & DEBUGGING
+
+### **Manual Testing Procedures**
+1. **Initial Setup Testing**: Verify header setup and formatting
+2. **API Integration Testing**: Validate Firebase Functions connectivity
+3. **Email Functionality Testing**: Use test email addresses for verification
+4. **Trigger Testing**: Confirm scheduled task execution
+
+### **Common Issue Resolution**
+
+#### **Permission Issues**
+```
+Error: Insufficient permissions
+Solution: Check appsscript.json permission configuration, re-authorize
+```
+
+#### **API Call Failures**
+```
+Error: Firebase Functions call timeout
+Solution: Verify network connectivity and API key configuration
+```
+
+#### **Trigger Problems**
+```
+Error: Emails not sending on schedule
+Solution: Check trigger setup and GMT timezone configuration
+```
 
 ---
 
-## 🚀 部署指南
+## 📊 MONITORING & MAINTENANCE
 
-### 發布流程
-1. **代碼審查**: 確認所有功能正常
-2. **權限檢查**: 驗證 appsscript.json 配置
-3. **推送部署**: `clasp push --force`
-4. **用戶測試**: 在實際環境中測試核心功能
+### **Logging Strategy**
+```javascript
+// Apps Script execution logging
+console.log() output → Stackdriver Logging
 
-### 版本管理
+// Error tracking implementation
+catch (error) {
+  console.error('Detailed error information:', error);
+}
+```
+
+### **Performance Monitoring**
+- Monitor API call frequency and response times
+- Track trigger execution patterns
+- Analyze user operation statistics
+
+### **Regular Maintenance Tasks**
+- Clean up expired triggers
+- Update API keys and permissions
+- Verify third-party service status
+
+---
+
+## 🚀 DEPLOYMENT GUIDELINES
+
+### **Release Process**
+1. **Code Review**: Ensure all functionality works correctly
+2. **Permission Verification**: Validate appsscript.json configuration
+3. **Code Push**: `clasp push --force`
+4. **User Testing**: Test in actual environment
+
+### **Version Management**
 ```bash
-# 創建版本
-clasp version "v1.2.0 - 新增 aspect1/aspect2 功能"
+# Create version
+clasp version "v2.0.0 - Enhanced AI integration with decoupling"
 
-# 部署特定版本
-clasp deploy --versionNumber 10
+# Deploy specific version
+clasp deploy --versionNumber 15
 ```
 
 ---
 
-## 🔧 服務層詳解
+## 🔧 SERVICE LAYER DETAILED DOCUMENTATION
 
-### SheetService.js - 工作表操作核心
+### **SheetService.js - Spreadsheet Operations Core**
 ```javascript
-// 主要功能
-- getMainSheet(): 獲取主工作表
-- setupHeaders(): 設置表頭和格式
-- updateStatus(): 更新行狀態
-- formatAllLeadRows(): 格式化所有行
-- setupColumnWidths(): 設置列寬
+// Primary functions
+- getMainSheet(): Retrieve main worksheet
+- setupHeaders(): Configure headers and formatting
+- updateStatus(): Update row status
+- formatAllLeadRows(): Format all data rows
+- setupColumnWidths(): Configure column widths
 ```
 
-### ContentGenerator.js - AI 內容生成
+### **ContentGenerator.js - AI Content Generation**
 ```javascript
-// 核心功能
-- generateLeadsProfile(): 生成客戶畫像
-- generateMailAngles(): 生成郵件切入點
-- parseMailAngles(): 解析 AI 回應
-- generateSingleFollowUpMail(): 生成追蹤郵件
+// Core functionality
+- generateLeadsProfile(): Generate customer profile
+- generateMailAngles(): Generate email angles
+- parseMailAngles(): Parse AI responses
+- generateSingleFollowUpMail(): Generate follow-up emails
 ```
 
-### ProcessingService.js - 業務流程控制
+### **ProcessingService.js - Business Workflow Control**
 ```javascript
-// 主要職責
-- processNewLeads(): 處理新潛客
-- checkStopSignal(): 檢查停止信號
-- 錯誤處理和狀態管理
+// Primary responsibilities
+- processNewLeads(): Process new potential customers
+- checkStopSignal(): Monitor stop conditions
+- Error handling and state management
 ```
 
-### EmailService.js - 郵件發送管理
+### **EmailService.js - Email Management**
 ```javascript
-// 核心功能
-- scheduleEmails(): 設置郵件排程
-- checkAndSendEmails(): 檢查並發送郵件
-- sendSingleEmail(): 發送單封郵件
-- generateNextMailContent(): 生成下一封郵件
+// Core functionality
+- scheduleEmails(): Set up email scheduling
+- checkAndSendEmails(): Check and send scheduled emails
+- sendSingleEmail(): Send individual emails
+- generateNextMailContent(): Generate subsequent email content
 ```
 
 ---
 
-## 📚 相關資源
+## 🚨 TECHNICAL DEBT PREVENTION
 
-### 官方文檔
-- [Google Apps Script 文檔](https://developers.google.com/apps-script)
-- [Gmail API 文檔](https://developers.google.com/gmail/api)
-- [Sheets API 文檔](https://developers.google.com/sheets/api)
+### ❌ **WRONG APPROACH (Creates Technical Debt)**
+```javascript
+// Creating new file without searching first
+Write(file_path="new_feature.js", content="...")
+```
 
-### 內部文檔
-- `../spec.md` - 產品需求規格
-- `../firebase/CLAUDE.md` - 後端服務文檔
+### ✅ **CORRECT APPROACH (Prevents Technical Debt)**
+```javascript
+// 1. SEARCH FIRST
+Grep(pattern="feature.*implementation", glob="*.js")
+// 2. READ EXISTING FILES
+Read(file_path="existing_feature.js")
+// 3. EXTEND EXISTING FUNCTIONALITY
+Edit(file_path="existing_feature.js", old_string="...", new_string="...")
+```
 
-### 開發工具
-- [clasp CLI](https://github.com/google/clasp) - 本地開發工具
-- [Google Apps Script IDE](https://script.google.com) - 線上編輯器
+### 🧹 **DEBT PREVENTION WORKFLOW**
+
+#### **Before Creating ANY New File:**
+1. **🔍 Search First** - Use Grep/Glob to find existing implementations
+2. **📋 Analyze Existing** - Read and understand current patterns
+3. **🤔 Decision Tree**: Can extend existing? → DO IT | Must create new? → Document why
+4. **✅ Follow Patterns** - Use established project patterns
+5. **📈 Validate** - Ensure no duplication or technical debt
+
+#### **After Making ANY Changes:**
+1. **🔍 Function Analysis** - Identify potentially unused functions
+2. **📋 Usage Search** - Use Grep to find all function references
+3. **🧹 Cleanup** - Remove confirmed unused code
+4. **✅ Verification** - Ensure no broken dependencies
+5. **📈 Consolidation** - Merge similar functionality where possible
 
 ---
 
-## 🎯 專案配置詳解
+## 🎯 **AUTO LEAD WARMER SPECIFIC CONFIGURATIONS**
 
-### COLUMNS 常數配置
+### **Column Configuration (Config.js)**
 ```javascript
 const COLUMNS = {
   EMAIL: 0,         // A: Email Address*
@@ -381,11 +570,11 @@ const COLUMNS = {
   MAIL_ANGLE_1: 5,  // F: 1st mail angle
   FOLLOW_UP_1: 6,   // G: 1st follow up mail
   SCHEDULE_1: 7,    // H: 1st mail schedule
-  // ... 更多欄位定義
+  // ... additional columns
 };
 ```
 
-### 用戶資訊欄位
+### **User Information Fields**
 ```javascript
 const USER_INFO_FIELDS = {
   GREETING: { row: 2, col: 2, label: 'Email Greeting' },
@@ -400,59 +589,12 @@ const USER_INFO_FIELDS = {
 
 ---
 
-## ⚡ 進階功能
-
-### 批量操作優化
-```javascript
-// 使用 Sheets API 進行批量更新
-const requests = [];
-requests.push({
-  "updateDimensionProperties": {
-    "range": {
-      "sheetId": sheetId,
-      "dimension": "ROWS",
-      "startIndex": rowIndex - 1,
-      "endIndex": rowIndex
-    },
-    "properties": {
-      "pixelSize": 200
-    },
-    "fields": "pixelSize"
-  }
-});
-
-Sheets.Spreadsheets.batchUpdate(resource, spreadsheetId);
-```
-
-### 觸發器管理
-```javascript
-// 創建時間觸發器
-const trigger = ScriptApp.newTrigger('sendScheduledEmails')
-  .timeBased()
-  .everyMinutes(10)
-  .create();
-
-// 清理觸發器
-const triggers = ScriptApp.getProjectTriggers();
-triggers.forEach(trigger => {
-  if (trigger.getHandlerFunction() === 'sendScheduledEmails') {
-    ScriptApp.deleteTrigger(trigger);
-  }
-});
-```
-
-### 數據驗證設置
-```javascript
-// 設置下拉選單驗證
-const rule = SpreadsheetApp.newDataValidation()
-  .requireValueInList(['New', 'Processing', 'Running', 'Stopped', 'Error'])
-  .setAllowInvalid(false)
-  .build();
-
-cell.setDataValidation(rule);
-```
+**⚠️ Prevention is better than consolidation - build clean from the start.**
+**🎯 Focus on single source of truth and extending existing functionality.**
+**🔄 Always design for decoupling and maintainability.**
+**🧹 Clean up code after every change - remove what's no longer needed.**
 
 ---
 
-*最後更新: 2025-09-21*
-*版本: v1.2.0*
+*Last Updated: 2025-09-22*
+*Version: v2.0*
