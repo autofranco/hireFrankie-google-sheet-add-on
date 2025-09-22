@@ -140,28 +140,46 @@ const ContentGenerator = {
    */
   parseMailAngles(response) {
     try {
+      console.log('開始解析 Mail Angles，原始回應長度:', response.length);
+
+      // 修復策略：先清理重複的標籤，只保留第一組完整的標籤
+      let cleanResponse = response;
+
+      // 找到第一組完整的標籤序列（aspect1 -> aspect2 -> angle1 -> angle2 -> angle3）
+      const firstCompleteMatch = response.match(/<aspect1>[\s\S]*?<aspect2>[\s\S]*?<angle1>[\s\S]*?<angle2>[\s\S]*?<angle3>[\s\S]*?(?=<aspect1>|$)/);
+
+      if (firstCompleteMatch) {
+        console.log('找到第一組完整的標籤序列，使用該序列進行解析');
+        cleanResponse = firstCompleteMatch[0];
+      } else {
+        console.log('未找到完整標籤序列，使用原始回應');
+      }
+
       // 解析 aspect1 和 aspect2
-      const aspect1Match = response.match(/<aspect1>[\s\S]*?(?=<aspect2>|<angle1>|$)/);
-      const aspect2Match = response.match(/<aspect2>[\s\S]*?(?=<angle1>|$)/);
+      const aspect1Match = cleanResponse.match(/<aspect1>[\s\S]*?(?=<aspect2>)/);
+      const aspect2Match = cleanResponse.match(/<aspect2>[\s\S]*?(?=<angle1>)/);
 
       let aspect1 = aspect1Match ? aspect1Match[0].replace('<aspect1>', '').replace(/職權與挑戰：?/, '').trim() : '';
       let aspect2 = aspect2Match ? aspect2Match[0].replace('<aspect2>', '').replace(/參與動機與溝通策略：?/, '').trim() : '';
 
       // 解析 angle1, angle2, angle3
-      const angle1Match = response.match(/<angle1>[\s\S]*?(?=<angle2>|$)/);
-      const angle2Match = response.match(/<angle2>[\s\S]*?(?=<angle3>|$)/);
-      const angle3Match = response.match(/<angle3>[\s\S]*?$/);
+      const angle1Match = cleanResponse.match(/<angle1>[\s\S]*?(?=<angle2>)/);
+      const angle2Match = cleanResponse.match(/<angle2>[\s\S]*?(?=<angle3>)/);
+      const angle3Match = cleanResponse.match(/<angle3>[\s\S]*?(?=<aspect1>|$)/);
 
       let angle1 = angle1Match ? angle1Match[0].replace('<angle1>', '').replace(/內容大綱：?/, '').trim() : '';
       let angle2 = angle2Match ? angle2Match[0].replace('<angle2>', '').replace(/內容大綱：?/, '').trim() : '';
       let angle3 = angle3Match ? angle3Match[0].replace('<angle3>', '').replace(/內容大綱：?/, '').trim() : '';
 
+      // 記錄解析結果
+      console.log(`解析結果: aspect1=${!!aspect1}, aspect2=${!!aspect2}, angle1=${!!angle1}, angle2=${!!angle2}, angle3=${!!angle3}`);
+
       // 如果任何項目解析失敗，記錄日誌但繼續
-      if (!aspect1) console.log('aspect1 解析失敗');
-      if (!aspect2) console.log('aspect2 解析失敗');
-      if (!angle1) console.log('angle1 解析失敗');
-      if (!angle2) console.log('angle2 解析失敗');
-      if (!angle3) console.log('angle3 解析失敗');
+      if (!aspect1) console.log('⚠️ aspect1 解析失敗');
+      if (!aspect2) console.log('⚠️ aspect2 解析失敗');
+      if (!angle1) console.log('⚠️ angle1 解析失敗');
+      if (!angle2) console.log('⚠️ angle2 解析失敗');
+      if (!angle3) console.log('⚠️ angle3 解析失敗');
 
       return {
         aspect1: aspect1 || 'aspect1解析失敗',
@@ -571,6 +589,110 @@ Mail Angle: ${data.mailAngle}
     } catch (error) {
       console.error('批次生成第一封郵件失敗:', error);
       throw new Error(`批次生成第一封郵件失敗: ${error.message}`);
+    }
+  },
+
+  /**
+   * 批次生成多封後續追蹤郵件（第二/三封）
+   * @param {Array} batchData - 批次資料陣列，每個元素包含 leadsProfile, mailAngle, firstName, emailNumber
+   * @returns {Array} 生成結果陣列
+   */
+  generateFollowUpMailsBatch(batchData) {
+    try {
+      console.log(`開始批次生成 ${batchData.length} 封後續追蹤郵件...`);
+
+      const userInfo = UserInfoService.getUserInfo();
+      const seminarBrief = userInfo.seminarBrief || '';
+
+      // 準備所有 API 請求
+      const requests = batchData.map((data, index) => {
+        // 根據郵件編號選擇對應的提示詞
+        let emailPrompt;
+        switch(data.emailNumber) {
+          case 2:
+            emailPrompt = userInfo.email2Prompt;
+            break;
+          case 3:
+            emailPrompt = userInfo.email3Prompt;
+            break;
+          default:
+            throw new Error(`無效的郵件編號: ${data.emailNumber}`);
+        }
+
+        const prompt = `${emailPrompt}
+- 開場使用Leads Profile的資訊展現對客戶職位與其公司的了解
+- 內容要使用 Mail Angle 的角度切入，使用Leads Profile的資訊讓客戶感覺此封信件是專門為'他'和'他的公司'寫的
+
+# 客戶方資訊
+- 收件人: ${data.firstName}
+- Leads Profile : ${data.leadsProfile}
+
+# 我方舉辦的活動資訊
+${seminarBrief}
+
+# 信件切入點
+Mail Angle: ${data.mailAngle}
+
+# 輸出
+請按照以下格式提供：
+主旨：[郵件主旨]
+內容：[郵件正文]
+
+# 注意
+- 嚴禁生成不存在的公司、品牌、解決方案、產品、案例、數據，只能使用上的資訊。
+- 不要在信中提及客戶以外的個人姓名，只能提到公司名
+- 請不要使用任何 Markdown 格式（如 **粗體** 或 *斜體*），請使用純文字格式，可以用「」符號來強調重點內容。
+- 嚴禁輸出任何簽名、祝福或聯絡方式，只寫郵件正文內容`;
+
+        return {
+          prompt: prompt,
+          provider: 'gpt',
+          model: 'gpt-5-mini-2025-08-07'
+        };
+      });
+
+      // 批次調用 API
+      const responses = APIService.callLLMAPIBatch(requests);
+
+      // 處理回應結果
+      const results = responses.map((response, index) => {
+        if (response.success) {
+          let mailContent = response.result.content;
+
+          // 添加用戶簽名
+          const signature = UserInfoService.generateEmailSignature();
+          if (signature) {
+            mailContent += signature;
+          }
+
+          console.log(`第${batchData[index].emailNumber}封郵件 ${index + 1} 生成成功`);
+
+          return {
+            success: true,
+            content: mailContent,
+            provider: response.result.provider,
+            model: response.result.model,
+            usage: response.result.usage,
+            tracking: response.result.tracking
+          };
+        } else {
+          console.error(`第${batchData[index].emailNumber}封郵件 ${index + 1} 生成失敗:`, response.error);
+          return {
+            success: false,
+            error: response.error,
+            content: null
+          };
+        }
+      });
+
+      const successCount = results.filter(r => r.success).length;
+      console.log(`批次後續追蹤郵件生成完成: 成功 ${successCount}/${batchData.length}`);
+
+      return results;
+
+    } catch (error) {
+      console.error('批次生成後續追蹤郵件失敗:', error);
+      throw new Error(`批次生成後續追蹤郵件失敗: ${error.message}`);
     }
   }
 };

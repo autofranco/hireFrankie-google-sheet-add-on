@@ -179,7 +179,8 @@ const EmailService = {
       
       let sentCount = 0;
       let checkedCount = 0;
-      
+      const needsGeneration = []; // 收集需要生成下一封郵件的資料
+
       // 掃描所有行，尋找 Running 狀態的潛在客戶
       for (let rowIndex = 2; rowIndex <= lastRow; rowIndex++) {
         const status = sheet.getRange(rowIndex, COLUMNS.STATUS + 1).getValue();
@@ -261,8 +262,12 @@ const EmailService = {
               // 標記為已發送（加刪除線）
               scheduleCell.setFontLine('line-through');
               
-              // 發送成功後，檢查是否需要生成下一封郵件
-              this.generateNextMailIfNeeded(rowIndex, emailInfo.type, firstName);
+              // 發送成功後，收集需要生成下一封郵件的資訊
+              needsGeneration.push({
+                rowIndex: rowIndex,
+                currentMailType: emailInfo.type,
+                firstName: firstName
+              });
               
               emailsSentThisRound++;
               totalEmailsSent++;
@@ -290,9 +295,15 @@ const EmailService = {
         }
       }
       
+      // 批量生成下一封郵件
+      if (needsGeneration.length > 0) {
+        console.log(`開始批量生成 ${needsGeneration.length} 封後續郵件...`);
+        this.batchGenerateNextMails(needsGeneration);
+      }
+
       console.log(`=== 全域郵件檢查完成 ===`);
       console.log(`檢查了 ${checkedCount} 個潛在客戶，發送了 ${sentCount} 封郵件`);
-      
+
       return { checked: checkedCount, sent: sentCount };
       
     } catch (error) {
@@ -345,13 +356,16 @@ const EmailService = {
       }
       
       // 生成下一封郵件
-      const nextMailContent = ContentGenerator.generateSingleFollowUpMail(
+      const nextMailResult = ContentGenerator.generateSingleFollowUpMail(
         leadsProfile,
         nextMailAngle,
         firstName,
         nextMailNumber
       );
-      
+
+      // 只提取郵件內容，排除 metadata
+      const nextMailContent = nextMailResult.content || nextMailResult;
+
       // 寫入生成的內容
       sheet.getRange(rowIndex, nextContentColumn).setValue(nextMailContent);
       
@@ -370,6 +384,124 @@ const EmailService = {
       } catch (updateError) {
         console.error('更新錯誤資訊失敗:', updateError);
       }
+    }
+  },
+
+  /**
+   * 批量生成下一封郵件（批量版本的 generateNextMailIfNeeded）
+   * @param {Array} needsGenerationList - 需要生成的郵件列表，每個元素包含 { rowIndex, currentMailType, firstName }
+   */
+  batchGenerateNextMails(needsGenerationList) {
+    try {
+      if (needsGenerationList.length === 0) {
+        console.log('沒有需要批量生成的郵件');
+        return;
+      }
+
+      console.log(`開始批量生成 ${needsGenerationList.length} 封後續郵件...`);
+
+      const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+      const batchData = [];
+      const rowMappings = []; // 記錄每個 API 請求對應的行資訊
+
+      // 第一階段：收集需要生成的資料
+      for (const item of needsGenerationList) {
+        const { rowIndex, currentMailType, firstName } = item;
+
+        // 判斷需要生成哪一封郵件
+        let nextMailNumber, nextContentColumn, nextMailAngleColumn;
+
+        if (currentMailType === 'mail1') {
+          nextMailNumber = 2;
+          nextContentColumn = COLUMNS.FOLLOW_UP_2 + 1;
+          nextMailAngleColumn = COLUMNS.MAIL_ANGLE_2 + 1;
+        } else if (currentMailType === 'mail2') {
+          nextMailNumber = 3;
+          nextContentColumn = COLUMNS.FOLLOW_UP_3 + 1;
+          nextMailAngleColumn = COLUMNS.MAIL_ANGLE_3 + 1;
+        } else {
+          console.log(`第 ${rowIndex} 行: 已發送最後一封郵件 (mail3)`);
+          continue;
+        }
+
+        // 檢查下一封郵件是否已經有內容
+        const nextContent = sheet.getRange(rowIndex, nextContentColumn).getValue();
+        if (nextContent && nextContent.trim() !== '') {
+          console.log(`第 ${rowIndex} 行: 第${nextMailNumber}封郵件內容已存在，跳過生成`);
+          continue;
+        }
+
+        // 讀取需要的資料
+        const leadsProfile = sheet.getRange(rowIndex, COLUMNS.LEADS_PROFILE + 1).getValue();
+        const nextMailAngle = sheet.getRange(rowIndex, nextMailAngleColumn).getValue();
+
+        if (!leadsProfile || !nextMailAngle) {
+          console.log(`第 ${rowIndex} 行: 缺少 Leads Profile 或 Mail Angle，無法生成第${nextMailNumber}封郵件`);
+          continue;
+        }
+
+        // 添加到批量資料
+        batchData.push({
+          leadsProfile: leadsProfile,
+          mailAngle: nextMailAngle,
+          firstName: firstName,
+          emailNumber: nextMailNumber
+        });
+
+        // 記錄對應關係
+        rowMappings.push({
+          rowIndex: rowIndex,
+          nextContentColumn: nextContentColumn,
+          nextMailNumber: nextMailNumber
+        });
+      }
+
+      if (batchData.length === 0) {
+        console.log('沒有有效的郵件需要生成');
+        return;
+      }
+
+      // 第二階段：批量調用 API
+      console.log(`準備批量生成 ${batchData.length} 封郵件...`);
+      const results = ContentGenerator.generateFollowUpMailsBatch(batchData);
+
+      // 第三階段：寫入結果
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (let i = 0; i < results.length; i++) {
+        const result = results[i];
+        const mapping = rowMappings[i];
+
+        try {
+          if (result.success) {
+            // 寫入生成的內容
+            sheet.getRange(mapping.rowIndex, mapping.nextContentColumn).setValue(result.content);
+
+            console.log(`✅ 第 ${mapping.rowIndex} 行: 第${mapping.nextMailNumber}封郵件生成成功`);
+
+            // 更新 info 欄位
+            SheetService.updateInfo(sheet, mapping.rowIndex, `自動生成第${mapping.nextMailNumber}封郵件完成`);
+
+            successCount++;
+          } else {
+            console.error(`第 ${mapping.rowIndex} 行第${mapping.nextMailNumber}封郵件生成失敗:`, result.error);
+
+            // 在 info 欄位記錄錯誤
+            SheetService.updateInfo(sheet, mapping.rowIndex, `[Error] 自動生成第${mapping.nextMailNumber}封郵件失敗: ${result.error}`);
+
+            errorCount++;
+          }
+        } catch (writeError) {
+          console.error(`第 ${mapping.rowIndex} 行寫入結果時發生錯誤:`, writeError);
+          errorCount++;
+        }
+      }
+
+      console.log(`批量生成後續郵件完成: 成功 ${successCount}/${batchData.length}, 失敗 ${errorCount}`);
+
+    } catch (error) {
+      console.error('批量生成下一封郵件時發生錯誤:', error);
     }
   }
 };

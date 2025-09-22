@@ -37,6 +37,9 @@ const PixelTrackingService = {
         try {
           const { rowIndex, emailType, openedTime } = openRecord;
 
+          // 調試：記錄接收到的開信記錄詳細資訊
+          console.log(`🔍 收到開信記錄: rowIndex=${rowIndex}, emailType=${emailType}, openedTime=${openedTime}`);
+
           // 驗證行索引
           if (rowIndex < 2 || rowIndex > lastRow) {
             console.log(`跳過無效的行索引: ${rowIndex}`);
@@ -107,11 +110,17 @@ const PixelTrackingService = {
       console.log(`正在查詢 Firebase Functions 開信記錄: ${spreadsheetId}`);
 
       const response = UrlFetchApp.fetch(firebaseUrl, options);
-      const responseData = JSON.parse(response.getContentText());
+      const responseCode = response.getResponseCode();
+      const responseText = response.getContentText();
 
-      if (response.getResponseCode() !== 200) {
-        throw new Error(`Firebase Functions 調用失敗: ${response.getResponseCode()} - ${responseData.error?.message || 'Unknown error'}`);
+      console.log(`Firebase Functions 響應碼: ${responseCode}`);
+
+      if (responseCode !== 200) {
+        console.error(`Firebase Functions 調用失敗: ${responseCode} - ${responseText}`);
+        throw new Error(`Firebase Functions 調用失敗: ${responseCode} - 請檢查後端服務狀態`);
       }
+
+      const responseData = JSON.parse(responseText);
 
       console.log(`Firebase Functions 回應: 找到 ${responseData.result?.totalCount || 0} 個開信記錄`);
 

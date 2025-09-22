@@ -35,31 +35,31 @@ const MenuService = {
     try {
       const sheet = SheetService.getMainSheet();
       const lastRow = sheet.getLastRow();
-      
+
       if (lastRow <= 1) {
         SpreadsheetApp.getUi().alert('沒有資料', '工作表中沒有資料可以處理', SpreadsheetApp.getUi().ButtonSet.OK);
         return;
       }
-      
+
       let processedCount = 0;
       let errorCount = 0;
-      
+
       // 掃描所有行，尋找勾選的 Send Now 復選框
       for (let i = 2; i <= lastRow; i++) {
         const sendNowCell = sheet.getRange(i, COLUMNS.SEND_NOW + 1);
         const isChecked = sendNowCell.getValue() === true;
         const status = sheet.getRange(i, COLUMNS.STATUS + 1).getValue();
-        
+
         // 只處理狀態為 Running 且復選框被勾選的行
         if (status === 'Running' && isChecked) {
           try {
             console.log(`處理第 ${i} 行的 Send Now 請求`);
             SendNowHandler.handleSendNowClick(sheet, i);
-            
+
             // 取消勾選復選框（表示已處理）
             sendNowCell.setValue(false);
             processedCount++;
-            
+
           } catch (error) {
             console.error(`第 ${i} 行 Send Now 失敗:`, error);
             SheetService.updateInfo(sheet, i, `[Error] Send Now 失敗: ${error.message}`);
@@ -67,18 +67,57 @@ const MenuService = {
           }
         }
       }
-      
+
       // 顯示結果
       if (processedCount === 0 && errorCount === 0) {
         SpreadsheetApp.getUi().alert('沒有發現勾選項目', '請先勾選要立即發送郵件的行，然後再點擊 Send Now', SpreadsheetApp.getUi().ButtonSet.OK);
       } else {
-        const message = `Send Now 完成！\n\n✅ 成功發送: ${processedCount} 封郵件\n${errorCount > 0 ? `❌ 發送失敗: ${errorCount} 封郵件` : ''}`;
+        let message = `Send Now 完成！\n\n✅ 成功發送: ${processedCount} 封郵件`;
+        if (errorCount > 0) {
+          message += `\n❌ 發送失敗: ${errorCount} 封郵件`;
+        }
+        if (processedCount > 0) {
+          message += `\n\n📧 郵件已發送完成，第二封郵件將自動生成`;
+        }
         SpreadsheetApp.getUi().alert('Send Now 結果', message, SpreadsheetApp.getUi().ButtonSet.OK);
       }
-      
+
     } catch (error) {
       console.error('Send Now 從選單執行失敗:', error);
       SpreadsheetApp.getUi().alert('錯誤', `Send Now 執行失敗: ${error.message}`, SpreadsheetApp.getUi().ButtonSet.OK);
+    }
+  },
+
+  /**
+   * 批量生成下一封郵件
+   */
+  batchGenerateNextMails(needsNextMailList) {
+    try {
+      console.log(`開始批量生成 ${needsNextMailList.length} 封第二封郵件...`);
+
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const item of needsNextMailList) {
+        try {
+          console.log(`生成第 ${item.rowIndex} 行的第二封郵件 (${item.emailType})`);
+          EmailService.generateNextMailIfNeeded(item.rowIndex, 'mail1', item.firstName);
+          successCount++;
+        } catch (error) {
+          console.error(`第 ${item.rowIndex} 行第二封郵件生成失敗:`, error);
+          errorCount++;
+        }
+      }
+
+      // 顯示生成結果
+      const resultMessage = `第二封郵件生成完成！\n\n✅ 成功生成: ${successCount} 封\n${errorCount > 0 ? `❌ 生成失敗: ${errorCount} 封` : ''}`;
+      SpreadsheetApp.getUi().alert('郵件生成結果', resultMessage, SpreadsheetApp.getUi().ButtonSet.OK);
+
+      console.log(`批量生成第二封郵件完成: 成功 ${successCount}/${needsNextMailList.length}`);
+
+    } catch (error) {
+      console.error('批量生成第二封郵件失敗:', error);
+      SpreadsheetApp.getUi().alert('生成錯誤', `第二封郵件生成失敗: ${error.message}`, SpreadsheetApp.getUi().ButtonSet.OK);
     }
   },
 
@@ -272,6 +311,78 @@ const MenuService = {
       SpreadsheetApp.getUi().alert('統計錯誤', `無法獲取像素追蹤統計：${error.message}`, SpreadsheetApp.getUi().ButtonSet.OK);
       return { error: error.message };
     }
+  },
+
+  /**
+   * 檢查開信與回覆 - 綜合測試功能
+   */
+  checkOpenAndReplies() {
+    try {
+      const ui = SpreadsheetApp.getUi();
+
+      console.log('=== 開始檢查開信與回覆 ===');
+
+      // 1. 檢查像素追蹤
+      console.log('步驟1: 檢查像素開信記錄');
+      const pixelResult = PixelTrackingService.checkPixelOpens();
+
+      // 2. 檢查回覆檢測
+      console.log('步驟2: 檢查郵件回覆');
+      const replyResult = ReplyDetectionService.checkAllRunningLeadsForReplies();
+
+      // 3. 獲取統計資訊
+      const stats = PixelTrackingService.getPixelTrackingStats();
+
+      // 組合結果訊息
+      let message = `👀 開信與回覆檢查結果：\n\n`;
+
+      // 像素追蹤結果
+      if (pixelResult.error) {
+        message += `📧 開信檢查：❌ 錯誤 - ${pixelResult.error}\n`;
+        message += `💡 提示：請檢查 Firebase Functions 服務狀態\n`;
+      } else {
+        message += `📧 開信檢查：✅ 檢查了 ${pixelResult.checked} 個記錄，更新了 ${pixelResult.opened} 個開信狀態\n`;
+      }
+
+      // 回覆檢測結果
+      if (replyResult.error) {
+        message += `💬 回覆檢查：❌ 錯誤 - ${replyResult.error}\n`;
+      } else {
+        message += `💬 回覆檢查：✅ 檢查了 ${replyResult.checked} 個潛客，發現 ${replyResult.repliesFound} 個回覆\n`;
+      }
+
+      // 總體統計
+      message += `\n📊 總體統計（基於歷史記錄）：\n`;
+      if (stats.error) {
+        message += `❌ 統計錯誤：${stats.error}`;
+      } else {
+        message += `📧 總發送：${stats.totalRows} 個潛客\n`;
+        message += `👀 已開信：${stats.openedCount} 人 (${stats.openRate}%)\n`;
+        message += `💬 已回信：${stats.repliedCount} 人`;
+
+        if (stats.totalRows > 0) {
+          const replyRate = (stats.repliedCount / stats.totalRows * 100).toFixed(1);
+          message += ` (${replyRate}%)`;
+        }
+
+        message += `\n\n💡 說明：統計數據是基於 info 欄位的歷史記錄，檢查結果顯示的是新發現的開信/回覆`;
+      }
+
+      ui.alert('開信與回覆檢查', message, ui.ButtonSet.OK);
+
+      console.log('=== 開信與回覆檢查完成 ===');
+
+      return {
+        pixelResult,
+        replyResult,
+        stats
+      };
+
+    } catch (error) {
+      console.error('檢查開信與回覆時發生錯誤:', error);
+      SpreadsheetApp.getUi().alert('檢查錯誤', `開信與回覆檢查失敗：${error.message}`, SpreadsheetApp.getUi().ButtonSet.OK);
+      return { error: error.message };
+    }
   }
 };
 
@@ -306,4 +417,8 @@ function testPixelTrackingManually() {
 
 function showPixelTrackingStats() {
   return MenuService.showPixelTrackingStats();
+}
+
+function checkOpenAndReplies() {
+  return MenuService.checkOpenAndReplies();
 }

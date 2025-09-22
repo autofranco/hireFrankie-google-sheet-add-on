@@ -18,11 +18,12 @@
  */
 function onOpen() {
   const ui = SpreadsheetApp.getUi();
-  
+
   ui.createMenu('Auto Lead Warmer')
     .addItem('⚙️ Initial Setup & Format', 'setupHeadersAndFormat')
     .addItem('🚀 Run', 'runAutoLeadWarmer')
     .addItem('📧 Send Now', 'sendNowFromMenu')
+    .addItem('👀 Check Opens & Replies', 'checkOpenAndReplies')
     .addItem('⏸️ Stop New Processing', 'stopNewProcessing')
     .addToUi();
 }
