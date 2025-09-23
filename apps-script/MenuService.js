@@ -330,7 +330,11 @@ const MenuService = {
       console.log('步驟2: 檢查郵件回覆');
       const replyResult = ReplyDetectionService.checkAllRunningLeadsForReplies();
 
-      // 3. 獲取統計資訊
+      // 3. 檢查退信狀態
+      console.log('步驟3: 檢查郵件退信');
+      const bounceResult = BounceDetectionService.checkAllRunningLeadsForBounces();
+
+      // 4. 獲取統計資訊
       const stats = PixelTrackingService.getPixelTrackingStats();
 
       // 組合結果訊息
@@ -349,6 +353,13 @@ const MenuService = {
         message += `💬 回覆檢查：❌ 錯誤 - ${replyResult.error}\n`;
       } else {
         message += `💬 回覆檢查：✅ 檢查了 ${replyResult.checked} 個潛客，發現 ${replyResult.repliesFound} 個回覆\n`;
+      }
+
+      // 退信檢測結果
+      if (bounceResult.error) {
+        message += `📤 退信檢查：❌ 錯誤 - ${bounceResult.error}\n`;
+      } else {
+        message += `📤 退信檢查：✅ 檢查了 ${bounceResult.checked} 個潛客，發現 ${bounceResult.bouncesFound} 個退信\n`;
       }
 
       // 總體統計
@@ -386,6 +397,7 @@ const MenuService = {
       return {
         pixelResult,
         replyResult,
+        bounceResult,
         stats
       };
 

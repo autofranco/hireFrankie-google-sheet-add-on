@@ -46,6 +46,7 @@ const PixelTrackingService = {
             return;
           }
 
+
           checkedCount++;
 
           // 獲取當前狀態
@@ -54,6 +55,12 @@ const PixelTrackingService = {
           // 檢查狀態優先級：只在不是 '已回信' 時更新為 '已開信'
           if (currentInfo && currentInfo.includes('已回信')) {
             console.log(`第 ${rowIndex} 行已經是 '已回信' 狀態，跳過開信更新`);
+            return;
+          }
+
+          // 檢查是否已經是退信狀態，退信狀態優先級高於開信
+          if (currentInfo && currentInfo.toLowerCase().includes('bounced')) {
+            console.log(`第 ${rowIndex} 行已經是 '退信' 狀態，跳過開信更新`);
             return;
           }
 

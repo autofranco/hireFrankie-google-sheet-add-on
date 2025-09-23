@@ -24,11 +24,12 @@ const BounceDetectionService = {
       for (const sentEmail of sentEmails) {
         console.log(`檢查郵件: ${sentEmail.subject} (發送時間: ${new Date(sentEmail.sentTime)})`);
 
-        // 搜尋退信相關的郵件
+        // 搜尋退信相關的郵件 - 修正：退信是發給我們的，不是發給客戶的
+        const myEmail = Session.getActiveUser().getEmail();
         const bounceSearchQueries = [
-          `to:${email} (from:mailer-daemon OR from:postmaster)`,
-          `subject:"${sentEmail.subject}" (from:mailer-daemon OR from:postmaster)`,
-          `to:${email} (subject:"Undeliverable" OR subject:"Delivery Status Notification" OR subject:"Mail delivery failed")`
+          `to:${myEmail} (from:mailer-daemon OR from:postmaster)`,
+          `to:${myEmail} from:mailer-daemon@googlemail.com`,
+          `to:${myEmail} from:mailer-daemon@gmail.com`
         ];
 
         for (const query of bounceSearchQueries) {
@@ -132,6 +133,19 @@ const BounceDetectionService = {
     const emailInBody = bodyLower.includes(targetEmail.toLowerCase());
 
     const bounceBodyKeywords = [
+      // Gmail specific error messages
+      'does not exist',
+      'cannot receive email',
+      'is not a valid',
+      'is inactive',
+      'out of storage space',
+      'temporarily rejected',
+      'temporarily blocked',
+      'message was blocked',
+      'email account that you tried to reach does not exist',
+      'find the recipient domain',
+
+      // Generic bounce keywords
       'could not be delivered',
       'message could not be delivered',
       'delivery failed',
@@ -140,14 +154,34 @@ const BounceDetectionService = {
       'invalid recipient',
       'user unknown',
       'address not found',
-      'no such user'
+      'no such user',
+      'message not delivered',
+      'undeliverable',
+      'bounce'
     ];
+
+    // 添加 SMTP 狀態碼檢查 - 基於 Gmail 官方文檔
+    const smtpBounceCodes = [
+      '550 5.1.1', // 收件人地址不存在 (最常見)
+      '550 5.2.1', // 收件人帳戶無效
+      '552 5.2.2', // 收件人信箱已滿
+      '550 5.7.1', // 因政策原因被拒絕
+      '553 5.1.2', // 找不到收件人網域
+      '553 5.1.3', // 收件人地址無效
+      '550 5.1.1', // 確定退信
+      '450 4.2.1', '451 4.3.0', '421 4.3.0', '452 4.2.2', // 暫時失敗
+      '550 5.4.5', '554 5.4.6' // 其他永久失敗
+    ];
+
+    const hasSmtpBounceCode = smtpBounceCodes.some(code =>
+      body.includes(code)
+    );
 
     const hasBounceBody = bounceBodyKeywords.some(keyword =>
       bodyLower.includes(keyword)
     );
 
-    return hasBounceSubject || (emailInBody && hasBounceBody);
+    return hasBounceSubject || hasSmtpBounceCode || (emailInBody && hasBounceBody);
   },
 
   /**
