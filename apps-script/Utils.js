@@ -138,7 +138,7 @@ const Utils = {
    * 解析郵件內容，分離主旨和內文
    * 從結構化的郵件內容中提取主旨和正文
    * 輸入格式：主旨：標題\n內容：\n正文內容
-   * 
+   *
    * @function parseEmailContent
    * @param {string} content - 原始郵件內容字串
    * @returns {Object} 解析結果
@@ -149,33 +149,40 @@ const Utils = {
     if (!content || typeof content !== 'string') {
       return { subject: null, body: content || '' };
     }
-    
+
     const lines = content.split('\n');
     let subject = null;
     let bodyLines = [];
     let inBodySection = false;
-    
+
     for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim();
-      
+      const line = lines[i];
+      const trimmedLine = line.trim();
+
       // 檢查主旨行
-      if (line.includes('主旨：') || line.includes('主旨:')) {
-        subject = line.replace(/主旨[:：]/g, '').trim();
+      if (trimmedLine.includes('主旨：') || trimmedLine.includes('主旨:')) {
+        subject = trimmedLine.replace(/主旨[:：]/g, '').trim();
         continue;
       }
-      
+
       // 檢查內容開始行
-      if (line.includes('內容：') || line.includes('內容:')) {
+      if (trimmedLine.includes('內容：') || trimmedLine.includes('內容:')) {
         inBodySection = true;
+
+        // 檢查內容標記後是否有文字在同一行
+        const contentAfterMarker = line.replace(/.*?內容[:：]\s*/, '');
+        if (contentAfterMarker.trim() !== '') {
+          bodyLines.push(contentAfterMarker);
+        }
         continue;
       }
-      
+
       // 如果在內容區域，收集所有後續行
       if (inBodySection) {
-        bodyLines.push(lines[i]); // 保持原始格式和縮排
+        bodyLines.push(line); // 保持原始格式和縮排
       }
     }
-    
+
     // 如果沒有找到內容標記，但找到主旨，則將剩餘內容作為body
     if (!inBodySection && subject && lines.length > 1) {
       const subjectLineIndex = lines.findIndex(line => line.includes('主旨'));
@@ -183,12 +190,12 @@ const Utils = {
         bodyLines = lines.slice(subjectLineIndex + 1);
       }
     }
-    
+
     // 如果都沒有標記，將整個內容作為body
     if (!subject && !inBodySection) {
       bodyLines = lines;
     }
-    
+
     return {
       subject: subject,
       body: bodyLines.join('\n').trim()
