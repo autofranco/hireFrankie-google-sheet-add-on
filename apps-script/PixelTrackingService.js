@@ -254,7 +254,8 @@ const PixelTrackingService = {
 
       let openedCount = 0;
       let repliedCount = 0;
-      let totalValidRows = 0;
+      let totalSentRows = 0;  // 總發送郵件數
+      let bouncedCount = 0;   // 退信郵件數
 
       // 掃描所有行統計開信和回信狀態
       for (let i = 2; i <= lastRow; i++) {
@@ -263,38 +264,48 @@ const PixelTrackingService = {
 
         // 只統計已發送的郵件（Running 或 Done 狀態）
         if (status === 'Running' || status === 'Done') {
-          // 檢查是否為退信郵件 - 退信郵件不計入統計
+          totalSentRows++; // 計入總發送數
+
+          // 檢查是否為退信郵件
           const infoLower = info ? info.toString().toLowerCase() : '';
           const isBounced = infoLower.includes('bounced') || infoLower.includes('退信');
 
-          if (!isBounced) {
-            totalValidRows++;
-
+          if (isBounced) {
+            bouncedCount++;
+            console.log(`第 ${i} 行為退信郵件: ${info}`);
+          } else {
+            // 只統計未退信的郵件的開信和回信狀態
             if (info && info.includes('已回信')) {
               repliedCount++;
               openedCount++; // 回信的客戶肯定也開信了
             } else if (info && info.includes('已開信')) {
               openedCount++;
             }
-          } else {
-            console.log(`第 ${i} 行為退信郵件，排除統計: ${info}`);
           }
         }
       }
 
-      const openRate = totalValidRows > 0 ? (openedCount / totalValidRows * 100).toFixed(1) : 0;
+      // 計算成功送達的郵件數（總發送數 - 退信數）
+      const deliveredCount = totalSentRows - bouncedCount;
+
+      // 開信率和回信率基於成功送達的郵件計算
+      const openRate = deliveredCount > 0 ? (openedCount / deliveredCount * 100).toFixed(1) : 0;
 
       return {
-        totalRows: totalValidRows,
-        openedCount: openedCount,
-        repliedCount: repliedCount,
-        openRate: parseFloat(openRate)
+        totalRows: totalSentRows,        // 總發送郵件數
+        deliveredRows: deliveredCount,   // 成功送達郵件數
+        bouncedCount: bouncedCount,      // 退信郵件數
+        openedCount: openedCount,        // 開信郵件數
+        repliedCount: repliedCount,      // 回信郵件數
+        openRate: parseFloat(openRate)   // 開信率（基於送達郵件）
       };
 
     } catch (error) {
       console.error('獲取像素追蹤統計時發生錯誤:', error);
       return {
         totalRows: 0,
+        deliveredRows: 0,
+        bouncedCount: 0,
         openedCount: 0,
         repliedCount: 0,
         openRate: 0,

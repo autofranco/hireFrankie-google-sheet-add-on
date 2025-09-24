@@ -290,15 +290,20 @@ const MenuService = {
         message += `❌ 錯誤：${stats.error}`;
       } else {
         message += `📧 總發送數：${stats.totalRows} 個潛在客戶\n`;
+        if (stats.bouncedCount > 0) {
+          const bounceRate = (stats.bouncedCount / stats.totalRows * 100).toFixed(1);
+          message += `📤 退信數：${stats.bouncedCount} 個 (${bounceRate}%)\n`;
+          message += `✅ 成功送達：${stats.deliveredRows} 個\n`;
+        }
         message += `👀 已開信數：${stats.openedCount} 人\n`;
         message += `💬 已回信數：${stats.repliedCount} 人\n`;
         message += `📈 開信率：${stats.openRate}%\n\n`;
 
-        if (stats.totalRows > 0) {
-          const replyRate = (stats.repliedCount / stats.totalRows * 100).toFixed(1);
-          message += `💌 回信率：${replyRate}%`;
+        if (stats.deliveredRows > 0) {
+          const replyRate = (stats.repliedCount / stats.deliveredRows * 100).toFixed(1);
+          message += `💌 回信率：${replyRate}% (基於送達郵件)`;
         } else {
-          message += `尚無發送記錄`;
+          message += `尚無成功送達記錄`;
         }
       }
 
@@ -368,15 +373,20 @@ const MenuService = {
         message += `❌ 統計錯誤：${stats.error}`;
       } else {
         message += `📧 總發送：${stats.totalRows} 個潛客\n`;
+        if (stats.bouncedCount > 0) {
+          const bounceRate = (stats.bouncedCount / stats.totalRows * 100).toFixed(1);
+          message += `📤 退信：${stats.bouncedCount} 個 (${bounceRate}%)\n`;
+          message += `✅ 送達：${stats.deliveredRows} 個\n`;
+        }
         message += `👀 已開信：${stats.openedCount} 人 (${stats.openRate}%)\n`;
         message += `💬 已回信：${stats.repliedCount} 人`;
 
-        if (stats.totalRows > 0) {
-          const replyRate = (stats.repliedCount / stats.totalRows * 100).toFixed(1);
+        if (stats.deliveredRows > 0) {
+          const replyRate = (stats.repliedCount / stats.deliveredRows * 100).toFixed(1);
           message += ` (${replyRate}%)`;
         }
 
-        message += `\n\n💡 說明：統計數據是基於 info 欄位的歷史記錄，檢查結果顯示的是新發現的開信/回覆`;
+        message += `\n\n💡 說明：開信率和回信率基於成功送達的郵件計算，統計數據基於 info 欄位的歷史記錄`;
       }
 
       // 更新統計儀表板
