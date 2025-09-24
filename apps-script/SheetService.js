@@ -536,9 +536,12 @@ const SheetService = {
       
       const cell = sheet.getRange(rowIndex, columnIndex);
       cell.setFontLine('line-through');
-      
+
       console.log(`✅ 已為第 ${rowIndex} 行的 ${scheduleType} 添加刪除線 (郵件已發送)`);
-      
+
+      // 檢查是否所有郵件都已發送，如果是則清除 Send Now 按鈕
+      this.setupSendNowButton(sheet, rowIndex);
+
     } catch (error) {
       console.error('更新排程状态时发生错误:', error);
     }

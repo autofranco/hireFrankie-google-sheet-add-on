@@ -56,8 +56,8 @@ const MenuService = {
             console.log(`處理第 ${i} 行的 Send Now 請求`);
             SendNowHandler.handleSendNowClick(sheet, i);
 
-            // 取消勾選復選框（表示已處理）
-            sendNowCell.setValue(false);
+            // 重新設置 Send Now 按鈕狀態（如果所有郵件已發送則清除）
+            SheetService.setupSendNowButton(sheet, i);
             processedCount++;
 
           } catch (error) {
