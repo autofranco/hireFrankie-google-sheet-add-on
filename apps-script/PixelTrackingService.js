@@ -263,13 +263,21 @@ const PixelTrackingService = {
 
         // 只統計已發送的郵件（Running 或 Done 狀態）
         if (status === 'Running' || status === 'Done') {
-          totalValidRows++;
+          // 檢查是否為退信郵件 - 退信郵件不計入統計
+          const infoLower = info ? info.toString().toLowerCase() : '';
+          const isBounced = infoLower.includes('bounced') || infoLower.includes('退信');
 
-          if (info && info.includes('已回信')) {
-            repliedCount++;
-            openedCount++; // 回信的客戶肯定也開信了
-          } else if (info && info.includes('已開信')) {
-            openedCount++;
+          if (!isBounced) {
+            totalValidRows++;
+
+            if (info && info.includes('已回信')) {
+              repliedCount++;
+              openedCount++; // 回信的客戶肯定也開信了
+            } else if (info && info.includes('已開信')) {
+              openedCount++;
+            }
+          } else {
+            console.log(`第 ${i} 行為退信郵件，排除統計: ${info}`);
           }
         }
       }

@@ -99,7 +99,10 @@ const SheetService = {
     
     // 設定列寬
     this.setupColumnWidths(sheet);
-    
+
+    // 設置狀態欄位的下拉選單和顏色格式
+    this.setupStatusColumnFormatting(sheet);
+
     // 同時設置用戶資訊工作表
     UserInfoService.getUserInfoSheet();
     
@@ -332,7 +335,10 @@ const SheetService = {
             const cell = sheet.getRange(rowIndex, col);
             cell.setWrap(true);
           });
-          
+
+          // 設置狀態下拉選單和顏色
+          this.setupStatusDropdown(sheet, rowIndex);
+
           formattedCount++;
         }
       }
@@ -369,36 +375,59 @@ const SheetService = {
   },
 
   /**
-   * 設置 Send Now 復選框 (只在狀態為 Running 時顯示)
+   * 設置 Send Now 復選框 (根據狀態和郵件發送情況決定顯示)
    */
   setupSendNowButton(sheet, rowIndex) {
     const statusCell = sheet.getRange(rowIndex, COLUMNS.STATUS + 1);
     const status = statusCell.getValue();
-    
     const sendNowCell = sheet.getRange(rowIndex, COLUMNS.SEND_NOW + 1);
-    
-    if (status === 'Running') {
-      // 設置復選框供用戶手動勾選
+
+    // 檢查是否所有郵件都已發送
+    const allEmailsSent = this.areAllEmailsSent(sheet, rowIndex);
+
+    if (status === 'Running' && !allEmailsSent) {
+      // 狀態為 Running 且還有郵件未發送：設置復選框
       sendNowCell.setValue(false); // 預設為未勾選
       sendNowCell.setBackground(null); // 透明背景
       sendNowCell.setFontColor('#000000'); // 黑色文字
       sendNowCell.setHorizontalAlignment('center');
-      
+
       // 設置標準復選框
       const rule = SpreadsheetApp.newDataValidation()
         .requireCheckbox() // 標準 true/false 值
         .build();
       sendNowCell.setDataValidation(rule);
-      
+
       console.log(`已設置第 ${rowIndex} 行的 Send Now 復選框`);
     } else {
-      // 清除 Send Now 復選框
+      // 清除 Send Now 復選框（狀態非 Running 或所有郵件已發送）
       sendNowCell.clearContent();
       sendNowCell.clearDataValidations();
       sendNowCell.setBackground(null);
       sendNowCell.setFontColor(null);
       sendNowCell.setFontWeight('normal');
+
+      if (allEmailsSent) {
+        console.log(`第 ${rowIndex} 行所有郵件已發送，清除 Send Now 按鈕`);
+      } else if (status !== 'Running') {
+        console.log(`第 ${rowIndex} 行狀態為 ${status}，清除 Send Now 按鈕`);
+      }
     }
+  },
+
+  /**
+   * 檢查是否所有郵件都已發送（通過檢查排程欄位是否有刪除線）
+   */
+  areAllEmailsSent(sheet, rowIndex) {
+    const schedule1 = sheet.getRange(rowIndex, COLUMNS.SCHEDULE_1 + 1);
+    const schedule2 = sheet.getRange(rowIndex, COLUMNS.SCHEDULE_2 + 1);
+    const schedule3 = sheet.getRange(rowIndex, COLUMNS.SCHEDULE_3 + 1);
+
+    const email1Sent = schedule1.getFontLine() === 'line-through';
+    const email2Sent = schedule2.getFontLine() === 'line-through';
+    const email3Sent = schedule3.getFontLine() === 'line-through';
+
+    return email1Sent && email2Sent && email3Sent;
   },
 
   /**
@@ -422,6 +451,65 @@ const SheetService = {
       .requireValueInList(['', 'Processing', 'Running', 'Done'], true)
       .build();
     cell.setDataValidation(rule);
+
+    // 設置狀態顏色
+    this.applyStatusColor(sheet, rowIndex);
+  },
+
+  /**
+   * 設置狀態欄位的格式化（下拉選單和顏色）
+   */
+  setupStatusColumnFormatting(sheet) {
+    try {
+      const lastRow = sheet.getLastRow();
+
+      // 如果只有表頭，設置一些預設行
+      const endRow = Math.max(lastRow, 10);
+
+      // 為整個狀態欄位設置下拉選單
+      const statusRange = sheet.getRange(2, COLUMNS.STATUS + 1, endRow - 1, 1);
+      const rule = SpreadsheetApp.newDataValidation()
+        .requireValueInList(['', 'Processing', 'Running', 'Done'], true)
+        .build();
+      statusRange.setDataValidation(rule);
+
+      // 為現有行設置顏色
+      for (let i = 2; i <= lastRow; i++) {
+        this.applyStatusColor(sheet, i);
+      }
+
+      console.log(`已設置狀態欄位格式 (第2-${endRow}行)`);
+
+    } catch (error) {
+      console.error('設置狀態欄位格式時發生錯誤:', error);
+    }
+  },
+
+  /**
+   * 根據狀態值應用顏色
+   */
+  applyStatusColor(sheet, rowIndex) {
+    const cell = sheet.getRange(rowIndex, COLUMNS.STATUS + 1);
+    const status = cell.getValue();
+
+    switch (status) {
+      case 'Processing':
+        cell.setBackground('#FFF2CC'); // 淺黃色
+        cell.setFontColor('#7F6000'); // 深黃色字體
+        break;
+      case 'Running':
+        cell.setBackground('#D9EAD3'); // 淺綠色
+        cell.setFontColor('#274E13'); // 深綠色字體
+        break;
+      case 'Done':
+        cell.setBackground('#CFE2F3'); // 淺藍色
+        cell.setFontColor('#1C4587'); // 深藍色字體
+        break;
+      default:
+        cell.setBackground(null); // 透明背景
+        cell.setFontColor(null); // 預設字體顏色
+        break;
+    }
   },
 
   /**
