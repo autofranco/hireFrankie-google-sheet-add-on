@@ -27,16 +27,16 @@ const AnalyticsService = {
       bounceCell.setFontColor('#c62828'); // 深紅色字體
       bounceCell.setFontWeight('bold');
 
-      // 更新 S1: Open Rate (綠色背景)
-      const openText = `Open Rate: ${openStats.openRate}% (${openStats.totalOpened}/${openStats.totalLeads})`;
+      // 更新 S1: Open Rate (綠色背景) - 基於送達郵件計算
+      const openText = `Open Rate: ${openStats.openRate}% (${openStats.totalOpened}/${openStats.deliveredLeads})`;
       const openCell = sheet.getRange('S1');
       openCell.setValue(openText);
       openCell.setBackground('#e8f5e8'); // 淺綠色背景
       openCell.setFontColor('#2e7d32'); // 深綠色字體
       openCell.setFontWeight('bold');
 
-      // 更新 T1: Reply Rate (藍色背景)
-      const replyText = `Reply Rate: ${replyStats.replyRate}% (${replyStats.totalReplied}/${replyStats.totalLeads})`;
+      // 更新 T1: Reply Rate (藍色背景) - 基於送達郵件計算
+      const replyText = `Reply Rate: ${replyStats.replyRate}% (${replyStats.totalReplied}/${replyStats.deliveredLeads})`;
       const replyCell = sheet.getRange('T1');
       replyCell.setValue(replyText);
       replyCell.setBackground('#e3f2fd'); // 淺藍色背景
@@ -116,6 +116,7 @@ const AnalyticsService = {
   /**
    * 獲取開信統計資料（以潛在客戶為單位）
    * 如果潛在客戶開啟任何一封郵件，就算開信
+   * 排除退信的潛在客戶
    */
   getOpenStatistics() {
     try {
@@ -123,11 +124,12 @@ const AnalyticsService = {
       const lastRow = sheet.getLastRow();
 
       if (lastRow <= 1) {
-        return { openRate: 0, totalLeads: 0, totalOpened: 0 };
+        return { openRate: 0, totalLeads: 0, totalOpened: 0, deliveredLeads: 0 };
       }
 
-      let totalLeads = 0;
-      let totalOpened = 0;
+      let totalSentLeads = 0;    // 總發送潛在客戶數
+      let bouncedLeads = 0;      // 退信潛在客戶數
+      let totalOpened = 0;       // 開信潛在客戶數
 
       // 統計每個潛在客戶
       for (let i = 2; i <= lastRow; i++) {
@@ -140,34 +142,46 @@ const AnalyticsService = {
           const hasSentEmail = schedule1.getFontLine() === 'line-through';
 
           if (hasSentEmail) {
-            totalLeads++;
+            totalSentLeads++;
 
-            // 檢查是否有開信（包含回信的也算開信）
+            // 檢查是否為退信
             const info = sheet.getRange(i, COLUMNS.INFO + 1).getValue();
-            if (info && (info.toString().includes('已開信') || info.toString().includes('已回信'))) {
-              totalOpened++;
+            const infoLower = info ? info.toString().toLowerCase() : '';
+            const isBounced = infoLower.includes('bounced') || infoLower.includes('退信');
+
+            if (isBounced) {
+              bouncedLeads++;
+            } else {
+              // 只統計未退信的潛在客戶的開信狀態
+              if (info && (info.toString().includes('已開信') || info.toString().includes('已回信'))) {
+                totalOpened++;
+              }
             }
           }
         }
       }
 
-      const openRate = totalLeads > 0 ? Math.round((totalOpened / totalLeads) * 100) : 0;
+      // 計算成功送達的潛在客戶數
+      const deliveredLeads = totalSentLeads - bouncedLeads;
+      const openRate = deliveredLeads > 0 ? Math.round((totalOpened / deliveredLeads) * 100) : 0;
 
       return {
         openRate: openRate,
-        totalLeads: totalLeads,
-        totalOpened: totalOpened
+        totalLeads: totalSentLeads,      // 總發送潛在客戶數
+        deliveredLeads: deliveredLeads,  // 成功送達潛在客戶數
+        totalOpened: totalOpened         // 開信潛在客戶數
       };
 
     } catch (error) {
       console.error('獲取開信統計時發生錯誤:', error);
-      return { openRate: 0, totalLeads: 0, totalOpened: 0, error: error.message };
+      return { openRate: 0, totalLeads: 0, deliveredLeads: 0, totalOpened: 0, error: error.message };
     }
   },
 
   /**
    * 獲取回信統計資料（以潛在客戶為單位）
    * 如果潛在客戶回信任何一封郵件，就算回信
+   * 排除退信的潛在客戶
    */
   getReplyStatistics() {
     try {
@@ -175,11 +189,12 @@ const AnalyticsService = {
       const lastRow = sheet.getLastRow();
 
       if (lastRow <= 1) {
-        return { replyRate: 0, totalLeads: 0, totalReplied: 0 };
+        return { replyRate: 0, totalLeads: 0, totalReplied: 0, deliveredLeads: 0 };
       }
 
-      let totalLeads = 0;
-      let totalReplied = 0;
+      let totalSentLeads = 0;    // 總發送潛在客戶數
+      let bouncedLeads = 0;      // 退信潛在客戶數
+      let totalReplied = 0;      // 回信潛在客戶數
 
       // 統計每個潛在客戶
       for (let i = 2; i <= lastRow; i++) {
@@ -192,28 +207,39 @@ const AnalyticsService = {
           const hasSentEmail = schedule1.getFontLine() === 'line-through';
 
           if (hasSentEmail) {
-            totalLeads++;
+            totalSentLeads++;
 
-            // 檢查是否有回信
+            // 檢查是否為退信
             const info = sheet.getRange(i, COLUMNS.INFO + 1).getValue();
-            if (info && info.toString().includes('已回信')) {
-              totalReplied++;
+            const infoLower = info ? info.toString().toLowerCase() : '';
+            const isBounced = infoLower.includes('bounced') || infoLower.includes('退信');
+
+            if (isBounced) {
+              bouncedLeads++;
+            } else {
+              // 只統計未退信的潛在客戶的回信狀態
+              if (info && info.toString().includes('已回信')) {
+                totalReplied++;
+              }
             }
           }
         }
       }
 
-      const replyRate = totalLeads > 0 ? Math.round((totalReplied / totalLeads) * 100) : 0;
+      // 計算成功送達的潛在客戶數
+      const deliveredLeads = totalSentLeads - bouncedLeads;
+      const replyRate = deliveredLeads > 0 ? Math.round((totalReplied / deliveredLeads) * 100) : 0;
 
       return {
         replyRate: replyRate,
-        totalLeads: totalLeads,
-        totalReplied: totalReplied
+        totalLeads: totalSentLeads,      // 總發送潛在客戶數
+        deliveredLeads: deliveredLeads,  // 成功送達潛在客戶數
+        totalReplied: totalReplied       // 回信潛在客戶數
       };
 
     } catch (error) {
       console.error('獲取回信統計時發生錯誤:', error);
-      return { replyRate: 0, totalLeads: 0, totalReplied: 0, error: error.message };
+      return { replyRate: 0, totalLeads: 0, deliveredLeads: 0, totalReplied: 0, error: error.message };
     }
   },
 
@@ -231,10 +257,10 @@ const AnalyticsService = {
       if (result.success) {
         message += '✅ 統計更新成功\n\n';
         message += `🔴 退信率: ${result.bounceStats.bounceRate}% (${result.bounceStats.totalBounced}/${result.bounceStats.totalLeads} 潛在客戶)\n`;
-        message += `🟢 開信率: ${result.openStats.openRate}% (${result.openStats.totalOpened}/${result.openStats.totalLeads} 潛在客戶)\n`;
-        message += `🔵 回信率: ${result.replyStats.replyRate}% (${result.replyStats.totalReplied}/${result.replyStats.totalLeads} 潛在客戶)\n\n`;
+        message += `🟢 開信率: ${result.openStats.openRate}% (${result.openStats.totalOpened}/${result.openStats.deliveredLeads} 送達潛客)\n`;
+        message += `🔵 回信率: ${result.replyStats.replyRate}% (${result.replyStats.totalReplied}/${result.replyStats.deliveredLeads} 送達潛客)\n\n`;
         message += '請檢查 R1、S1、T1 儲存格的顯示效果。\n\n';
-        message += '注意：統計以潛在客戶為單位，不是以郵件為單位。';
+        message += '注意：開信率和回信率基於成功送達的潛在客戶計算，排除退信客戶。';
       } else {
         message += `❌ 統計更新失敗: ${result.error}`;
       }
