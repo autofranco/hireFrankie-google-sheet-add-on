@@ -24,58 +24,58 @@ const BounceDetectionService = {
       for (const sentEmail of sentEmails) {
         console.log(`檢查郵件: ${sentEmail.subject} (發送時間: ${new Date(sentEmail.sentTime)})`);
 
-        // 搜尋退信相關的郵件 - 修正：退信是發給我們的，不是發給客戶的
+        // 搜尋退信相關的郵件 - 單一綜合查詢策略
         const myEmail = Session.getActiveUser().getEmail();
-        const bounceSearchQueries = [
-          `to:${myEmail} (from:mailer-daemon OR from:postmaster)`,
-          `to:${myEmail} from:mailer-daemon@googlemail.com`,
-          `to:${myEmail} from:mailer-daemon@gmail.com`
-        ];
 
-        for (const query of bounceSearchQueries) {
-          try {
-            console.log(`搜尋退信查詢: ${query}`);
-            const threads = GmailApp.search(query, 0, 5);
+        // 綜合搜尋查詢：包含精確和備用條件
+        const comprehensiveQuery = `to:${myEmail} (from:mailer-daemon OR from:postmaster OR from:mailer-daemon@googlemail.com OR from:mailer-daemon@gmail.com)`;
 
-            for (const thread of threads) {
-              const messages = thread.getMessages();
+        try {
+          console.log(`🔍 搜尋退信查詢: ${comprehensiveQuery}`);
+          const threads = GmailApp.search(comprehensiveQuery, 0, 15);
 
-              for (const message of messages) {
-                const messageDate = message.getDate();
-                const sender = message.getFrom();
-                const subject = message.getSubject();
-                const body = message.getPlainBody();
+          for (const thread of threads) {
+            const messages = thread.getMessages();
 
-                // 檢查是否為退信：1) 來自系統郵件 2) 在我們發送郵件之後 3) 內容包含退信關鍵詞
-                if (messageDate.getTime() > sentEmail.sentTime &&
-                    this.isBounceMessage(sender, subject, body, email)) {
+            for (const message of messages) {
+              const messageDate = message.getDate();
+              const sender = message.getFrom();
+              const subject = message.getSubject();
+              const body = message.getPlainBody();
 
-                  console.log(`✅ 發現退信: ${sender} 於 ${messageDate} 報告 "${email}" 退信`);
+              // 檢查時間窗口：退信應該在發送後48小時內
+              const timeDiff = messageDate.getTime() - sentEmail.sentTime;
+              const maxBounceWindow = 48 * 60 * 60 * 1000; // 48小時
 
-                  // 記錄退信資訊
-                  this.recordBounce(rowIndex, sentEmail.emailType, {
-                    email: email,
-                    bounceDate: messageDate,
-                    bounceSender: sender,
-                    bounceSubject: subject,
-                    originalEmailType: sentEmail.emailType,
-                    originalSubject: sentEmail.subject
-                  });
+              // 檢查是否為退信：1) 時間窗口內 2) 通過嚴格的退信驗證（必須包含目標郵件地址）
+              if (timeDiff > 0 && timeDiff <= maxBounceWindow &&
+                  this.isBounceMessage(sender, subject, body, email)) {
 
-                  return {
-                    hasBounce: true,
-                    bounceDate: messageDate,
-                    bounceSender: sender,
-                    bounceSubject: subject,
-                    originalEmailType: sentEmail.emailType
-                  };
-                }
+                console.log(`✅ 發現退信: ${sender} 於 ${messageDate} 報告 "${email}" 退信`);
+
+                // 記錄退信資訊
+                this.recordBounce(rowIndex, sentEmail.emailType, {
+                  email: email,
+                  bounceDate: messageDate,
+                  bounceSender: sender,
+                  bounceSubject: subject,
+                  originalEmailType: sentEmail.emailType,
+                  originalSubject: sentEmail.subject
+                });
+
+                return {
+                  hasBounce: true,
+                  bounceDate: messageDate,
+                  bounceSender: sender,
+                  bounceSubject: subject,
+                  originalEmailType: sentEmail.emailType
+                };
               }
             }
-          } catch (searchError) {
-            console.error(`搜尋退信錯誤:`, searchError);
-            continue;
           }
+        } catch (searchError) {
+          console.error(`搜尋退信錯誤:`, searchError);
+          continue;
         }
       }
 
@@ -89,9 +89,11 @@ const BounceDetectionService = {
   },
 
   /**
-   * 判斷是否為退信郵件
+   * 判斷是否為退信郵件 - 增強版本，防止誤報
    */
   isBounceMessage(sender, subject, body, targetEmail) {
+    console.log(`🔍 檢查退信訊息: sender=${sender}, targetEmail=${targetEmail}`);
+
     // 檢查發送者是否為系統郵件
     const systemSenders = [
       'mailer-daemon',
@@ -108,8 +110,20 @@ const BounceDetectionService = {
     );
 
     if (!isSystemSender) {
+      console.log(`❌ 非系統發件人，跳過: ${sender}`);
       return false;
     }
+
+    // CRITICAL: 目標郵件地址必須出現在郵件內容中
+    const bodyLower = body.toLowerCase();
+    const emailInBody = bodyLower.includes(targetEmail.toLowerCase());
+
+    if (!emailInBody) {
+      console.log(`❌ 目標郵件地址 ${targetEmail} 未在退信內容中找到，跳過檢查`);
+      return false;
+    }
+
+    console.log(`✅ 目標郵件地址 ${targetEmail} 在退信內容中找到`);
 
     // 檢查主旨是否包含退信關鍵詞
     const bounceSubjectKeywords = [
@@ -128,10 +142,7 @@ const BounceDetectionService = {
       subjectLower.includes(keyword)
     );
 
-    // 檢查內容是否包含目標郵件地址和退信關鍵詞
-    const bodyLower = body.toLowerCase();
-    const emailInBody = bodyLower.includes(targetEmail.toLowerCase());
-
+    // 檢查內容是否包含退信關鍵詞
     const bounceBodyKeywords = [
       // Gmail specific error messages
       'does not exist',
@@ -168,7 +179,6 @@ const BounceDetectionService = {
       '550 5.7.1', // 因政策原因被拒絕
       '553 5.1.2', // 找不到收件人網域
       '553 5.1.3', // 收件人地址無效
-      '550 5.1.1', // 確定退信
       '450 4.2.1', '451 4.3.0', '421 4.3.0', '452 4.2.2', // 暫時失敗
       '550 5.4.5', '554 5.4.6' // 其他永久失敗
     ];
@@ -181,7 +191,16 @@ const BounceDetectionService = {
       bodyLower.includes(keyword)
     );
 
-    return hasBounceSubject || hasSmtpBounceCode || (emailInBody && hasBounceBody);
+    // 必須同時滿足：1) 系統發件人 2) 目標郵件在內容中 3) 有退信標誌（主旨 OR SMTP碼 OR 關鍵詞）
+    const isBounce = hasBounceSubject || hasSmtpBounceCode || hasBounceBody;
+
+    if (isBounce) {
+      console.log(`✅ 確認退信: 主旨關鍵詞=${hasBounceSubject}, SMTP碼=${hasSmtpBounceCode}, 內容關鍵詞=${hasBounceBody}`);
+    } else {
+      console.log(`❌ 未發現退信證據: 主旨關鍵詞=${hasBounceSubject}, SMTP碼=${hasSmtpBounceCode}, 內容關鍵詞=${hasBounceBody}`);
+    }
+
+    return isBounce;
   },
 
   /**
