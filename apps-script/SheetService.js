@@ -28,21 +28,35 @@ const SheetService = {
    * @returns {Promise<void>}
    */
   async setupHeaders() {
-    const sheet = this.getMainSheet();
-    
-    // 在現有名稱後面加上 Auto Lead Warmer 標識和時間戳（避免覆蓋原名稱）
-    const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-    const currentTitle = spreadsheet.getName();
-    
-    // 只有在尚未包含 Auto Lead Warmer 時才添加
-    let finalTitle = currentTitle;
-    if (!currentTitle.includes('Auto Lead Warmer')) {
-      const timestamp = new Date();
-      const dateStr = `${(timestamp.getMonth() + 1).toString().padStart(2, '0')}/${timestamp.getDate().toString().padStart(2, '0')}`;
-      const timeStr = timestamp.toLocaleTimeString('zh-TW', {hour12: false, hour: '2-digit', minute: '2-digit'});
-      finalTitle = `${currentTitle} - Auto Lead Warmer (${dateStr} ${timeStr})`;
-      spreadsheet.rename(finalTitle);
-    }
+    try {
+      console.log('🔧 開始 setupHeaders - 獲取主工作表...');
+      const sheet = this.getMainSheet();
+      console.log('✅ 主工作表獲取成功');
+
+      // 在現有名稱後面加上 Auto Lead Warmer 標識和時間戳（避免覆蓋原名稱）
+      console.log('🔧 開始重命名電子表格...');
+      const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+      const currentTitle = spreadsheet.getName();
+      console.log(`📋 當前標題: ${currentTitle}`);
+
+      // 只有在尚未包含 Auto Lead Warmer 時才添加
+      let finalTitle = currentTitle;
+      if (!currentTitle.includes('Auto Lead Warmer')) {
+        try {
+          const timestamp = new Date();
+          const dateStr = `${(timestamp.getMonth() + 1).toString().padStart(2, '0')}/${timestamp.getDate().toString().padStart(2, '0')}`;
+          const timeStr = timestamp.toLocaleTimeString('zh-TW', {hour12: false, hour: '2-digit', minute: '2-digit'});
+          finalTitle = `${currentTitle} - Auto Lead Warmer (${dateStr} ${timeStr})`;
+          console.log(`🔄 嘗試重命名為: ${finalTitle}`);
+          spreadsheet.rename(finalTitle);
+          console.log('✅ 電子表格重命名成功');
+        } catch (renameError) {
+          console.error('❌ 電子表格重命名失敗 (drive.file 權限限制?):', renameError);
+          console.log('⚠️ 跳過重命名，繼續其他設置...');
+        }
+      } else {
+        console.log('ℹ️ 電子表格已包含 Auto Lead Warmer 標識，跳過重命名');
+      }
     
     const headers = [
       'Email Address*',
@@ -87,12 +101,14 @@ const SheetService = {
       'info'               // column 17 (Q)
     ];
     
-    grayHeaders.forEach((headerText) => {
-      const columnIndex = headers.indexOf(headerText) + 1;
-      if (columnIndex > 0) {
-        sheet.getRange(1, columnIndex).setFontColor('#949494');
-      }
-    });
+      console.log('🔧 設置表頭中...');
+      grayHeaders.forEach((headerText) => {
+        const columnIndex = headers.indexOf(headerText) + 1;
+        if (columnIndex > 0) {
+          sheet.getRange(1, columnIndex).setFontColor('#949494');
+        }
+      });
+      console.log('✅ 表頭設置完成');
     
     // 凍結第一行（標題行）
     sheet.setFrozenRows(1);
@@ -123,7 +139,13 @@ const SheetService = {
       // 不中斷設定流程，只記錄錯誤
     }
     
-    SpreadsheetApp.getUi().alert(`設定完成！\n\n✅ 工作表已重新命名為: ${finalTitle}\n✅ User Info 工作表已創建\n✅ Firebase 用戶已初始化\n✅ 列寬已設定\n\n💡 重要提醒：\n• 請到 "User Info" 工作表填入您的個人資訊\n• 請在 "Seminar Info" 欄位填寫研習活動資訊\n• 系統會自動生成 "Seminar Brief" 供所有潛客分析使用\n• 個人資訊會自動添加到所有郵件簽名中`);
+      SpreadsheetApp.getUi().alert(`設定完成！\n\n✅ 工作表已重新命名為: ${finalTitle}\n✅ User Info 工作表已創建\n✅ Firebase 用戶已初始化\n✅ 列寬已設定\n\n💡 重要提醒：\n• 請到 "User Info" 工作表填入您的個人資訊\n• 請在 "Seminar Info" 欄位填寫研習活動資訊\n• 系統會自動生成 "Seminar Brief" 供所有潛客分析使用\n• 個人資訊會自動添加到所有郵件簽名中`);
+      console.log('✅ setupHeaders 全部完成');
+
+    } catch (mainError) {
+      console.error('❌ setupHeaders 主要錯誤:', mainError);
+      throw mainError; // Re-throw for calling function to handle
+    }
   },
 
   /**

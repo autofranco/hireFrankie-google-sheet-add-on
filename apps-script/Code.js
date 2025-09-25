@@ -61,10 +61,10 @@ function onOpen() {
  * @description 結合初始設置和格式化功能，簡化用戶操作
  * @returns {void}
  */
-function setupHeadersAndFormat() {
+async function setupHeadersAndFormat() {
   try {
     // 先執行表頭設置
-    SheetService.setupHeaders();
+    await SheetService.setupHeaders();
 
     // 等待一下讓設置完成
     Utilities.sleep(1000);
