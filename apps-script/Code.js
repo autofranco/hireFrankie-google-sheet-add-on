@@ -28,7 +28,7 @@
  * 必要权限：
  * - https://www.googleapis.com/auth/script.external_request
  * - https://www.googleapis.com/auth/gmail.send
- * - https://www.googleapis.com/auth/drive.file
+ * - 電子表格權限由 @OnlyCurrentDoc 自動提供 (容器綁定腳本)
  */
 
 /**
