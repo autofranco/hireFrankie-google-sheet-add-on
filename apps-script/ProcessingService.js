@@ -213,17 +213,20 @@ const ProcessingService = {
       APIService.checkUserPaymentStatus();
       console.log('✅ 用戶付費狀態驗證通過');
 
+      // 獲取用戶資訊（只獲取一次）
+      const userInfo = UserInfoService.getUserInfo();
+
       // 第1階段：並行生成所有 Leads Profiles
       console.log('第1階段：並行生成 Leads Profiles...');
-      const leadsProfilesData = this.generateLeadsProfilesConcurrently(sheet, batchRows, batchRowIndexes);
+      const leadsProfilesData = this.generateLeadsProfilesConcurrently(sheet, batchRows, batchRowIndexes, userInfo);
 
       // 第2階段：並行生成所有 Mail Angles
       console.log('第2階段：並行生成 Mail Angles...');
-      const mailAnglesData = this.generateMailAnglesConcurrently(sheet, batchRows, batchRowIndexes, leadsProfilesData);
+      const mailAnglesData = this.generateMailAnglesConcurrently(sheet, batchRows, batchRowIndexes, leadsProfilesData, userInfo);
 
       // 第3階段：並行生成所有第一封郵件
       console.log('第3階段：並行生成第一封郵件...');
-      const firstMailsData = this.generateFirstMailsConcurrently(sheet, batchRows, batchRowIndexes, leadsProfilesData, mailAnglesData);
+      const firstMailsData = this.generateFirstMailsConcurrently(sheet, batchRows, batchRowIndexes, leadsProfilesData, mailAnglesData, userInfo);
 
       // 第4階段：設定排程和觸發器
       console.log('第4階段：設定排程和觸發器...');
@@ -296,7 +299,7 @@ const ProcessingService = {
   /**
    * 第1階段：並行生成多個 Leads Profiles
    */
-  generateLeadsProfilesConcurrently(sheet, batchRows, batchRowIndexes) {
+  generateLeadsProfilesConcurrently(sheet, batchRows, batchRowIndexes, userInfo) {
     try {
       // 準備批次資料
       const batchData = batchRows.map((row, index) => ({
@@ -311,7 +314,7 @@ const ProcessingService = {
       });
 
       // 批次生成
-      const results = ContentGenerator.generateLeadsProfilesBatch(batchData);
+      const results = ContentGenerator.generateLeadsProfilesBatch(batchData, userInfo);
 
       // 填入工作表
       results.forEach((result, index) => {
@@ -336,7 +339,7 @@ const ProcessingService = {
   /**
    * 第2階段：並行生成多個 Mail Angles
    */
-  generateMailAnglesConcurrently(sheet, batchRows, batchRowIndexes, leadsProfilesData) {
+  generateMailAnglesConcurrently(sheet, batchRows, batchRowIndexes, leadsProfilesData, userInfo) {
     try {
       // 準備批次資料
       const batchData = batchRows.map((row, index) => {
@@ -368,7 +371,7 @@ const ProcessingService = {
       });
 
       // 批次生成
-      const results = ContentGenerator.generateMailAnglesBatch(validBatchData);
+      const results = ContentGenerator.generateMailAnglesBatch(validBatchData, userInfo);
 
       // 填入工作表
       const allResults = batchRows.map(() => ({ success: false, error: '跳過處理' }));
@@ -414,7 +417,7 @@ const ProcessingService = {
   /**
    * 第3階段：並行生成多封第一封郵件
    */
-  generateFirstMailsConcurrently(sheet, batchRows, batchRowIndexes, leadsProfilesData, mailAnglesData) {
+  generateFirstMailsConcurrently(sheet, batchRows, batchRowIndexes, leadsProfilesData, mailAnglesData, userInfo) {
     try {
       // 準備批次資料
       const batchData = batchRows.map((row, index) => {
@@ -453,7 +456,7 @@ const ProcessingService = {
       });
 
       // 批次生成
-      const results = ContentGenerator.generateFirstMailsBatch(validBatchData);
+      const results = ContentGenerator.generateFirstMailsBatch(validBatchData, userInfo);
 
       // 填入工作表
       const allResults = batchRows.map(() => ({ success: false, error: '跳過處理' }));

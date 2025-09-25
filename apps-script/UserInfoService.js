@@ -115,7 +115,7 @@ const UserInfoService = {
         email3Prompt: sheet.getRange(USER_INFO_FIELDS.EMAIL3_PROMPT.row, USER_INFO_FIELDS.EMAIL3_PROMPT.col).getValue() || ''
       };
       
-      console.log('已獲取用戶資訊:', userInfo);
+      console.log(`已獲取用戶資訊: ${userInfo.name} (${userInfo.company})`);
       return userInfo;
     } catch (error) {
       console.error('獲取用戶資訊時發生錯誤:', error);

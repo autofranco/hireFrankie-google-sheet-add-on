@@ -353,18 +353,16 @@ Mail Angle: ${mailAngle}
   /**
    * 批次生成多個潛在客戶畫像
    * @param {Array} batchData - 批次資料陣列，每個元素包含 companyUrl, position, firstName
+   * @param {Object} userInfo - 用戶資訊物件 (避免重複獲取)
    * @returns {Array} 生成結果陣列
    */
-  generateLeadsProfilesBatch(batchData) {
+  generateLeadsProfilesBatch(batchData, userInfo = null) {
     try {
       console.log(`開始批次生成 ${batchData.length} 個客戶畫像...`);
 
-      // 檢查用戶付費狀態
-      APIService.checkUserPaymentStatus();
-
-      // 獲取研習活動簡介資訊
-      const userInfo = UserInfoService.getUserInfo();
-      const seminarBrief = userInfo.seminarBrief || '';
+      // 使用傳入的 userInfo 或獲取新的（向後兼容）
+      const user = userInfo || UserInfoService.getUserInfo();
+      const seminarBrief = user.seminarBrief || '';
 
       // 準備所有 API 請求
       const requests = batchData.map((data, index) => {
@@ -398,7 +396,6 @@ Mail Angle: ${mailAngle}
       const results = responses.map((response, index) => {
         if (response.success) {
           const cleanedContent = this.cleanMarkdownForSheets(response.result.content);
-          console.log(`客戶畫像 ${index + 1} 生成成功 (${cleanedContent.length} 字符)`);
 
           return {
             success: true,
@@ -418,9 +415,6 @@ Mail Angle: ${mailAngle}
         }
       });
 
-      const successCount = results.filter(r => r.success).length;
-      console.log(`批次客戶畫像生成完成: 成功 ${successCount}/${batchData.length}`);
-
       return results;
 
     } catch (error) {
@@ -432,14 +426,16 @@ Mail Angle: ${mailAngle}
   /**
    * 批次生成多個郵件切入點
    * @param {Array} batchData - 批次資料陣列，每個元素包含 leadsProfile, firstName, position
+   * @param {Object} userInfo - 用戶資訊物件 (避免重複獲取)
    * @returns {Array} 生成結果陣列
    */
-  generateMailAnglesBatch(batchData) {
+  generateMailAnglesBatch(batchData, userInfo = null) {
     try {
       console.log(`開始批次生成 ${batchData.length} 個郵件切入點...`);
 
-      const userInfo = UserInfoService.getUserInfo();
-      const seminarBrief = userInfo.seminarBrief || '';
+      // 使用傳入的 userInfo 或獲取新的（向後兼容）
+      const user = userInfo || UserInfoService.getUserInfo();
+      const seminarBrief = user.seminarBrief || '';
 
       // 準備所有 API 請求
       const requests = batchData.map((data, index) => {
@@ -486,7 +482,6 @@ Mail Angle: ${mailAngle}
       const results = responses.map((response, index) => {
         if (response.success) {
           const angles = this.parseMailAngles(response.result.content);
-          console.log(`郵件切入點 ${index + 1} 生成成功`);
 
           return {
             success: true,
@@ -506,9 +501,6 @@ Mail Angle: ${mailAngle}
         }
       });
 
-      const successCount = results.filter(r => r.success).length;
-      console.log(`批次郵件切入點生成完成: 成功 ${successCount}/${batchData.length}`);
-
       return results;
 
     } catch (error) {
@@ -520,15 +512,17 @@ Mail Angle: ${mailAngle}
   /**
    * 批次生成多封第一封追蹤郵件
    * @param {Array} batchData - 批次資料陣列，每個元素包含 leadsProfile, mailAngle, firstName
+   * @param {Object} userInfo - 用戶資訊物件 (避免重複獲取)
    * @returns {Array} 生成結果陣列
    */
-  generateFirstMailsBatch(batchData) {
+  generateFirstMailsBatch(batchData, userInfo = null) {
     try {
       console.log(`開始批次生成 ${batchData.length} 封第一封追蹤郵件...`);
 
-      const userInfo = UserInfoService.getUserInfo();
-      const seminarBrief = userInfo.seminarBrief || '';
-      const emailPrompt = userInfo.email1Prompt;
+      // 使用傳入的 userInfo 或獲取新的（向後兼容）
+      const user = userInfo || UserInfoService.getUserInfo();
+      const seminarBrief = user.seminarBrief || '';
+      const emailPrompt = user.email1Prompt;
 
       // 準備所有 API 請求
       const requests = batchData.map((data, index) => {
@@ -578,8 +572,6 @@ Mail Angle: ${data.mailAngle}
             mailContent += signature;
           }
 
-          console.log(`第一封郵件 ${index + 1} 生成成功`);
-
           return {
             success: true,
             content: mailContent,
@@ -597,9 +589,6 @@ Mail Angle: ${data.mailAngle}
           };
         }
       });
-
-      const successCount = results.filter(r => r.success).length;
-      console.log(`批次第一封郵件生成完成: 成功 ${successCount}/${batchData.length}`);
 
       return results;
 
@@ -701,9 +690,6 @@ Mail Angle: ${data.mailAngle}
           };
         }
       });
-
-      const successCount = results.filter(r => r.success).length;
-      console.log(`批次後續追蹤郵件生成完成: 成功 ${successCount}/${batchData.length}`);
 
       return results;
 
