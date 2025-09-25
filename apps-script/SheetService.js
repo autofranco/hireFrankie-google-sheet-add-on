@@ -143,9 +143,9 @@ const SheetService = {
     const unprocessedRowIndexes = [];
     
     data.forEach((row, index) => {
-      if (!row[COLUMNS.STATUS] && // status 為空白
-          row[COLUMNS.EMAIL] && 
-          row[COLUMNS.FIRST_NAME] && 
+      if ((!row[COLUMNS.STATUS] || row[COLUMNS.STATUS] === 'Processing') && // status 為空白或 Processing
+          row[COLUMNS.EMAIL] &&
+          row[COLUMNS.FIRST_NAME] &&
           row[COLUMNS.COMPANY_URL] &&
           row[COLUMNS.POSITION]) {
         unprocessedRows.push(row);
