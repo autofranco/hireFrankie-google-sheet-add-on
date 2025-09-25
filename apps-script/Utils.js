@@ -5,28 +5,51 @@
 const Utils = {
   
   /**
-   * 生成排程時間 - 更新為工作日上午9點模式
-   * 產生三個排程時間：下一個工作日，以及後續兩個星期的同一天
-   * 
+   * 生成排程時間 - 智慧分散工作時間排程
+   * 產生三個排程時間：第一封分散在工作時間，第二第三封週週循環
+   *
    * @function generateScheduleTimes
-   * @description 計算三封郵件的發送排程時間，都安排在工作日上午9點
+   * @description 計算三封郵件的發送排程時間，每小時最多10封避免垃圾郵件偵測
    * @returns {Object} 包含三個排程時間的物件
-   * @returns {Date} returns.schedule1 - 第一封郵件的排程時間（下一個工作日上午9點）
-   * @returns {Date} returns.schedule2 - 第二封郵件的排程時間（第一封後7天）
-   * @returns {Date} returns.schedule3 - 第三封郵件的排程時間（第二封後7天）
+   * @returns {Date} returns.schedule1 - 第一封郵件的排程時間（分散在工作時間 8:00-17:00）
+   * @returns {Date} returns.schedule2 - 第二封郵件的排程時間（第一封後7天同時間）
+   * @returns {Date} returns.schedule3 - 第三封郵件的排程時間（第二封後7天同時間）
    */
   generateScheduleTimes() {
-    const now = new Date();
-    
-    // 第一封邮件：下一个工作日上午9点
-    const schedule1 = this.getNextWeekdayAt9AM(now);
-    
-    // 第二封邮件：第一封邮件后7天（保持同一星期几）
-    const schedule2 = new Date(schedule1.getTime() + 7 * 24 * 60 * 60 * 1000);
-    
-    // 第三封邮件：第二封邮件后7天（保持同一星期几）
-    const schedule3 = new Date(schedule2.getTime() + 7 * 24 * 60 * 60 * 1000);
-    
+    // 使用 PropertiesService 維持計數器狀態
+    const properties = PropertiesService.getScriptProperties();
+
+    // 取得當前的郵件計數器和小時段
+    let emailCounter = parseInt(properties.getProperty('emailCounter')) || 0;
+    let currentHourSlot = properties.getProperty('currentHourSlot');
+
+    // 如果沒有當前小時段，或計數器歸零時，取得新的小時段
+    if (!currentHourSlot || emailCounter === 0) {
+      const slotDate = this.getNextHourSlot();
+      currentHourSlot = slotDate.getTime().toString();
+      properties.setProperty('currentHourSlot', currentHourSlot);
+    }
+
+    // 轉換回 Date 物件
+    const schedule1 = new Date(parseInt(currentHourSlot));
+
+    // 第二封郵件：第一封後一週同時間
+    const schedule2 = this.getNextWeekHourSlot(schedule1);
+
+    // 第三封郵件：第二封後一週同時間
+    const schedule3 = this.getNextWeekHourSlot(schedule2);
+
+    // 更新計數器
+    emailCounter = (emailCounter + 1) % 10;
+    properties.setProperty('emailCounter', emailCounter.toString());
+
+    // 如果計數器歸零（每10封郵件），下次呼叫時會取得新的小時段
+    if (emailCounter === 0) {
+      console.log(`已安排10封郵件至 ${this.formatScheduleTime(schedule1)}，下次將使用新的時間段`);
+    }
+
+    console.log(`安排郵件排程 (${emailCounter}/10): 第1封=${this.formatScheduleTime(schedule1)}, 第2封=${this.formatScheduleTime(schedule2)}, 第3封=${this.formatScheduleTime(schedule3)}`);
+
     return {
       schedule1: schedule1,
       schedule2: schedule2,
@@ -37,7 +60,7 @@ const Utils = {
   /**
    * 獲取下一個工作日上午9點的時間
    * 從指定日期開始找到下一個工作日的上午9點
-   * 
+   *
    * @function getNextWeekdayAt9AM
    * @param {Date} fromDate - 起始日期
    * @returns {Date} 下一個工作日上午9點的時間
@@ -45,19 +68,90 @@ const Utils = {
   getNextWeekdayAt9AM(fromDate) {
     const date = new Date(fromDate);
     date.setHours(9, 0, 0, 0); // 设置为上午9点
-    
+
     // 如果是今天且还未到9点，就用今天
     const now = new Date();
     if (date.toDateString() === now.toDateString() && now.getHours() < 9) {
       return date;
     }
-    
+
     // 否则找下一个工作日
     do {
       date.setDate(date.getDate() + 1);
     } while (date.getDay() === 0 || date.getDay() === 6); // 0是周日，6是周六
-    
+
     return date;
+  },
+
+  /**
+   * 獲取下一個可用的工作時間小時段
+   * 工作時間：週一到週五 8:00-17:00
+   *
+   * @function getNextHourSlot
+   * @param {Date} fromDate - 起始日期，預設為當前時間
+   * @returns {Date} 下一個可用的工作時間小時段
+   */
+  getNextHourSlot(fromDate = new Date()) {
+    const date = new Date(fromDate);
+
+    // 設置為下一個整點
+    date.setMinutes(0, 0, 0);
+    date.setHours(date.getHours() + 1);
+
+    // 確保在工作時間內（8:00-17:00）
+    while (true) {
+      const hour = date.getHours();
+      const day = date.getDay();
+
+      // 檢查是否為工作日（1=週一, 5=週五）
+      if (day >= 1 && day <= 5) {
+        // 檢查是否在工作時間內（8:00-17:00）
+        if (hour >= 8 && hour <= 17) {
+          return new Date(date);
+        }
+
+        // 如果超過17點，跳到明天8點
+        if (hour > 17) {
+          date.setDate(date.getDate() + 1);
+          date.setHours(8, 0, 0, 0);
+          continue;
+        }
+
+        // 如果早於8點，設置為8點
+        if (hour < 8) {
+          date.setHours(8, 0, 0, 0);
+          continue;
+        }
+      }
+
+      // 不是工作日，跳到下一天
+      date.setDate(date.getDate() + 1);
+      date.setHours(8, 0, 0, 0);
+
+      // 跳過週末，到下週一
+      if (date.getDay() === 6) { // 週六跳到週一
+        date.setDate(date.getDate() + 2);
+      } else if (date.getDay() === 0) { // 週日跳到週一
+        date.setDate(date.getDate() + 1);
+      }
+    }
+  },
+
+  /**
+   * 獲取指定日期後一週的同一時間
+   *
+   * @function getNextWeekHourSlot
+   * @param {Date} date - 基準日期
+   * @returns {Date} 一週後的同一時間
+   */
+  getNextWeekHourSlot(date) {
+    if (!date || !(date instanceof Date)) {
+      throw new Error('需要提供有效的日期物件');
+    }
+
+    const nextWeek = new Date(date);
+    nextWeek.setDate(nextWeek.getDate() + 7);
+    return nextWeek;
   },
 
   /**
