@@ -124,5 +124,5 @@ const CHARACTER_LIMITS = {
   // 主要工作表欄位限制
   FIRST_NAME: 100,
   POSITION: 100,
-  COMPANY_URL: 200
+  COMPANY_URL: 500
 };
