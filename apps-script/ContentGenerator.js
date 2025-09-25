@@ -87,19 +87,19 @@ const ContentGenerator = {
 三個切入點應該根據客戶本人選擇最在意的痛點與對他影響最大的地方。
 請嚴格按照以下格式回答，每個切入點獨立成段：
 
-<aspect1> (**職權與挑戰，100字內，決策權力和關注重點與此職位常見的痛點**)
+<aspect1>(**職權與挑戰，100字內，決策權力和關注重點與此職位常見的痛點**)</aspect1>
 
-<aspect2> (**參與動機與溝通策略，100字內，客戶參加本研習活動的可能需求，以及活動後最適合的追蹤方式和價值主張**)
+<aspect2>(**參與動機與溝通策略，100字內，客戶參加本研習活動的可能需求，以及活動後最適合的追蹤方式和價值主張**)</aspect2>
 
-<angle1> (**信件1內容大綱，50字內，包括價值主張、行動呼籲**)
+<angle1>(**信件1內容大綱，50字內，包括價值主張、行動呼籲**)</angle1>
 
-<angle2> (**信件2大綱，50字內，包括價值主張、行動呼籲**)
+<angle2>(**信件2大綱，50字內，包括價值主張、行動呼籲**)</angle2>
 
-<angle3> (**信件3大綱，50字內，包括價值主張、行動呼籲**)
- 
+<angle3>(**信件3大綱，50字內，包括價值主張、行動呼籲**)</angle3>
+
 # 格式要求
 - 在parentheses()中被**包起來的說明文字不要輸出
-- 開頭必須要是 <aspect?> 或是 <angle?>
+- 必須使用完整的XML標籤格式，每個標籤都要有對應的結束標籤
 - 請用繁體中文回答，總字數必須控制在320~380個字
 - 每個面向用簡潔的段落表達，避免冗長描述
 - 嚴禁生成不存在的公司、品牌、解決方案、產品、案例、數據，只能使用上述的資訊
@@ -136,45 +136,39 @@ const ContentGenerator = {
   },
 
   /**
-   * 解析邮件切入点的改进方法
+   * 解析邮件切入点 - 使用XML標籤格式的簡化版本
    */
   parseMailAngles(response) {
     try {
       console.log('開始解析 Mail Angles，原始回應長度:', response.length);
 
-      // 修復策略：先清理重複的標籤，只保留第一組完整的標籤
-      let cleanResponse = response;
+      // 使用簡單的XML標籤解析
+      const parseTag = (tagName) => {
+        const regex = new RegExp(`<${tagName}>(.*?)<\/${tagName}>`, 's');
+        const match = response.match(regex);
+        if (match && match[1]) {
+          // 清理內容：移除說明文字和多餘空白
+          let content = match[1]
+            .replace(/\*\*[^*]*\*\*/g, '') // 移除 **說明文字**
+            .replace(/\([^)]*\)/g, '')     // 移除 (說明文字)
+            .replace(/【[^】]*】/g, '')     // 移除 【說明文字】
+            .trim();
+          return content;
+        }
+        return '';
+      };
 
-      // 找到第一組完整的標籤序列（aspect1 -> aspect2 -> angle1 -> angle2 -> angle3）
-      const firstCompleteMatch = response.match(/<aspect1>[\s\S]*?<aspect2>[\s\S]*?<angle1>[\s\S]*?<angle2>[\s\S]*?<angle3>[\s\S]*?(?=<aspect1>|$)/);
-
-      if (firstCompleteMatch) {
-        console.log('找到第一組完整的標籤序列，使用該序列進行解析');
-        cleanResponse = firstCompleteMatch[0];
-      } else {
-        console.log('未找到完整標籤序列，使用原始回應');
-      }
-
-      // 解析 aspect1 和 aspect2
-      const aspect1Match = cleanResponse.match(/<aspect1>[\s\S]*?(?=<aspect2>)/);
-      const aspect2Match = cleanResponse.match(/<aspect2>[\s\S]*?(?=<angle1>)/);
-
-      let aspect1 = aspect1Match ? aspect1Match[0].replace('<aspect1>', '').replace(/職權與挑戰：?/, '').trim() : '';
-      let aspect2 = aspect2Match ? aspect2Match[0].replace('<aspect2>', '').replace(/參與動機與溝通策略：?/, '').trim() : '';
-
-      // 解析 angle1, angle2, angle3
-      const angle1Match = cleanResponse.match(/<angle1>[\s\S]*?(?=<angle2>)/);
-      const angle2Match = cleanResponse.match(/<angle2>[\s\S]*?(?=<angle3>)/);
-      const angle3Match = cleanResponse.match(/<angle3>[\s\S]*?(?=<aspect1>|$)/);
-
-      let angle1 = angle1Match ? angle1Match[0].replace('<angle1>', '').replace(/內容大綱：?/, '').trim() : '';
-      let angle2 = angle2Match ? angle2Match[0].replace('<angle2>', '').replace(/內容大綱：?/, '').trim() : '';
-      let angle3 = angle3Match ? angle3Match[0].replace('<angle3>', '').replace(/內容大綱：?/, '').trim() : '';
+      // 解析各個標籤
+      const aspect1 = parseTag('aspect1');
+      const aspect2 = parseTag('aspect2');
+      const angle1 = parseTag('angle1');
+      const angle2 = parseTag('angle2');
+      const angle3 = parseTag('angle3');
 
       // 記錄解析結果
       console.log(`解析結果: aspect1=${!!aspect1}, aspect2=${!!aspect2}, angle1=${!!angle1}, angle2=${!!angle2}, angle3=${!!angle3}`);
 
-      // 如果任何項目解析失敗，記錄日誌但繼續
+      // 記錄解析失敗的項目
       if (!aspect1) console.log('⚠️ aspect1 解析失敗');
       if (!aspect2) console.log('⚠️ aspect2 解析失敗');
       if (!angle1) console.log('⚠️ angle1 解析失敗');
@@ -199,6 +193,29 @@ const ContentGenerator = {
         angle3: `解析錯誤: ${error.message}`
       };
     }
+  },
+
+  /**
+   * 測試解析邮件切入点功能
+   * 用於驗證新的XML標籤解析是否正常工作
+   */
+  testParseMailAngles() {
+    const testResponse = `
+<aspect1>負責公司數位轉型決策，面臨技術選擇與投資效益評估的挑戰，需要平衡創新與風險控制</aspect1>
+
+<aspect2>參加活動是為了解決數位化轉型痛點，最適合透過具體案例分享和量化效益證明來建立信任</aspect2>
+
+<angle1>強調數位轉型ROI計算方法，邀請參與一對一諮詢會議</angle1>
+
+<angle2>分享同業成功轉型案例，提供免費評估服務</angle2>
+
+<angle3>提醒錯過數位轉型黃金時機的風險，最後機會預約專家諮詢</angle3>
+    `;
+
+    console.log('=== 測試新的解析功能 ===');
+    const result = this.parseMailAngles(testResponse);
+    console.log('解析結果:', result);
+    return result;
   },
 
 
