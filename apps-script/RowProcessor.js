@@ -24,8 +24,29 @@ const RowProcessor = {
       SheetService.setupStatusDropdown(sheet, rowIndex);
 
       // 執行所有處理步驟並收集統計資料
+
+      // 檢查停止標記 - 在生成客戶畫像前
+      if (ProcessingService.shouldStopProcessing()) {
+        console.log(`第 ${rowIndex} 行：檢測到停止標記，中止處理`);
+        return { success: false, stopped: true };
+      }
+
       const leadProfileResult = this.generateLeadsProfile(sheet, row, rowIndex);
+
+      // 檢查停止標記 - 在生成郵件切入點前
+      if (ProcessingService.shouldStopProcessing()) {
+        console.log(`第 ${rowIndex} 行：檢測到停止標記，中止處理`);
+        return { success: false, stopped: true };
+      }
+
       const mailAnglesResult = this.generateMailAngles(sheet, row, rowIndex);
+
+      // 檢查停止標記 - 在生成第一封郵件前
+      if (ProcessingService.shouldStopProcessing()) {
+        console.log(`第 ${rowIndex} 行：檢測到停止標記，中止處理`);
+        return { success: false, stopped: true };
+      }
+
       const firstMailResult = this.generateFirstMail(sheet, row, rowIndex);
 
       this.setupSchedules(sheet, row, rowIndex);

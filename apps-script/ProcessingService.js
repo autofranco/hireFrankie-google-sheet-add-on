@@ -218,14 +218,29 @@ const ProcessingService = {
 
       // 第1階段：並行生成所有 Leads Profiles
       console.log('第1階段：並行生成 Leads Profiles...');
+      // 檢查停止標記 - 在生成客戶畫像前
+      if (this.shouldStopProcessing()) {
+        console.log('檢測到停止標記，中止批次處理');
+        return { successCount: 0, errorCount: 0, stopped: true };
+      }
       const leadsProfilesData = this.generateLeadsProfilesConcurrently(sheet, batchRows, batchRowIndexes, userInfo);
 
       // 第2階段：並行生成所有 Mail Angles
       console.log('第2階段：並行生成 Mail Angles...');
+      // 檢查停止標記 - 在生成郵件切入點前
+      if (this.shouldStopProcessing()) {
+        console.log('檢測到停止標記，中止批次處理');
+        return { successCount: 0, errorCount: 0, stopped: true };
+      }
       const mailAnglesData = this.generateMailAnglesConcurrently(sheet, batchRows, batchRowIndexes, leadsProfilesData, userInfo);
 
       // 第3階段：並行生成所有第一封郵件
       console.log('第3階段：並行生成第一封郵件...');
+      // 檢查停止標記 - 在生成第一封郵件前
+      if (this.shouldStopProcessing()) {
+        console.log('檢測到停止標記，中止批次處理');
+        return { successCount: 0, errorCount: 0, stopped: true };
+      }
       const firstMailsData = this.generateFirstMailsConcurrently(sheet, batchRows, batchRowIndexes, leadsProfilesData, mailAnglesData, userInfo);
 
       // 第4階段：設定排程和觸發器
