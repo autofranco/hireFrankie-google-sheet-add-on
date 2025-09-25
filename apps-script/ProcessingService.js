@@ -14,8 +14,6 @@ const ProcessingService = {
       // 開始統計追蹤
       StatisticsService.startRun();
 
-      // 清除任何現有的停止標記（允許重新開始處理）
-      this.clearStopFlag();
 
       // 檢查並處理研習活動簡介
       if (!this.handleSeminarBrief()) {
@@ -40,16 +38,6 @@ const ProcessingService = {
     }
   },
 
-  /**
-   * 清除停止標記
-   */
-  clearStopFlag() {
-    const existingStopFlag = PropertiesService.getScriptProperties().getProperty('stop_processing');
-    if (existingStopFlag === 'true') {
-      PropertiesService.getScriptProperties().deleteProperty('stop_processing');
-      console.log('已清除先前的停止標記，重新開始處理');
-    }
-  },
 
   /**
    * 處理研習活動簡介
@@ -155,14 +143,6 @@ const ProcessingService = {
 
     // 分批處理
     for (let i = 0; i < data.rows.length; i += batchSize) {
-      // 檢查是否有停止處理的標記
-      if (this.shouldStopProcessing()) {
-        console.log('檢測到停止處理標記，終止處理新行');
-        SpreadsheetApp.getUi().alert('處理已停止', `已成功處理 ${processedCount} 行，剩餘 ${data.rows.length - i} 行未處理`, SpreadsheetApp.getUi().ButtonSet.OK);
-        // 清除停止標記
-        PropertiesService.getScriptProperties().deleteProperty('stop_processing');
-        break;
-      }
 
       // 取得當前批次的資料
       const batchRows = data.rows.slice(i, i + batchSize);
@@ -218,29 +198,14 @@ const ProcessingService = {
 
       // 第1階段：並行生成所有 Leads Profiles
       console.log('第1階段：並行生成 Leads Profiles...');
-      // 檢查停止標記 - 在生成客戶畫像前
-      if (this.shouldStopProcessing()) {
-        console.log('檢測到停止標記，中止批次處理');
-        return { successCount: 0, errorCount: 0, stopped: true };
-      }
       const leadsProfilesData = this.generateLeadsProfilesConcurrently(sheet, batchRows, batchRowIndexes, userInfo);
 
       // 第2階段：並行生成所有 Mail Angles
       console.log('第2階段：並行生成 Mail Angles...');
-      // 檢查停止標記 - 在生成郵件切入點前
-      if (this.shouldStopProcessing()) {
-        console.log('檢測到停止標記，中止批次處理');
-        return { successCount: 0, errorCount: 0, stopped: true };
-      }
       const mailAnglesData = this.generateMailAnglesConcurrently(sheet, batchRows, batchRowIndexes, leadsProfilesData, userInfo);
 
       // 第3階段：並行生成所有第一封郵件
       console.log('第3階段：並行生成第一封郵件...');
-      // 檢查停止標記 - 在生成第一封郵件前
-      if (this.shouldStopProcessing()) {
-        console.log('檢測到停止標記，中止批次處理');
-        return { successCount: 0, errorCount: 0, stopped: true };
-      }
       const firstMailsData = this.generateFirstMailsConcurrently(sheet, batchRows, batchRowIndexes, leadsProfilesData, mailAnglesData, userInfo);
 
       // 第4階段：設定排程和觸發器
@@ -499,13 +464,6 @@ const ProcessingService = {
     }
   },
 
-  /**
-   * 檢查是否應該停止處理
-   */
-  shouldStopProcessing() {
-    const shouldStop = PropertiesService.getScriptProperties().getProperty('stop_processing');
-    return shouldStop === 'true';
-  },
 
   /**
    * 顯示完成訊息
