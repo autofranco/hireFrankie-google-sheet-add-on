@@ -202,7 +202,7 @@ const SheetService = {
    */
   updateStatus(sheet, rowIndex, status) {
     sheet.getRange(rowIndex, COLUMNS.STATUS + 1).setValue(status);
-    this.updateStatusColor(sheet, rowIndex);
+    this.applyStatusColor(sheet, rowIndex);
   },
 
   /**
