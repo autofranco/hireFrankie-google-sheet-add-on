@@ -202,6 +202,7 @@ const SheetService = {
    */
   updateStatus(sheet, rowIndex, status) {
     sheet.getRange(rowIndex, COLUMNS.STATUS + 1).setValue(status);
+    this.updateStatusColor(sheet, rowIndex);
   },
 
   /**
@@ -209,6 +210,7 @@ const SheetService = {
    */
   updateInfo(sheet, rowIndex, infoMessage) {
     sheet.getRange(rowIndex, COLUMNS.INFO + 1).setValue(infoMessage);
+    this.updateInfoColor(sheet, rowIndex, infoMessage);
   },
 
   /**
@@ -493,22 +495,47 @@ const SheetService = {
     const status = cell.getValue();
 
     switch (status) {
-      case 'Processing':
-        cell.setBackground('#FFF2CC'); // 淺黃色
-        cell.setFontColor('#7F6000'); // 深黃色字體
-        break;
       case 'Running':
-        cell.setBackground('#D9EAD3'); // 淺綠色
-        cell.setFontColor('#274E13'); // 深綠色字體
+        cell.setBackground('#f0f0f0'); // 淺灰色
+        cell.setFontColor('#666666'); // 深灰色字體
         break;
+      case 'Processing':
       case 'Done':
-        cell.setBackground('#CFE2F3'); // 淺藍色
-        cell.setFontColor('#1C4587'); // 深藍色字體
+        cell.setBackground(null); // 無背景色
+        cell.setFontColor(null); // 預設字體顏色
         break;
       default:
         cell.setBackground(null); // 透明背景
         cell.setFontColor(null); // 預設字體顏色
         break;
+    }
+  },
+
+  /**
+   * 更新Info欄位顏色
+   * 根據訊息內容自動套用對應的背景顏色
+   *
+   * @function updateInfoColor
+   * @param {GoogleAppsScript.Spreadsheet.Sheet} sheet - 工作表物件
+   * @param {number} rowIndex - 行索引
+   * @param {string} infoMessage - info訊息內容
+   */
+  updateInfoColor(sheet, rowIndex, infoMessage) {
+    const cell = sheet.getRange(rowIndex, COLUMNS.INFO + 1);
+    const message = infoMessage.toLowerCase();
+
+    if (message.includes('bounced') || message.includes('退信')) {
+      cell.setBackground('#ffebee'); // 淺紅色 - 退信
+      cell.setFontColor('#c62828'); // 深紅色字體
+    } else if (message.includes('已開信') || message.includes('開信')) {
+      cell.setBackground('#e8f5e8'); // 淺綠色 - 開信
+      cell.setFontColor('#2e7d32'); // 深綠色字體
+    } else if (message.includes('已回信') || message.includes('回信')) {
+      cell.setBackground('#e3f2fd'); // 淺藍色 - 回信
+      cell.setFontColor('#1565c0'); // 深藍色字體
+    } else {
+      cell.setBackground(null); // 無背景色
+      cell.setFontColor(null); // 預設字體顏色
     }
   },
 
