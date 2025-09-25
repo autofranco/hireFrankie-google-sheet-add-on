@@ -281,7 +281,7 @@ const Utils = {
   /**
    * 截斷文本到指定長度
    * 如果文本超過指定長度，則截斷並添加省略號
-   * 
+   *
    * @function truncateText
    * @param {string} text - 要截斷的文本
    * @param {number} maxLength - 最大長度，預設 100
@@ -291,12 +291,169 @@ const Utils = {
     if (!text || typeof text !== 'string') {
       return '';
     }
-    
+
     if (text.length <= maxLength) {
       return text;
     }
-    
+
     return text.substring(0, maxLength) + '...';
+  },
+
+  /**
+   * 驗證字符長度
+   * 檢查文本是否超過指定的字符限制
+   *
+   * @function validateCharacterLimit
+   * @param {string} text - 要檢查的文本
+   * @param {number} limit - 字符限制
+   * @param {string} fieldName - 欄位名稱，用於錯誤消息
+   * @returns {Object} 驗證結果
+   * @returns {boolean} returns.isValid - 是否通過驗證
+   * @returns {string} returns.error - 錯誤消息（如果驗證失敗）
+   * @returns {number} returns.currentLength - 當前字符數
+   */
+  validateCharacterLimit(text, limit, fieldName) {
+    if (!text || typeof text !== 'string') {
+      return { isValid: true, error: null, currentLength: 0 };
+    }
+
+    const currentLength = text.length;
+
+    if (currentLength > limit) {
+      return {
+        isValid: false,
+        error: `${fieldName} 超過字符限制！當前 ${currentLength} 字符，限制 ${limit} 字符`,
+        currentLength: currentLength
+      };
+    }
+
+    return {
+      isValid: true,
+      error: null,
+      currentLength: currentLength
+    };
+  },
+
+  /**
+   * 驗證用戶資訊欄位
+   * 根據 CHARACTER_LIMITS 常量驗證用戶資訊欄位
+   *
+   * @function validateUserInfoFields
+   * @param {Object} userInfo - 用戶資訊物件
+   * @returns {Object} 驗證結果
+   * @returns {boolean} returns.isValid - 所有欄位是否通過驗證
+   * @returns {Array} returns.errors - 錯誤消息陣列
+   */
+  validateUserInfoFields(userInfo) {
+    const errors = [];
+
+    // 驗證講座資訊
+    const seminarInfoResult = this.validateCharacterLimit(
+      userInfo.seminarInfo,
+      CHARACTER_LIMITS.SEMINAR_INFO,
+      'Seminar Info'
+    );
+    if (!seminarInfoResult.isValid) {
+      errors.push(seminarInfoResult.error);
+    }
+
+    // 驗證講座摘要
+    const seminarBriefResult = this.validateCharacterLimit(
+      userInfo.seminarBrief,
+      CHARACTER_LIMITS.SEMINAR_BRIEF,
+      'Seminar Brief'
+    );
+    if (!seminarBriefResult.isValid) {
+      errors.push(seminarBriefResult.error);
+    }
+
+    // 驗證郵件提示詞
+    const email1Result = this.validateCharacterLimit(
+      userInfo.email1Prompt,
+      CHARACTER_LIMITS.EMAIL1_PROMPT,
+      'Email 1 Prompt'
+    );
+    if (!email1Result.isValid) {
+      errors.push(email1Result.error);
+    }
+
+    const email2Result = this.validateCharacterLimit(
+      userInfo.email2Prompt,
+      CHARACTER_LIMITS.EMAIL2_PROMPT,
+      'Email 2 Prompt'
+    );
+    if (!email2Result.isValid) {
+      errors.push(email2Result.error);
+    }
+
+    const email3Result = this.validateCharacterLimit(
+      userInfo.email3Prompt,
+      CHARACTER_LIMITS.EMAIL3_PROMPT,
+      'Email 3 Prompt'
+    );
+    if (!email3Result.isValid) {
+      errors.push(email3Result.error);
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors: errors
+    };
+  },
+
+  /**
+   * 驗證工作表行資料
+   * 根據 CHARACTER_LIMITS 常量驗證主工作表的行資料
+   *
+   * @function validateRowData
+   * @param {Object} rowData - 行資料物件
+   * @returns {Object} 驗證結果
+   * @returns {boolean} returns.isValid - 所有欄位是否通過驗證
+   * @returns {Array} returns.errors - 錯誤消息陣列
+   */
+  validateRowData(rowData) {
+    const errors = [];
+
+    // 驗證姓名
+    if (rowData.firstName) {
+      const firstNameResult = this.validateCharacterLimit(
+        rowData.firstName,
+        CHARACTER_LIMITS.FIRST_NAME,
+        'First Name'
+      );
+      if (!firstNameResult.isValid) {
+        errors.push(firstNameResult.error);
+      }
+    }
+
+    // 驗證職位
+    if (rowData.position) {
+      const positionResult = this.validateCharacterLimit(
+        rowData.position,
+        CHARACTER_LIMITS.POSITION,
+        'Position'
+      );
+      if (!positionResult.isValid) {
+        errors.push(positionResult.error);
+      }
+    }
+
+    // 驗證公司網址
+    if (rowData.companyUrl) {
+      const companyUrlResult = this.validateCharacterLimit(
+        rowData.companyUrl,
+        CHARACTER_LIMITS.COMPANY_URL,
+        'Company URL'
+      );
+      if (!companyUrlResult.isValid) {
+        errors.push(companyUrlResult.error);
+      }
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors: errors
+    };
   }
 };
 

@@ -111,3 +111,18 @@ const RUN_MODE = {
 
 // 固定使用正式模式
 const CURRENT_MODE = RUN_MODE.PRODUCTION;
+
+// 字符限制常量
+const CHARACTER_LIMITS = {
+  // 用戶資訊欄位限制
+  SEMINAR_INFO: 5000,
+  SEMINAR_BRIEF: 1000,
+  EMAIL1_PROMPT: 1000,
+  EMAIL2_PROMPT: 1000,
+  EMAIL3_PROMPT: 1000,
+
+  // 主要工作表欄位限制
+  FIRST_NAME: 100,
+  POSITION: 100,
+  COMPANY_URL: 200
+};

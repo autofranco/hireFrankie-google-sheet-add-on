@@ -545,6 +545,88 @@ const SheetService = {
     } catch (error) {
       console.error('更新排程状态时发生错误:', error);
     }
+  },
+
+  /**
+   * 驗證單個儲存格的字符長度
+   * 在編輯事件發生時驗證特定儲存格
+   *
+   * @param {Object} e - onEdit 事件物件
+   * @returns {boolean} 驗證是否通過
+   */
+  validateCellCharacterLimit(e) {
+    try {
+      const range = e.range;
+      const sheet = range.getSheet();
+      const row = range.getRow();
+      const col = range.getColumn();
+      const value = e.value || '';
+
+      // 跳過標題行
+      if (row === 1) return true;
+
+      let limit = null;
+      let fieldName = '';
+
+      // 檢查是否是主要工作表
+      if (sheet.getName() === SHEET_NAME) {
+        // 檢查主要工作表的欄位
+        if (col === COLUMNS.FIRST_NAME + 1) {
+          limit = CHARACTER_LIMITS.FIRST_NAME;
+          fieldName = 'First Name';
+        } else if (col === COLUMNS.POSITION + 1) {
+          limit = CHARACTER_LIMITS.POSITION;
+          fieldName = 'Position';
+        } else if (col === COLUMNS.COMPANY_URL + 1) {
+          limit = CHARACTER_LIMITS.COMPANY_URL;
+          fieldName = 'Company URL';
+        }
+      } else if (sheet.getName() === USER_INFO_SHEET_NAME) {
+        // 檢查用戶資訊工作表的欄位
+        if (row === USER_INFO_FIELDS.SEMINAR_INFO.row && col === USER_INFO_FIELDS.SEMINAR_INFO.col) {
+          limit = CHARACTER_LIMITS.SEMINAR_INFO;
+          fieldName = 'Seminar Info';
+        } else if (row === USER_INFO_FIELDS.SEMINAR_BRIEF.row && col === USER_INFO_FIELDS.SEMINAR_BRIEF.col) {
+          limit = CHARACTER_LIMITS.SEMINAR_BRIEF;
+          fieldName = 'Seminar Brief';
+        } else if (row === USER_INFO_FIELDS.EMAIL1_PROMPT.row && col === USER_INFO_FIELDS.EMAIL1_PROMPT.col) {
+          limit = CHARACTER_LIMITS.EMAIL1_PROMPT;
+          fieldName = 'Email 1 Prompt';
+        } else if (row === USER_INFO_FIELDS.EMAIL2_PROMPT.row && col === USER_INFO_FIELDS.EMAIL2_PROMPT.col) {
+          limit = CHARACTER_LIMITS.EMAIL2_PROMPT;
+          fieldName = 'Email 2 Prompt';
+        } else if (row === USER_INFO_FIELDS.EMAIL3_PROMPT.row && col === USER_INFO_FIELDS.EMAIL3_PROMPT.col) {
+          limit = CHARACTER_LIMITS.EMAIL3_PROMPT;
+          fieldName = 'Email 3 Prompt';
+        }
+      }
+
+      // 如果有字符限制，進行驗證
+      if (limit !== null && value && typeof value === 'string') {
+        const validation = Utils.validateCharacterLimit(value, limit, fieldName);
+
+        if (!validation.isValid) {
+          // 顯示錯誤消息
+          SpreadsheetApp.getUi().alert(
+            '字符限制超出',
+            validation.error + '\n\n系統將自動截斷內容到允許的長度。',
+            SpreadsheetApp.getUi().ButtonSet.OK
+          );
+
+          // 截斷內容到允許的長度
+          const truncatedValue = value.substring(0, limit);
+          range.setValue(truncatedValue);
+
+          return false;
+        }
+      }
+
+      return true;
+
+    } catch (error) {
+      console.error('驗證儲存格字符限制時發生錯誤:', error);
+      return true; // 發生錯誤時允許通過，避免阻斷用戶操作
+    }
   }
 };
 

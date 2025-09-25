@@ -9,29 +9,32 @@ const EditHandler = {
    */
   onEdit(e) {
     try {
+      // 首先驗證字符限制（適用於所有工作表和欄位）
+      SheetService.validateCellCharacterLimit(e);
+
       const sheet = e.source.getActiveSheet();
       const range = e.range;
-      
-      // 只處理主要工作表
+
+      // 只處理主要工作表的其他邏輯
       if (!this.isMainSheet(sheet)) {
         return;
       }
-      
+
       // 只處理資料行（非表頭）
       if (!this.isDataRow(range)) {
         return;
       }
-      
+
       const rowIndex = range.getRow();
       const col = range.getColumn();
-      
+
       // 處理狀態欄位變更
       if (this.isStatusColumn(col)) {
         this.handleStatusChange(sheet, rowIndex, e.value);
       }
-      
+
       // Send Now 現在透過選單處理，不依賴 onEdit 觸發器
-      
+
     } catch (error) {
       console.error('onEdit 觸發錯誤:', error);
     }
