@@ -25,8 +25,15 @@ const Utils = {
 
     // 如果沒有當前小時段，或計數器歸零時，取得新的小時段
     if (!currentHourSlot || emailCounter === 0) {
-      const slotDate = this.getNextHourSlot();
-      currentHourSlot = slotDate.getTime().toString();
+      // 如果計數器歸零，從當前時間段取得下一個時間段
+      if (emailCounter === 0 && currentHourSlot) {
+        const slotDate = this.getNextHourSlot(new Date(parseInt(currentHourSlot)));
+        currentHourSlot = slotDate.getTime().toString();
+      } else {
+        // 第一次執行，從現在開始
+        const slotDate = this.getNextHourSlot();
+        currentHourSlot = slotDate.getTime().toString();
+      }
       properties.setProperty('currentHourSlot', currentHourSlot);
     }
 
@@ -363,13 +370,81 @@ const Utils = {
   /**
    * 檢查字串是否為空
    * 檢查字串是否為 null、undefined 或只包含空白字元
-   * 
+   *
    * @function isEmpty
    * @param {string} str - 要檢查的字串
    * @returns {boolean} 字串為空或只包含空白時返回 true
    */
   isEmpty(str) {
     return !str || typeof str !== 'string' || str.trim().length === 0;
+  },
+
+  /**
+   * 測試函數：生成130個排程並顯示分佈情況
+   * 用於測試智慧排程系統的工作情況
+   *
+   * @function testScheduling100
+   * @returns {Array} 包含100個排程結果的陣列
+   */
+  testScheduling130() {
+    console.log('=== 開始測試130個郵件排程 ===');
+
+    // 清除之前的狀態，重新開始
+    const properties = PropertiesService.getScriptProperties();
+    properties.deleteProperty('emailCounter');
+    properties.deleteProperty('currentHourSlot');
+    console.log('已清除排程狀態，重新開始');
+
+    const results = [];
+    const hourSlotStats = {}; // 統計每個時間段的郵件數量
+
+    for (let i = 1; i <= 130; i++) {
+      console.log(`--- 處理第 ${i} 個潛在客戶 ---`);
+
+      const schedules = this.generateScheduleTimes();
+
+      // 記錄結果
+      const result = {
+        leadNumber: i,
+        schedule1: schedules.schedule1,
+        schedule2: schedules.schedule2,
+        schedule3: schedules.schedule3,
+        schedule1Formatted: this.formatScheduleTime(schedules.schedule1),
+        schedule2Formatted: this.formatScheduleTime(schedules.schedule2),
+        schedule3Formatted: this.formatScheduleTime(schedules.schedule3)
+      };
+
+      results.push(result);
+
+      // 統計第一封郵件的時間段分佈
+      const hourSlot = result.schedule1Formatted;
+      hourSlotStats[hourSlot] = (hourSlotStats[hourSlot] || 0) + 1;
+    }
+
+    // 顯示統計結果
+    console.log('\n=== 第一封郵件時間段統計 ===');
+    Object.keys(hourSlotStats).forEach(slot => {
+      console.log(`${slot}: ${hourSlotStats[slot]} 封郵件`);
+    });
+
+    // 顯示前10個和後10個排程作為範例
+    console.log('\n=== 前10個排程範例 ===');
+    for (let i = 0; i < 10; i++) {
+      const r = results[i];
+      console.log(`Lead ${r.leadNumber}: 1st=${r.schedule1Formatted}, 2nd=${r.schedule2Formatted}, 3rd=${r.schedule3Formatted}`);
+    }
+
+    console.log('\n=== 後10個排程範例 ===');
+    for (let i = 120; i < 130; i++) {
+      const r = results[i];
+      console.log(`Lead ${r.leadNumber}: 1st=${r.schedule1Formatted}, 2nd=${r.schedule2Formatted}, 3rd=${r.schedule3Formatted}`);
+    }
+
+    console.log('\n=== 測試完成 ===');
+    console.log(`總共處理: ${results.length} 個潛在客戶`);
+    console.log(`使用時間段數量: ${Object.keys(hourSlotStats).length}`);
+
+    return results;
   },
 
   /**
@@ -575,11 +650,18 @@ function formatDate(date) {
 
 /**
  * 驗證郵件地址 - 全域函數包裝器
- * 
+ *
  * @function isValidEmail
  * @param {string} email - 要驗證的郵件地址
  * @returns {boolean} 郵件地址有效時返回 true
  */
 function isValidEmail(email) {
   return Utils.isValidEmail(email);
+}
+
+/**
+ * 測試排程系統 - 全域函數（可在 Apps Script 控制台執行）
+ */
+function testSchedulingSystem() {
+  return Utils.testScheduling130();
 }
