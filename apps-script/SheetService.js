@@ -367,20 +367,13 @@ const SheetService = {
         }
       }
       
-      // 執行 API 請求
-      if (requests.length > 0) {
-        const resource = {
-          requests: requests
-        };
-        
-        Sheets.Spreadsheets.batchUpdate(resource, spreadsheetId);
-        console.log(`已透過 API 設定 ${requests.length} 行高度`);
-      }
+      // 跳過行高設定 (不需要 Sheets API)
+      // 註：之前使用 Sheets.Spreadsheets.batchUpdate 設定行高，已移除以避免權限問題
       
       // 強制刷新
       SpreadsheetApp.flush();
       
-      const message = `✅ 格式化完成！\n\n已格式化 ${formattedCount} 行潛在客戶資料\n• 使用 Sheets API 設定行高為 200px\n• 列寬已調整\n• Mail Angle 欄位已啟用文字換行（固定高度）`;
+      const message = `✅ 格式化完成！\n\n已格式化 ${formattedCount} 行潛在客戶資料\n• 列寬已調整\n• Mail Angle 欄位已啟用文字換行`;
       SpreadsheetApp.getUi().alert('格式化完成', message, SpreadsheetApp.getUi().ButtonSet.OK);
       
       console.log(`格式化完成: ${formattedCount} 行`);
