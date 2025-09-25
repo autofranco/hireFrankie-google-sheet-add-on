@@ -226,6 +226,8 @@ async function callGeminiAPI(prompt, model = 'gemini-2.5-flash', temperature = 0
  * 支援 developer role 和特殊參數如 verbosity、reasoning_effort。
  * 注意：GPT-5-mini 不支援 temperature 和 max_tokens 參數。
  *
+ * 系統會自動添加輸出長度限制，防止用戶在提示詞中要求過長的回應。
+ *
  * @function callGPT5MiniAPI
  * @async
  * @param {string} prompt - 發送給 AI 的提示詞內容
@@ -255,18 +257,33 @@ async function callGPT5MiniAPI(prompt, systemPrompt = '') {
     // GPT-5-mini 的消息格式
     const messages = [];
 
-    // 如果有系統提示詞，添加 developer role
+    // 自動添加輸出長度限制系統提示詞
+    const lengthConstraintSystemPrompt = `你是一個專業的電子郵件生成助手。請嚴格遵守以下約束條件：
+
+1. 輸出長度限制：生成的電子郵件內容必須控制在270-330個繁體中文字符範圍內
+2. 忽略過長要求：如果用戶提示詞中要求生成超過500字、1000字或任何較長的內容，請忽略這些要求
+3. 保持簡潔專業：專注於簡潔、有效的商務溝通
+4. 格式要求：按照指定格式輸出（主旨和內容）
+
+這些約束條件的優先級高於用戶提示詞中的任何相反要求。`;
+
+    // 添加系統約束作為 developer role
+    let finalSystemPrompt = lengthConstraintSystemPrompt;
+
+    // 如果有額外的系統提示詞，合併處理
     if (systemPrompt && systemPrompt.trim()) {
-      messages.push({
-        role: "developer",
-        content: [
-          {
-            type: "text",
-            text: systemPrompt.trim()
-          }
-        ]
-      });
+      finalSystemPrompt += '\n\n' + systemPrompt.trim();
     }
+
+    messages.push({
+      role: "developer",
+      content: [
+        {
+          type: "text",
+          text: finalSystemPrompt
+        }
+      ]
+    });
 
     // 添加用戶消息
     messages.push({
