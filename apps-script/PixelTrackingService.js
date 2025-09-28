@@ -224,13 +224,15 @@ const PixelTrackingService = {
         message += `\n\n🔥 Firebase Functions：❌ 錯誤 - ${firebaseError.message}`;
       }
 
-      SpreadsheetApp.getUi().alert('像素追蹤測試', message, SpreadsheetApp.getUi().ButtonSet.OK);
+      // 像素追蹤測試結果改為console log輸出，不中斷用戶操作
+      console.log('🔍 像素追蹤測試結果:', message);
 
       return result;
 
     } catch (error) {
       console.error('測試像素追蹤功能時發生錯誤:', error);
-      SpreadsheetApp.getUi().alert('測試錯誤', `像素追蹤測試失敗：${error.message}`, SpreadsheetApp.getUi().ButtonSet.OK);
+      // 測試錯誤改為console log輸出，不中斷用戶操作
+      console.error('❌ 像素追蹤測試失敗:', error.message);
       return { error: error.message };
     }
   },

@@ -21,7 +21,8 @@ const MenuService = {
 
 運行模式: 正式模式 (每小時檢查)`;
       
-      SpreadsheetApp.getUi().alert('觸發器統計', message, SpreadsheetApp.getUi().ButtonSet.OK);
+      // 觸發器統計結果改為console log輸出，不中斷用戶操作
+      console.log('⚙️ 觸發器統計:', message);
       
     } catch (error) {
       SpreadsheetApp.getUi().alert('錯誤', `無法取得觸發器統計: ${error.message}`, SpreadsheetApp.getUi().ButtonSet.OK);
@@ -79,7 +80,8 @@ const MenuService = {
         if (processedCount > 0) {
           message += `\n\n📧 郵件已發送完成，第二封郵件將自動生成`;
         }
-        SpreadsheetApp.getUi().alert('Send Now 結果', message, SpreadsheetApp.getUi().ButtonSet.OK);
+        // 使用非阻塞toast通知顯示Send Now結果
+        ToastService.showSuccess(`Send Now 完成：${message.replace(/\n/g, ' ')}`, 4);
       }
 
     } catch (error) {
@@ -109,9 +111,8 @@ const MenuService = {
         }
       }
 
-      // 顯示生成結果
-      const resultMessage = `第二封郵件生成完成！\n\n✅ 成功生成: ${successCount} 封\n${errorCount > 0 ? `❌ 生成失敗: ${errorCount} 封` : ''}`;
-      SpreadsheetApp.getUi().alert('郵件生成結果', resultMessage, SpreadsheetApp.getUi().ButtonSet.OK);
+      // 顯示生成結果 - 使用非阻塞toast通知
+      ToastService.showBatchResult('第二封郵件生成', successCount, errorCount, 5);
 
       console.log(`批量生成第二封郵件完成: 成功 ${successCount}/${needsNextMailList.length}`);
 
@@ -136,7 +137,8 @@ const MenuService = {
     if (result === ui.Button.YES) {
       try {
         const deletedCount = TriggerManager.deleteAllLeadWarmerTriggers();
-        ui.alert('成功', `已刪除 ${deletedCount} 個觸發器\n\n所有自動功能已停止`, ui.ButtonSet.OK);
+        // 使用非阻塞toast通知顯示刪除結果
+        ToastService.showSuccess(`已刪除 ${deletedCount} 個觸發器，所有自動功能已停止`, 4);
       } catch (error) {
         ui.alert('錯誤', `刪除觸發器失敗: ${error.message}`, ui.ButtonSet.OK);
       }
@@ -179,13 +181,15 @@ const MenuService = {
       
       message += `\n\n📊 工作表狀態：\n🔄 Running 狀態的潛客數: ${runningCount}`;
       
-      ui.alert('全域郵件檢查測試', message, ui.ButtonSet.OK);
+      // 全域郵件檢查測試結果改為console log輸出，不中斷用戶操作
+      console.log('📬 全域郵件檢查測試結果:', message);
       
       console.log('測試結果:', result);
       
     } catch (error) {
       console.error('手動測試全域郵件檢查失敗:', error);
-      SpreadsheetApp.getUi().alert('測試失敗', `全域郵件檢查測試失敗: ${error.message}`, SpreadsheetApp.getUi().ButtonSet.OK);
+      // 測試失敗改為console log輸出，不中斷用戶操作
+      console.error('❌ 全域郵件檢查測試失敗:', error.message);
     }
   },
 
@@ -230,13 +234,15 @@ const MenuService = {
         message += `\n\n📮 Gmail 權限：❌ 錯誤 - ${gmailError.message}`;
       }
       
-      ui.alert('回覆檢測測試', message, ui.ButtonSet.OK);
+      // 回覆檢測測試結果改為console log輸出，不中斷用戶操作
+      console.log('🔄 回覆檢測測試結果:', message);
       
       console.log('測試結果:', result);
       
     } catch (error) {
       console.error('手動測試回覆檢測失敗:', error);
-      SpreadsheetApp.getUi().alert('測試失敗', `回覆檢測測試失敗: ${error.message}`, SpreadsheetApp.getUi().ButtonSet.OK);
+      // 測試失敗改為console log輸出，不中斷用戶操作
+      console.error('❌ 回覆檢測測試失敗:', error.message);
     }
   },
 
@@ -248,7 +254,8 @@ const MenuService = {
       return PixelTrackingService.testPixelTracking();
     } catch (error) {
       console.error('測試像素追蹤功能時發生錯誤:', error);
-      SpreadsheetApp.getUi().alert('測試錯誤', `像素追蹤測試失敗：${error.message}`, SpreadsheetApp.getUi().ButtonSet.OK);
+      // 測試錯誤改為console log輸出，不中斷用戶操作
+      console.error('❌ 像素追蹤測試失敗:', error.message);
       return { error: error.message };
     }
   },
@@ -283,13 +290,15 @@ const MenuService = {
         }
       }
 
-      SpreadsheetApp.getUi().alert('像素追蹤統計', message, SpreadsheetApp.getUi().ButtonSet.OK);
+      // 像素追蹤統計結果改為console log輸出，不中斷用戶操作
+      console.log('📈 像素追蹤統計:', message);
 
       return stats;
 
     } catch (error) {
       console.error('顯示像素追蹤統計時發生錯誤:', error);
-      SpreadsheetApp.getUi().alert('統計錯誤', `無法獲取像素追蹤統計：${error.message}`, SpreadsheetApp.getUi().ButtonSet.OK);
+      // 統計錯誤改為console log輸出，不中斷用戶操作
+      console.error('❌ 無法獲取像素追蹤統計:', error.message);
       return { error: error.message };
     }
   },
@@ -376,7 +385,8 @@ const MenuService = {
         message += `\n\n⚠️ 統計儀表板更新失敗`;
       }
 
-      ui.alert('開信與回覆檢查', message, ui.ButtonSet.OK);
+      // 開信與回覆檢查結果改為console log輸出，不中斷用戶操作
+      console.log('📬 開信與回覆檢查結果:', message);
 
       console.log('=== 開信與回覆檢查完成 ===');
 
@@ -389,7 +399,8 @@ const MenuService = {
 
     } catch (error) {
       console.error('檢查開信與回覆時發生錯誤:', error);
-      SpreadsheetApp.getUi().alert('檢查錯誤', `開信與回覆檢查失敗：${error.message}`, SpreadsheetApp.getUi().ButtonSet.OK);
+      // 檢查錯誤改為console log輸出，不中斷用戶操作
+      console.error('❌ 開信與回覆檢查失敗:', error.message);
       return { error: error.message };
     }
   }

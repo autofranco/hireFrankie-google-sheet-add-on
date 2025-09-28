@@ -81,7 +81,8 @@ async function setupHeadersAndFormat() {
       console.error('統計資料儀表板初始化失敗:', statsResult.error);
     }
 
-    SpreadsheetApp.getUi().alert('✅ 初始設置完成！', '表頭設置和格式化已完成，統計儀表板已初始化，可以開始使用 Auto Lead Warmer。', SpreadsheetApp.getUi().ButtonSet.OK);
+    // 使用非阻塞toast通知顯示初始設置完成
+    ToastService.showSuccess('初始設置完成！表頭設置、格式化、統計儀表板初始化已完成', 4);
 
   } catch (error) {
     console.error('初始設置和格式化失敗:', error);

@@ -247,7 +247,8 @@ const UserInfoService = {
 function setupUserInfoSheet() {
   const sheet = UserInfoService.getUserInfoSheet();
   if (sheet) {
-    SpreadsheetApp.getUi().alert('用戶資訊工作表已準備就緒！', '請在 "User Info" 工作表中填入您的個人資訊，這些資訊會自動添加到所有郵件的簽名中。', SpreadsheetApp.getUi().ButtonSet.OK);
+    // 使用非阻塞toast通知顯示用戶資訊工作表準備完成
+    ToastService.showInfo('用戶資訊工作表已準備就緒！請在 "User Info" 工作表中填入個人資訊', 4);
   }
 }
 

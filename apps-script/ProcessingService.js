@@ -469,15 +469,17 @@ const ProcessingService = {
    * 顯示完成訊息
    */
   showCompletionMessage(processedCount, errorCount) {
-    const message = `處理完成！
-    
-✅ 成功處理: ${processedCount} 筆
-❌ 處理失敗: ${errorCount} 筆
-📧 已設置 ${processedCount * 3} 個郵件發送排程（Mail 2、3 將在前一封發送後自動生成內容）
+    const operation = "Auto Lead Warmer 處理";
+    const message = `成功處理: ${processedCount} 筆 | 失敗: ${errorCount} 筆\n已設置 ${processedCount * 3} 個郵件發送排程`;
 
-${errorCount > 0 ? '\n請檢查錯誤行詳細訊息。' : ''}`;
-    
-    SpreadsheetApp.getUi().alert('執行完成', message, SpreadsheetApp.getUi().ButtonSet.OK);
+    // Show non-blocking toast notification instead of blocking alert
+    ToastService.showBatchResult(operation, processedCount, errorCount, 6);
+
+    // Log detailed information to console
+    console.log(`處理完成！成功: ${processedCount}, 失敗: ${errorCount}`);
+    if (errorCount > 0) {
+      console.log('請檢查錯誤行詳細訊息。');
+    }
   }
 };
 

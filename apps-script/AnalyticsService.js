@@ -265,14 +265,15 @@ const AnalyticsService = {
         message += `❌ 統計更新失敗: ${result.error}`;
       }
 
-      SpreadsheetApp.getUi().alert('統計測試', message, SpreadsheetApp.getUi().ButtonSet.OK);
+      // 統計測試結果改為console log輸出，不中斷用戶操作
+      console.log('📈 統計測試結果:', message);
 
       return result;
 
     } catch (error) {
       console.error('測試統計更新功能時發生錯誤:', error);
-      const errorMessage = `統計測試失敗：${error.message}`;
-      SpreadsheetApp.getUi().alert('測試錯誤', errorMessage, SpreadsheetApp.getUi().ButtonSet.OK);
+      // 測試錯誤改為console log輸出，不中斷用戶操作
+      console.error('❌ 統計測試失敗:', error.message);
       return { success: false, error: error.message };
     }
   }

@@ -40,8 +40,8 @@ const SendNowHandler = {
       // 檢查是否所有郵件都已發送完成
       this.checkAndUpdateStatusIfAllEmailsSent(sheet, rowIndex);
       
-      // 提供用戶反饋
-      SpreadsheetApp.getUi().alert('✅ 郵件發送成功', `已立即發送 ${nextEmail.type} 給 ${row[COLUMNS.FIRST_NAME]}`, SpreadsheetApp.getUi().ButtonSet.OK);
+      // 提供用戶反饋 - 使用非阻塞toast通知
+      ToastService.showEmailSuccess(nextEmail.type, row[COLUMNS.FIRST_NAME], 3);
       
     } catch (error) {
       console.error('Send Now 點擊處理錯誤:', error);

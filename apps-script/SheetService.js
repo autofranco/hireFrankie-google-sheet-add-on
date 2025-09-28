@@ -139,7 +139,11 @@ const SheetService = {
       // 不中斷設定流程，只記錄錯誤
     }
     
-      SpreadsheetApp.getUi().alert(`設定完成！\n\n✅ 工作表已重新命名為: ${finalTitle}\n✅ User Info 工作表已創建\n✅ Firebase 用戶已初始化\n✅ 列寬已設定\n\n💡 重要提醒：\n• 請到 "User Info" 工作表填入您的個人資訊\n• 請在 "Seminar Info" 欄位填寫研習活動資訊\n• 系統會自動生成 "Seminar Brief" 供所有潛客分析使用\n• 個人資訊會自動添加到所有郵件簽名中`);
+      // 使用非阻塞toast通知顯示設定完成
+      ToastService.showCompletion('工作表設定', {setup: '工作表重新命名、User Info創建、Firebase初始化、列寬設定'}, 5);
+
+      // 重要提醒仍使用console log
+      console.log('💡 重要提醒：請到 "User Info" 工作表填入個人資訊，並在 "Seminar Info" 欄位填寫研習活動資訊');
       console.log('✅ setupHeaders 全部完成');
 
     } catch (mainError) {
@@ -374,7 +378,8 @@ const SheetService = {
       SpreadsheetApp.flush();
       
       const message = `✅ 格式化完成！\n\n已格式化 ${formattedCount} 行潛在客戶資料\n• 列寬已調整\n• Mail Angle 欄位已啟用文字換行`;
-      SpreadsheetApp.getUi().alert('格式化完成', message, SpreadsheetApp.getUi().ButtonSet.OK);
+      // 使用非阻塞toast通知顯示格式化結果
+      ToastService.showSuccess(`格式化完成：${message}`, 3);
       
       console.log(`格式化完成: ${formattedCount} 行`);
       
