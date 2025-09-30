@@ -331,7 +331,8 @@ const ProcessingService = {
         return {
           leadsProfile: leadsProfileResult.content,
           firstName: row[COLUMNS.FIRST_NAME],
-          position: row[COLUMNS.POSITION]
+          position: row[COLUMNS.POSITION],
+          department: row[COLUMNS.DEPARTMENT]
         };
       });
 
@@ -416,7 +417,9 @@ const ProcessingService = {
         return {
           leadsProfile: updatedLeadsProfile,
           mailAngle: mailAnglesResult.content.angle1,
-          firstName: row[COLUMNS.FIRST_NAME]
+          firstName: row[COLUMNS.FIRST_NAME],
+          department: row[COLUMNS.DEPARTMENT],
+          position: row[COLUMNS.POSITION]
         };
       });
 

@@ -357,7 +357,7 @@ Mail Angle: ${mailAngle}
   },
 
   /**
-   * 批次生成多個潛在客戶畫像
+   * 批次生成多個潛在客戶畫像，這段只做公司研究，不進行職位分析-->mail angle才做
    * @param {Array} batchData - 批次資料陣列，每個元素包含 companyUrl, position, firstName
    * @param {Object} userInfo - 用戶資訊物件 (避免重複獲取)
    * @returns {Array} 生成結果陣列
@@ -365,10 +365,6 @@ Mail Angle: ${mailAngle}
   generateLeadsProfilesBatch(batchData, userInfo = null) {
     try {
       console.log(`開始批次生成 ${batchData.length} 個客戶畫像...`);
-
-      // 使用傳入的 userInfo 或獲取新的（向後兼容）
-      const user = userInfo || UserInfoService.getUserInfo();
-      const seminarBrief = user.seminarBrief || '';
 
       // 準備所有 API 請求
       const requests = batchData.map((data, index) => {

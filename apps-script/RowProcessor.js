@@ -62,8 +62,20 @@ const RowProcessor = {
    * 驗證必要欄位
    */
   validateRequiredFields(row, rowIndex) {
+    // Debug logging for Department column
+    console.log(`🔍 DEBUG - Row ${rowIndex} Department debugging:`);
+    console.log(`  - COLUMNS.DEPARTMENT index: ${COLUMNS.DEPARTMENT}`);
+    console.log(`  - Department value: "${row[COLUMNS.DEPARTMENT]}"`);
+    console.log(`  - Department type: ${typeof row[COLUMNS.DEPARTMENT]}`);
+    console.log(`  - Department is empty: ${!row[COLUMNS.DEPARTMENT]}`);
+
     if (!row[COLUMNS.EMAIL] || !row[COLUMNS.FIRST_NAME] || !row[COLUMNS.COMPANY_URL] || !row[COLUMNS.DEPARTMENT] || !row[COLUMNS.POSITION]) {
       console.log(`第 ${rowIndex} 行跳过：缺少必要字段`);
+      console.log(`  - Email: "${row[COLUMNS.EMAIL]}" (empty: ${!row[COLUMNS.EMAIL]})`);
+      console.log(`  - First Name: "${row[COLUMNS.FIRST_NAME]}" (empty: ${!row[COLUMNS.FIRST_NAME]})`);
+      console.log(`  - Company URL: "${row[COLUMNS.COMPANY_URL]}" (empty: ${!row[COLUMNS.COMPANY_URL]})`);
+      console.log(`  - Department: "${row[COLUMNS.DEPARTMENT]}" (empty: ${!row[COLUMNS.DEPARTMENT]})`);
+      console.log(`  - Position: "${row[COLUMNS.POSITION]}" (empty: ${!row[COLUMNS.POSITION]})`);
       return false;
     }
     return true;
@@ -123,6 +135,13 @@ const RowProcessor = {
     SpreadsheetApp.flush();
 
     const leadsProfile = sheet.getRange(rowIndex, COLUMNS.LEADS_PROFILE + 1).getValue();
+
+    // Debug logging for Department value before passing to ContentGenerator
+    console.log(`🔍 DEBUG - generateMailAngles Department debugging:`);
+    console.log(`  - Row ${rowIndex} Department value: "${row[COLUMNS.DEPARTMENT]}"`);
+    console.log(`  - Department type: ${typeof row[COLUMNS.DEPARTMENT]}`);
+    console.log(`  - Department length: ${row[COLUMNS.DEPARTMENT] ? row[COLUMNS.DEPARTMENT].length : 'N/A'}`);
+    console.log(`  - Is Department empty/undefined: ${!row[COLUMNS.DEPARTMENT]}`);
 
     const result = ContentGenerator.generateMailAngles(
       leadsProfile,
