@@ -60,8 +60,9 @@ const SheetService = {
     
     const headers = [
       'Email Address*',
-      'First Name*', 
+      'First Name*',
       'Company url*',
+      'Department*',
       'Position*',
       'Leads Profile',
       '1st mail angle',
@@ -173,6 +174,7 @@ const SheetService = {
           row[COLUMNS.EMAIL] &&
           row[COLUMNS.FIRST_NAME] &&
           row[COLUMNS.COMPANY_URL] &&
+          row[COLUMNS.DEPARTMENT] &&
           row[COLUMNS.POSITION]) {
         unprocessedRows.push(row);
         unprocessedRowIndexes.push(index + 2); // +2 因為從第2行開始且index從0開始
@@ -259,54 +261,57 @@ const SheetService = {
       
       // Email Address: 110px (column A)
       sheet.setColumnWidth(1, 110);
-      
-      // First Name: 80px (column B) 
+
+      // First Name: 80px (column B)
       sheet.setColumnWidth(2, 80);
-      
+
       // Company url: 95px (column C)
       sheet.setColumnWidth(3, 95);
-      
-      // Position: 70px (column D)
+
+      // Department: 70px (column D)
       sheet.setColumnWidth(4, 70);
-      
-      // Leads Profile: 200px (column E)
-      sheet.setColumnWidth(5, 200);
-      
-      // 1st mail angle: 150px (column F)
-      sheet.setColumnWidth(6, 150);
-      
-      // 1st follow up mail: 150px (column G)
+
+      // Position: 70px (column E)
+      sheet.setColumnWidth(5, 70);
+
+      // Leads Profile: 200px (column F)
+      sheet.setColumnWidth(6, 200);
+
+      // 1st mail angle: 150px (column G)
       sheet.setColumnWidth(7, 150);
-      
-      // 1st mail schedule: 75px (column H)
-      sheet.setColumnWidth(8, 75);
-      
-      // 2nd mail angle: 150px (column I)
-      sheet.setColumnWidth(9, 150);
-      
-      // 2nd follow up mail: 150px (column J)
+
+      // 1st follow up mail: 150px (column H)
+      sheet.setColumnWidth(8, 150);
+
+      // 1st mail schedule: 75px (column I)
+      sheet.setColumnWidth(9, 75);
+
+      // 2nd mail angle: 150px (column J)
       sheet.setColumnWidth(10, 150);
-      
-      // 2nd mail schedule: 75px (column K)
-      sheet.setColumnWidth(11, 75);
-      
-      // 3rd mail angle: 150px (column L)
-      sheet.setColumnWidth(12, 150);
-      
-      // 3rd follow up mail: 150px (column M)
+
+      // 2nd follow up mail: 150px (column K)
+      sheet.setColumnWidth(11, 150);
+
+      // 2nd mail schedule: 75px (column L)
+      sheet.setColumnWidth(12, 75);
+
+      // 3rd mail angle: 150px (column M)
       sheet.setColumnWidth(13, 150);
-      
-      // 3rd mail schedule: 75px (column N)
-      sheet.setColumnWidth(14, 75);
-      
-      // send now: 70px (column O)
-      sheet.setColumnWidth(15, 70);
-      
-      // status: 70px (column P)
+
+      // 3rd follow up mail: 150px (column N)
+      sheet.setColumnWidth(14, 150);
+
+      // 3rd mail schedule: 75px (column O)
+      sheet.setColumnWidth(15, 75);
+
+      // send now: 70px (column P)
       sheet.setColumnWidth(16, 70);
-      
-      // info: 200px (column Q)  
-      sheet.setColumnWidth(17, 200);
+
+      // status: 70px (column Q)
+      sheet.setColumnWidth(17, 70);
+
+      // info: 200px (column R)
+      sheet.setColumnWidth(18, 200);
       
       // 強制刷新以確保更改立即生效
       SpreadsheetApp.flush();
@@ -621,6 +626,9 @@ const SheetService = {
         if (col === COLUMNS.FIRST_NAME + 1) {
           limit = CHARACTER_LIMITS.FIRST_NAME;
           fieldName = 'First Name';
+        } else if (col === COLUMNS.DEPARTMENT + 1) {
+          limit = CHARACTER_LIMITS.DEPARTMENT;
+          fieldName = 'Department';
         } else if (col === COLUMNS.POSITION + 1) {
           limit = CHARACTER_LIMITS.POSITION;
           fieldName = 'Position';

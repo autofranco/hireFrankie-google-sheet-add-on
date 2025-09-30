@@ -72,7 +72,7 @@ const ContentGenerator = {
   /**
    * 生成三个信件切入点 - 改进版本
    */
-  generateMailAngles(leadsProfile, firstName, position) {
+  generateMailAngles(leadsProfile, firstName, position, department) {
     const userInfo = UserInfoService.getUserInfo();
     const seminarBrief = userInfo.seminarBrief || '';
 
@@ -80,14 +80,16 @@ const ContentGenerator = {
 # 參與活動的客戶方資訊:
 客戶姓名：${firstName}
 客戶職位：${position}
+客戶部門：${department}
 客戶公司資訊：${leadsProfile}
 # 任務
 基於以上我方活動與客戶方資訊，請協助分析並簡潔的生成以下2個面向和3個信件內容切入點。
 用戶已經參加過我方舉辦的活動，信件的目的是邀約客戶做後續的動作，信件切入點以研習活動的內容為主軸。
-三個切入點應該根據客戶本人選擇最在意的痛點與對他影響最大的地方。
+三個切入點應該根據客戶本人選擇最在意的痛點與對他影響最大的地方，特別考慮其在${department}部門擔任${position}職位的特殊需求和關注重點。
+
 請嚴格按照以下格式回答，每個切入點獨立成段：
 
-<aspect1>(**職權與挑戰，100字內，決策權力和關注重點與此職位常見的痛點**)</aspect1>
+<aspect1>(**職權與挑戰，100字內，決策權力和關注重點與此職位在${department}部門常見的痛點**)</aspect1>
 
 <aspect2>(**參與動機與溝通策略，100字內，客戶參加本研習活動的可能需求，以及活動後最適合的追蹤方式和價值主張**)</aspect2>
 
@@ -102,6 +104,7 @@ const ContentGenerator = {
 - 必須使用XML格式，如 <aspect1>內容</aspect1> 和 <angle1>內容</angle1>
 - 請用繁體中文回答，總字數必須控制在320~380個字
 - 每個面向用簡潔的段落表達，避免冗長描述
+- 特別考慮${department}部門的工作特性和該職位的業務重點
 - 嚴禁生成不存在的公司、品牌、解決方案、產品、案例、數據，只能使用上述的資訊
 - 不使用 Markdown 格式，用「」符號強調重點
 `;
@@ -222,7 +225,7 @@ const ContentGenerator = {
   /**
    * 生成單封追蹤信件
    */
-  generateSingleFollowUpMail(leadsProfile, mailAngle, firstName, emailNumber) {
+  generateSingleFollowUpMail(leadsProfile, mailAngle, firstName, emailNumber, department, position) {
     try {
       const userInfo = UserInfoService.getUserInfo();
       const seminarBrief = userInfo.seminarBrief || '';
@@ -249,10 +252,13 @@ const ContentGenerator = {
       const prompt = `${emailPrompt}
 - 開場使用Leads Profile的資訊展現對客戶職位與其公司的了解
 - 內容要使用 Mail Angle 的角度切入，使用Leads Profile的資訊讓客戶感覺此封信件是專門為'他'和'他的公司'寫的
+- 特別考慮客戶在${department}部門擔任${position}職位的特殊需求和關注重點
 
 # 客戶方資訊
 - 收件人: ${firstName}
-- Leads Profile : ${leadsProfile} 
+- 職位: ${position}
+- 部門: ${department}
+- Leads Profile : ${leadsProfile}
 
 # 我方舉辦的活動資訊
 ${seminarBrief}
@@ -425,7 +431,7 @@ Mail Angle: ${mailAngle}
 
   /**
    * 批次生成多個郵件切入點
-   * @param {Array} batchData - 批次資料陣列，每個元素包含 leadsProfile, firstName, position
+   * @param {Array} batchData - 批次資料陣列，每個元素包含 leadsProfile, firstName, position, department
    * @param {Object} userInfo - 用戶資訊物件 (避免重複獲取)
    * @returns {Array} 生成結果陣列
    */
@@ -443,14 +449,16 @@ Mail Angle: ${mailAngle}
 # 參與活動的客戶方資訊:
 客戶姓名：${data.firstName}
 客戶職位：${data.position}
+客戶部門：${data.department}
 客戶公司資訊：${data.leadsProfile}
 # 任務
 基於以上我方活動與客戶方資訊，請協助分析並簡潔的生成以下2個面向和3個信件內容切入點。
 用戶已經參加過我方舉辦的活動，信件的目的是邀約客戶做後續的動作，信件切入點以研習活動的內容為主軸。
-三個切入點應該根據客戶本人選擇最在意的痛點與對他影響最大的地方。
+三個切入點應該根據客戶本人選擇最在意的痛點與對他影響最大的地方，特別考慮其在${data.department}部門擔任${data.position}職位的特殊需求和關注重點。
+
 請嚴格按照以下格式回答，每個切入點獨立成段：
 
-<aspect1>(**職權與挑戰，100字內，決策權力和關注重點與此職位常見的痛點**)</aspect1>
+<aspect1>(**職權與挑戰，100字內，決策權力和關注重點與此職位在${data.department}部門常見的痛點**)</aspect1>
 
 <aspect2>(**參與動機與溝通策略，100字內，客戶參加本研習活動的可能需求，以及活動後最適合的追蹤方式和價值主張**)</aspect2>
 
@@ -465,6 +473,7 @@ Mail Angle: ${mailAngle}
 - 必須使用XML格式，如 <aspect1>內容</aspect1> 和 <angle1>內容</angle1>
 - 請用繁體中文回答，總字數必須控制在320~380個字
 - 每個面向用簡潔的段落表達，避免冗長描述
+- 特別考慮${data.department}部門的工作特性和該職位的業務重點
 - 嚴禁生成不存在的公司、品牌、解決方案、產品、案例、數據，只能使用上述的資訊
 - 不使用 Markdown 格式，用「」符號強調重點`;
 
@@ -511,7 +520,7 @@ Mail Angle: ${mailAngle}
 
   /**
    * 批次生成多封第一封追蹤郵件
-   * @param {Array} batchData - 批次資料陣列，每個元素包含 leadsProfile, mailAngle, firstName
+   * @param {Array} batchData - 批次資料陣列，每個元素包含 leadsProfile, mailAngle, firstName, department, position
    * @param {Object} userInfo - 用戶資訊物件 (避免重複獲取)
    * @returns {Array} 生成結果陣列
    */
@@ -529,9 +538,12 @@ Mail Angle: ${mailAngle}
         const prompt = `${emailPrompt}
 - 開場使用Leads Profile的資訊展現對客戶職位與其公司的了解
 - 內容要使用 Mail Angle 的角度切入，使用Leads Profile的資訊讓客戶感覺此封信件是專門為'他'和'他的公司'寫的
+- 特別考慮客戶在${data.department}部門擔任${data.position}職位的特殊需求和關注重點
 
 # 客戶方資訊
 - 收件人: ${data.firstName}
+- 職位: ${data.position}
+- 部門: ${data.department}
 - Leads Profile : ${data.leadsProfile}
 
 # 我方舉辦的活動資訊
@@ -600,7 +612,7 @@ Mail Angle: ${data.mailAngle}
 
   /**
    * 批次生成多封後續追蹤郵件（第二/三封）
-   * @param {Array} batchData - 批次資料陣列，每個元素包含 leadsProfile, mailAngle, firstName, emailNumber
+   * @param {Array} batchData - 批次資料陣列，每個元素包含 leadsProfile, mailAngle, firstName, emailNumber, department, position
    * @returns {Array} 生成結果陣列
    */
   generateFollowUpMailsBatch(batchData) {
@@ -628,9 +640,12 @@ Mail Angle: ${data.mailAngle}
         const prompt = `${emailPrompt}
 - 開場使用Leads Profile的資訊展現對客戶職位與其公司的了解
 - 內容要使用 Mail Angle 的角度切入，使用Leads Profile的資訊讓客戶感覺此封信件是專門為'他'和'他的公司'寫的
+- 特別考慮客戶在${data.department}部門擔任${data.position}職位的特殊需求和關注重點
 
 # 客戶方資訊
 - 收件人: ${data.firstName}
+- 職位: ${data.position}
+- 部門: ${data.department}
 - Leads Profile : ${data.leadsProfile}
 
 # 我方舉辦的活動資訊

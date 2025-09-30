@@ -62,7 +62,7 @@ const RowProcessor = {
    * 驗證必要欄位
    */
   validateRequiredFields(row, rowIndex) {
-    if (!row[COLUMNS.EMAIL] || !row[COLUMNS.FIRST_NAME] || !row[COLUMNS.COMPANY_URL] || !row[COLUMNS.POSITION]) {
+    if (!row[COLUMNS.EMAIL] || !row[COLUMNS.FIRST_NAME] || !row[COLUMNS.COMPANY_URL] || !row[COLUMNS.DEPARTMENT] || !row[COLUMNS.POSITION]) {
       console.log(`第 ${rowIndex} 行跳过：缺少必要字段`);
       return false;
     }
@@ -127,7 +127,8 @@ const RowProcessor = {
     const result = ContentGenerator.generateMailAngles(
       leadsProfile,
       row[COLUMNS.FIRST_NAME],
-      row[COLUMNS.POSITION]
+      row[COLUMNS.POSITION],
+      row[COLUMNS.DEPARTMENT]
     );
 
     const mailAngles = result.content;
@@ -173,7 +174,9 @@ const RowProcessor = {
       leadsProfile,
       mailAngle1,
       row[COLUMNS.FIRST_NAME],
-      1
+      1,
+      row[COLUMNS.DEPARTMENT],
+      row[COLUMNS.POSITION]
     );
 
     // 验证邮件是否成功生成

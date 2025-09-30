@@ -12,21 +12,22 @@ const COLUMNS = {
   EMAIL: 0,         // A: Email Address*
   FIRST_NAME: 1,    // B: First Name*
   COMPANY_URL: 2,   // C: Company url*
-  POSITION: 3,      // D: Position*
-  LEADS_PROFILE: 4, // E: Leads Profile
-  MAIL_ANGLE_1: 5,  // F: 1st mail angle
-  FOLLOW_UP_1: 6,   // G: 1st follow up mail
-  SCHEDULE_1: 7,    // H: 1st mail schedule
-  MAIL_ANGLE_2: 8,  // I: 2nd mail angle
-  FOLLOW_UP_2: 9,   // J: 2nd follow up mail
-  SCHEDULE_2: 10,   // K: 2nd mail schedule
-  MAIL_ANGLE_3: 11, // L: 3rd mail angle
-  FOLLOW_UP_3: 12,  // M: 3rd follow up mail
-  SCHEDULE_3: 13,   // N: 3rd mail schedule
-  SEND_NOW: 14,     // O: send now 按鈕
-  STATUS: 15,       // P: status 狀態
-  INFO: 16,         // Q: info 詳細訊息 (原 Processed)
-  BOUNCE_STATUS: 17 // R: 退信狀態 (bounce tracking)
+  DEPARTMENT: 3,    // D: Department*
+  POSITION: 4,      // E: Position*
+  LEADS_PROFILE: 5, // F: Leads Profile
+  MAIL_ANGLE_1: 6,  // G: 1st mail angle
+  FOLLOW_UP_1: 7,   // H: 1st follow up mail
+  SCHEDULE_1: 8,    // I: 1st mail schedule
+  MAIL_ANGLE_2: 9,  // J: 2nd mail angle
+  FOLLOW_UP_2: 10,  // K: 2nd follow up mail
+  SCHEDULE_2: 11,   // L: 2nd mail schedule
+  MAIL_ANGLE_3: 12, // M: 3rd mail angle
+  FOLLOW_UP_3: 13,  // N: 3rd follow up mail
+  SCHEDULE_3: 14,   // O: 3rd mail schedule
+  SEND_NOW: 15,     // P: send now 按鈕
+  STATUS: 16,       // Q: status 狀態
+  INFO: 17,         // R: info 詳細訊息 (原 Processed)
+  BOUNCE_STATUS: 18 // S: 退信狀態 (bounce tracking)
 };
 
 // 其他配置常量
@@ -122,7 +123,8 @@ const CHARACTER_LIMITS = {
   EMAIL3_PROMPT: 1000,
 
   // 主要工作表欄位限制
-  FIRST_NAME: 100,
-  POSITION: 100,
+  FIRST_NAME: 50,
+  DEPARTMENT: 50,
+  POSITION: 50,
   COMPANY_URL: 500
 };
