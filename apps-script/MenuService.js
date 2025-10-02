@@ -379,7 +379,7 @@ const MenuService = {
       const dashboardResult = AnalyticsService.updateSummaryStatistics();
       if (dashboardResult.success) {
         console.log('統計儀表板更新成功');
-        message += `\n\n📊 統計儀表板已更新 (請查看 R1/S1/T1 儲存格)`;
+        message += `\n\n📊 統計儀表板已更新 (請查看 S1/T1/U1 儲存格)`;
       } else {
         console.error('統計儀表板更新失敗:', dashboardResult.error);
         message += `\n\n⚠️ 統計儀表板更新失敗`;

@@ -32,10 +32,10 @@ const TriggerManager = {
     try {
       // 檢查是否已存在全域觸發器
       const existingTriggers = this.getAllTriggers();
-      const globalTriggerExists = existingTriggers.some(trigger => 
+      const globalTriggerExists = existingTriggers.some(trigger =>
         trigger.getHandlerFunction() === 'checkAndSendMails'
       );
-      
+
       if (!globalTriggerExists) {
         console.log('創建全域郵件發送觸發器（每小時執行一次）');
         ScriptApp.newTrigger('checkAndSendMails')

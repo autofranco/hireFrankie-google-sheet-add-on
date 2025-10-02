@@ -308,7 +308,7 @@ const EmailService = {
         console.log(`發現 ${bounceResult.bouncesFound} 個退信`);
       }
 
-      // 更新統計資料到 R1/S1/T1
+      // 更新統計資料到 S1/T1/U1
       console.log('更新總覽統計資料...');
       const statsResult = AnalyticsService.updateSummaryStatistics();
       if (statsResult.success) {
@@ -365,18 +365,22 @@ const EmailService = {
       // 讀取需要的資料
       const leadsProfile = sheet.getRange(rowIndex, COLUMNS.LEADS_PROFILE + 1).getValue();
       const nextMailAngle = sheet.getRange(rowIndex, nextMailAngleColumn).getValue();
-      
+      const department = sheet.getRange(rowIndex, COLUMNS.DEPARTMENT + 1).getValue();
+      const position = sheet.getRange(rowIndex, COLUMNS.POSITION + 1).getValue();
+
       if (!leadsProfile || !nextMailAngle) {
         console.log(`第 ${rowIndex} 行: 缺少 Leads Profile 或 Mail Angle，無法生成第${nextMailNumber}封郵件`);
         return;
       }
-      
+
       // 生成下一封郵件
       const nextMailResult = ContentGenerator.generateSingleFollowUpMail(
         leadsProfile,
         nextMailAngle,
         firstName,
-        nextMailNumber
+        nextMailNumber,
+        department,
+        position
       );
 
       // 只提取郵件內容，排除 metadata

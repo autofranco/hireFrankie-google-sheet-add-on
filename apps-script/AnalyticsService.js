@@ -19,25 +19,25 @@ const AnalyticsService = {
       const openStats = this.getOpenStatistics();
       const replyStats = this.getReplyStatistics();
 
-      // 更新 R1: Bounce Rate (紅色背景)
+      // 更新 S1: Bounce Rate (紅色背景)
       const bounceText = `Bounce Rate: ${bounceStats.bounceRate}% (${bounceStats.totalBounced}/${bounceStats.totalLeads})`;
-      const bounceCell = sheet.getRange('R1');
+      const bounceCell = sheet.getRange('S1');
       bounceCell.setValue(bounceText);
       bounceCell.setBackground('#ffebee'); // 淺紅色背景
       bounceCell.setFontColor('#c62828'); // 深紅色字體
       bounceCell.setFontWeight('bold');
 
-      // 更新 S1: Open Rate (綠色背景) - 基於送達郵件計算
+      // 更新 T1: Open Rate (綠色背景) - 基於送達郵件計算
       const openText = `Open Rate: ${openStats.openRate}% (${openStats.totalOpened}/${openStats.deliveredLeads})`;
-      const openCell = sheet.getRange('S1');
+      const openCell = sheet.getRange('T1');
       openCell.setValue(openText);
       openCell.setBackground('#e8f5e8'); // 淺綠色背景
       openCell.setFontColor('#2e7d32'); // 深綠色字體
       openCell.setFontWeight('bold');
 
-      // 更新 T1: Reply Rate (藍色背景) - 基於送達郵件計算
+      // 更新 U1: Reply Rate (藍色背景) - 基於送達郵件計算
       const replyText = `Reply Rate: ${replyStats.replyRate}% (${replyStats.totalReplied}/${replyStats.deliveredLeads})`;
-      const replyCell = sheet.getRange('T1');
+      const replyCell = sheet.getRange('U1');
       replyCell.setValue(replyText);
       replyCell.setBackground('#e3f2fd'); // 淺藍色背景
       replyCell.setFontColor('#1976d2'); // 深藍色字體
@@ -259,7 +259,7 @@ const AnalyticsService = {
         message += `🔴 退信率: ${result.bounceStats.bounceRate}% (${result.bounceStats.totalBounced}/${result.bounceStats.totalLeads} 潛在客戶)\n`;
         message += `🟢 開信率: ${result.openStats.openRate}% (${result.openStats.totalOpened}/${result.openStats.deliveredLeads} 送達潛客)\n`;
         message += `🔵 回信率: ${result.replyStats.replyRate}% (${result.replyStats.totalReplied}/${result.replyStats.deliveredLeads} 送達潛客)\n\n`;
-        message += '請檢查 R1、S1、T1 儲存格的顯示效果。\n\n';
+        message += '請檢查 S1、T1、U1 儲存格的顯示效果。\n\n';
         message += '注意：開信率和回信率基於成功送達的潛在客戶計算，排除退信客戶。';
       } else {
         message += `❌ 統計更新失敗: ${result.error}`;
