@@ -32,7 +32,7 @@ const BounceDetectionService = {
 
         try {
           console.log(`🔍 搜尋退信查詢: ${comprehensiveQuery}`);
-          const threads = GmailApp.search(comprehensiveQuery, 0, 15);
+          const threads = GmailApp.search(comprehensiveQuery, 0, 1);
 
           for (const thread of threads) {
             const messages = thread.getMessages();
@@ -274,6 +274,12 @@ const BounceDetectionService = {
         if (status === 'Running') {
           const email = sheet.getRange(i, COLUMNS.EMAIL + 1).getValue();
           const firstName = sheet.getRange(i, COLUMNS.FIRST_NAME + 1).getValue();
+          const info = sheet.getRange(i, COLUMNS.INFO + 1).getValue();
+
+          // 跳過已經標記為退信的潛客（優化 Gmail 配額使用）
+          if (info && info.toString().toLowerCase().includes('bounced')) {
+            continue;
+          }
 
           if (email && firstName) {
             checkedCount++;

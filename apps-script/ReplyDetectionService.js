@@ -30,7 +30,7 @@ const ReplyDetectionService = {
         console.log(`搜尋查詢: ${query}`);
         
         try {
-          const threads = GmailApp.search(query, 0, 10);
+          const threads = GmailApp.search(query, 0, 1);
           console.log(`找到 ${threads.length} 個相關對話串`);
           
           for (const thread of threads) {
@@ -134,7 +134,13 @@ const ReplyDetectionService = {
         if (status === 'Running' || status === 'Done') {
           const email = sheet.getRange(i, COLUMNS.EMAIL + 1).getValue();
           const firstName = sheet.getRange(i, COLUMNS.FIRST_NAME + 1).getValue();
-          
+          const info = sheet.getRange(i, COLUMNS.INFO + 1).getValue();
+
+          // 跳過已經標記為回覆的潛客（優化 Gmail 配額使用）
+          if (info && info.toString().includes('潛客已回信')) {
+            continue;
+          }
+
           if (email && firstName) {
             checkedCount++;
             

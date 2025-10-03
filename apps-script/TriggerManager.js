@@ -77,10 +77,11 @@ const TriggerManager = {
       );
 
       if (!replyTriggerExists) {
-        console.log('創建回覆檢測觸發器（每小時執行一次）');
+        console.log('創建回覆檢測觸發器（每天早上 7:00 執行一次）');
         ScriptApp.newTrigger('checkAllRunningLeadsForReplies')
           .timeBased()
-          .everyHours(1)
+          .atHour(7)
+          .everyDays(1)
           .create();
         console.log('✅ 回覆檢測觸發器創建成功');
       } else {
