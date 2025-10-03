@@ -129,9 +129,9 @@ const ReplyDetectionService = {
       // 檢查每一行的狀態
       for (let i = 2; i <= lastRow; i++) {
         const status = sheet.getRange(i, COLUMNS.STATUS + 1).getValue();
-        
-        // 只檢查 Running 狀態的行
-        if (status === 'Running') {
+
+        // 檢查 Running 和 Done 狀態的行（Done 狀態可能是發完3封信後才收到回覆）
+        if (status === 'Running' || status === 'Done') {
           const email = sheet.getRange(i, COLUMNS.EMAIL + 1).getValue();
           const firstName = sheet.getRange(i, COLUMNS.FIRST_NAME + 1).getValue();
           
