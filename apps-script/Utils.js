@@ -65,32 +65,6 @@ const Utils = {
   },
 
   /**
-   * 獲取下一個工作日上午9點的時間
-   * 從指定日期開始找到下一個工作日的上午9點
-   *
-   * @function getNextWeekdayAt9AM
-   * @param {Date} fromDate - 起始日期
-   * @returns {Date} 下一個工作日上午9點的時間
-   */
-  getNextWeekdayAt9AM(fromDate) {
-    const date = new Date(fromDate);
-    date.setHours(9, 0, 0, 0); // 设置为上午9点
-
-    // 如果是今天且还未到9点，就用今天
-    const now = new Date();
-    if (date.toDateString() === now.toDateString() && now.getHours() < 9) {
-      return date;
-    }
-
-    // 否则找下一个工作日
-    do {
-      date.setDate(date.getDate() + 1);
-    } while (date.getDay() === 0 || date.getDay() === 6); // 0是周日，6是周六
-
-    return date;
-  },
-
-  /**
    * 獲取下一個可用的工作時間小時段
    * 工作時間：週一到週五 8:00-17:00
    *
@@ -321,53 +295,6 @@ const Utils = {
   },
 
   /**
-   * 清理文本內容
-   * 移除多餘的空白字元和整理文字格式
-   * 
-   * @function cleanText
-   * @param {string} text - 要清理的文本內容
-   * @returns {string} 清理後的文本，空值時返回空字串
-   */
-  cleanText(text) {
-    if (!text || typeof text !== 'string') {
-      return '';
-    }
-    
-    return text.trim().replace(/\s+/g, ' ');
-  },
-
-
-  /**
-   * 延遲執行
-   * 暫停程式執行指定的毫秒數
-   * 
-   * @function sleep
-   * @param {number} milliseconds - 延遲的毫秒數
-   * @returns {void}
-   */
-  sleep(milliseconds) {
-    Utilities.sleep(milliseconds);
-  },
-
-  /**
-   * 安全的 JSON 解析
-   * 嘗試解析 JSON 字串，失敗時返回預設值
-   * 
-   * @function safeJsonParse
-   * @param {string} jsonString - 要解析的 JSON 字串
-   * @param {*} defaultValue - 解析失敗時的預設返回值
-   * @returns {*} 解析成功的物件或預設值
-   */
-  safeJsonParse(jsonString, defaultValue = null) {
-    try {
-      return JSON.parse(jsonString);
-    } catch (error) {
-      console.error('JSON解析错误:', error);
-      return defaultValue;
-    }
-  },
-
-  /**
    * 檢查字串是否為空
    * 檢查字串是否為 null、undefined 或只包含空白字元
    *
@@ -377,74 +304,6 @@ const Utils = {
    */
   isEmpty(str) {
     return !str || typeof str !== 'string' || str.trim().length === 0;
-  },
-
-  /**
-   * 測試函數：生成130個排程並顯示分佈情況
-   * 用於測試智慧排程系統的工作情況
-   *
-   * @function testScheduling100
-   * @returns {Array} 包含100個排程結果的陣列
-   */
-  testScheduling130() {
-    console.log('=== 開始測試130個郵件排程 ===');
-
-    // 清除之前的狀態，重新開始
-    const properties = PropertiesService.getScriptProperties();
-    properties.deleteProperty('emailCounter');
-    properties.deleteProperty('currentHourSlot');
-    console.log('已清除排程狀態，重新開始');
-
-    const results = [];
-    const hourSlotStats = {}; // 統計每個時間段的郵件數量
-
-    for (let i = 1; i <= 130; i++) {
-      console.log(`--- 處理第 ${i} 個潛在客戶 ---`);
-
-      const schedules = this.generateScheduleTimes();
-
-      // 記錄結果
-      const result = {
-        leadNumber: i,
-        schedule1: schedules.schedule1,
-        schedule2: schedules.schedule2,
-        schedule3: schedules.schedule3,
-        schedule1Formatted: this.formatScheduleTime(schedules.schedule1),
-        schedule2Formatted: this.formatScheduleTime(schedules.schedule2),
-        schedule3Formatted: this.formatScheduleTime(schedules.schedule3)
-      };
-
-      results.push(result);
-
-      // 統計第一封郵件的時間段分佈
-      const hourSlot = result.schedule1Formatted;
-      hourSlotStats[hourSlot] = (hourSlotStats[hourSlot] || 0) + 1;
-    }
-
-    // 顯示統計結果
-    console.log('\n=== 第一封郵件時間段統計 ===');
-    Object.keys(hourSlotStats).forEach(slot => {
-      console.log(`${slot}: ${hourSlotStats[slot]} 封郵件`);
-    });
-
-    // 顯示前10個和後10個排程作為範例
-    console.log('\n=== 前10個排程範例 ===');
-    for (let i = 0; i < 10; i++) {
-      const r = results[i];
-      console.log(`Lead ${r.leadNumber}: 1st=${r.schedule1Formatted}, 2nd=${r.schedule2Formatted}, 3rd=${r.schedule3Formatted}`);
-    }
-
-    console.log('\n=== 後10個排程範例 ===');
-    for (let i = 120; i < 130; i++) {
-      const r = results[i];
-      console.log(`Lead ${r.leadNumber}: 1st=${r.schedule1Formatted}, 2nd=${r.schedule2Formatted}, 3rd=${r.schedule3Formatted}`);
-    }
-
-    console.log('\n=== 測試完成 ===');
-    console.log(`總共處理: ${results.length} 個潛在客戶`);
-    console.log(`使用時間段數量: ${Object.keys(hourSlotStats).length}`);
-
-    return results;
   },
 
   /**
@@ -659,9 +518,3 @@ function isValidEmail(email) {
   return Utils.isValidEmail(email);
 }
 
-/**
- * 測試排程系統 - 全域函數（可在 Apps Script 控制台執行）
- */
-function testSchedulingSystem() {
-  return Utils.testScheduling130();
-}

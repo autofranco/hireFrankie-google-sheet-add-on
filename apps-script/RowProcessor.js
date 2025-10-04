@@ -82,23 +82,6 @@ const RowProcessor = {
   },
 
   /**
-   * 檢查研習活動簡介
-   */
-  checkSeminarBrief(sheet, rowIndex) {
-    console.log('步骤0: 檢查研習活動簡介...');
-    SheetService.updateInfo(sheet, rowIndex, '檢查研習活動簡介...');
-    SpreadsheetApp.flush();
-    
-    const seminarResult = UserInfoService.checkAndGenerateSeminarBrief();
-    if (!seminarResult.success && seminarResult.needsUserInput) {
-      throw new Error('請先在 User Info 工作表填寫 Seminar Info');
-    } else if (!seminarResult.success) {
-      throw new Error(seminarResult.message);
-    }
-    console.log('研習活動簡介檢查完成');
-  },
-
-  /**
    * 生成潛在客戶畫像
    */
   generateLeadsProfile(sheet, row, rowIndex) {

@@ -243,47 +243,11 @@ const AnalyticsService = {
     }
   },
 
-  /**
-   * 測試統計更新功能
-   */
-  testStatisticsUpdate() {
-    try {
-      console.log('=== 測試統計更新功能 ===');
-
-      const result = this.updateSummaryStatistics();
-
-      let message = '📊 統計更新測試結果：\n\n';
-
-      if (result.success) {
-        message += '✅ 統計更新成功\n\n';
-        message += `🔴 退信率: ${result.bounceStats.bounceRate}% (${result.bounceStats.totalBounced}/${result.bounceStats.totalLeads} 潛在客戶)\n`;
-        message += `🟢 開信率: ${result.openStats.openRate}% (${result.openStats.totalOpened}/${result.openStats.deliveredLeads} 送達潛客)\n`;
-        message += `🔵 回信率: ${result.replyStats.replyRate}% (${result.replyStats.totalReplied}/${result.replyStats.deliveredLeads} 送達潛客)\n\n`;
-        message += '請檢查 S1、T1、U1 儲存格的顯示效果。\n\n';
-        message += '注意：開信率和回信率基於成功送達的潛在客戶計算，排除退信客戶。';
-      } else {
-        message += `❌ 統計更新失敗: ${result.error}`;
-      }
-
-      // 統計測試結果改為console log輸出，不中斷用戶操作
-      console.log('📈 統計測試結果:', message);
-
-      return result;
-
-    } catch (error) {
-      console.error('測試統計更新功能時發生錯誤:', error);
-      // 測試錯誤改為console log輸出，不中斷用戶操作
-      console.error('❌ 統計測試失敗:', error.message);
-      return { success: false, error: error.message };
-    }
-  }
 };
+
 
 // 全局函數包裝器
 function updateSummaryStatistics() {
   return AnalyticsService.updateSummaryStatistics();
 }
 
-function testStatisticsUpdate() {
-  return AnalyticsService.testStatisticsUpdate();
-}

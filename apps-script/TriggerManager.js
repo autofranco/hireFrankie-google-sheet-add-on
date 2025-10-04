@@ -53,19 +53,6 @@ const TriggerManager = {
   },
 
   /**
-   * 刪除全域郵件發送觸發器
-   */
-  deleteGlobalEmailTrigger() {
-    const triggers = this.getAllTriggers();
-    triggers.forEach(trigger => {
-      if (trigger.getHandlerFunction() === 'checkAndSendMails') {
-        this.deleteTrigger(trigger);
-        console.log('已刪除全域郵件發送觸發器');
-      }
-    });
-  },
-
-  /**
    * 創建回覆檢測觸發器（每小時執行一次）
    */
   createReplyDetectionTrigger() {
@@ -227,24 +214,6 @@ const TriggerManager = {
     return deletedCount;
   },
 
-
-  /**
-   * 清理退信檢測觸發器（退信檢測已整合至 checkAndSendMails 中）
-   */
-  cleanupBounceDetectionTriggers() {
-    const triggers = this.getAllTriggers();
-    let deletedCount = 0;
-
-    triggers.forEach(trigger => {
-      if (trigger.getHandlerFunction() === 'checkAllRunningLeadsForBounces') {
-        this.deleteTrigger(trigger);
-        console.log('已刪除多餘的退信檢測觸發器（已整合至全域觸發器）');
-        deletedCount++;
-      }
-    });
-
-    return deletedCount;
-  },
 
   /**
    * 獲取觸發器統計資訊

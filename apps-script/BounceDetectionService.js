@@ -312,42 +312,6 @@ const BounceDetectionService = {
   },
 
   /**
-   * 清理舊的退信記錄（超過30天的記錄）
-   */
-  cleanupOldBounceRecords() {
-    try {
-      const properties = PropertiesService.getScriptProperties().getProperties();
-      const thirtyDaysAgo = new Date().getTime() - (30 * 24 * 60 * 60 * 1000);
-      let cleanedCount = 0;
-
-      for (const [key, value] of Object.entries(properties)) {
-        if (key.startsWith('bounce_')) {
-          try {
-            const bounceRecord = JSON.parse(value);
-            if (bounceRecord.recordedTime < thirtyDaysAgo) {
-              PropertiesService.getScriptProperties().deleteProperty(key);
-              cleanedCount++;
-              console.log(`清理舊退信記錄: ${key}`);
-            }
-          } catch (parseError) {
-            // 如果解析失敗，刪除損壞的記錄
-            PropertiesService.getScriptProperties().deleteProperty(key);
-            cleanedCount++;
-            console.log(`清理損壞退信記錄: ${key}`);
-          }
-        }
-      }
-
-      if (cleanedCount > 0) {
-        console.log(`已清理 ${cleanedCount} 個舊的退信記錄`);
-      }
-
-    } catch (error) {
-      console.error('清理舊退信記錄時發生錯誤:', error);
-    }
-  },
-
-  /**
    * 計算總體退信率
    */
   calculateBounceRate() {

@@ -179,65 +179,6 @@ const PixelTrackingService = {
   },
 
   /**
-   * 測試像素追蹤功能
-   * 手動執行一次檢查，用於調試和測試
-   */
-  testPixelTracking() {
-    try {
-      console.log('=== 手動測試像素追蹤功能 ===');
-
-      // 檢查觸發器狀態
-      const triggers = ScriptApp.getProjectTriggers();
-      const pixelTrigger = triggers.find(t => t.getHandlerFunction() === 'checkPixelOpens');
-
-      let triggerInfo = '';
-      if (pixelTrigger) {
-        triggerInfo = `\n\n觸發器狀態：✅ 已存在\n觸發器 ID：${pixelTrigger.getUniqueId()}`;
-      } else {
-        triggerInfo = `\n\n觸發器狀態：❌ 不存在`;
-      }
-
-      // 執行開信檢查
-      const result = this.checkPixelOpens();
-
-      let message = `🎯 像素追蹤測試結果：\n\n`;
-
-      if (result.error) {
-        message += `❌ 錯誤：${result.error}`;
-      } else {
-        message += `✅ 檢查了 ${result.checked} 個開信記錄\n📧 更新了 ${result.opened} 個開信狀態`;
-      }
-
-      message += triggerInfo;
-
-      // 檢查 Firebase Functions 連接
-      try {
-        const spreadsheetId = SpreadsheetApp.getActiveSpreadsheet().getId();
-        const testResult = this.getPixelOpensFromFirebase(spreadsheetId);
-
-        if (testResult.success) {
-          message += `\n\n🔥 Firebase Functions：✅ 連接正常 (${testResult.totalCount || 0} 個記錄)`;
-        } else {
-          message += `\n\n🔥 Firebase Functions：❌ 錯誤 - ${testResult.error || 'Unknown error'}`;
-        }
-      } catch (firebaseError) {
-        message += `\n\n🔥 Firebase Functions：❌ 錯誤 - ${firebaseError.message}`;
-      }
-
-      // 像素追蹤測試結果改為console log輸出，不中斷用戶操作
-      console.log('🔍 像素追蹤測試結果:', message);
-
-      return result;
-
-    } catch (error) {
-      console.error('測試像素追蹤功能時發生錯誤:', error);
-      // 測試錯誤改為console log輸出，不中斷用戶操作
-      console.error('❌ 像素追蹤測試失敗:', error.message);
-      return { error: error.message };
-    }
-  },
-
-  /**
    * 獲取像素追蹤統計資訊
    */
   getPixelTrackingStats() {
@@ -330,6 +271,3 @@ function deletePixelTrackingTrigger() {
   return PixelTrackingService.deletePixelTrackingTrigger();
 }
 
-function testPixelTracking() {
-  return PixelTrackingService.testPixelTracking();
-}

@@ -190,42 +190,6 @@ const SheetService = {
   },
 
   /**
-   * 更新信件切入点
-   */
-  updateMailAngles(sheet, rowIndex, mailAngles) {
-    sheet.getRange(rowIndex, COLUMNS.MAIL_ANGLE_1 + 1).setValue(mailAngles.angle1);
-    sheet.getRange(rowIndex, COLUMNS.MAIL_ANGLE_2 + 1).setValue(mailAngles.angle2);
-    sheet.getRange(rowIndex, COLUMNS.MAIL_ANGLE_3 + 1).setValue(mailAngles.angle3);
-  },
-
-  /**
-   * 更新追踪信件
-   */
-  updateFollowUpMails(sheet, rowIndex, followUpMails) {
-    sheet.getRange(rowIndex, COLUMNS.FOLLOW_UP_1 + 1).setValue(followUpMails.mail1);
-    sheet.getRange(rowIndex, COLUMNS.FOLLOW_UP_2 + 1).setValue(followUpMails.mail2);
-    sheet.getRange(rowIndex, COLUMNS.FOLLOW_UP_3 + 1).setValue(followUpMails.mail3);
-  },
-
-  /**
-   * 更新排程时间
-   */
-  updateSchedules(sheet, rowIndex, schedules) {
-    // 設定排程時間並確保沒有刪除線格式
-    const schedule1Cell = sheet.getRange(rowIndex, COLUMNS.SCHEDULE_1 + 1);
-    schedule1Cell.setValue(Utils.formatScheduleTime(schedules.schedule1));
-    schedule1Cell.setFontLine('none');
-    
-    const schedule2Cell = sheet.getRange(rowIndex, COLUMNS.SCHEDULE_2 + 1);
-    schedule2Cell.setValue(Utils.formatScheduleTime(schedules.schedule2));
-    schedule2Cell.setFontLine('none');
-    
-    const schedule3Cell = sheet.getRange(rowIndex, COLUMNS.SCHEDULE_3 + 1);
-    schedule3Cell.setValue(Utils.formatScheduleTime(schedules.schedule3));
-    schedule3Cell.setFontLine('none');
-  },
-
-  /**
    * 更新狀態
    */
   updateStatus(sheet, rowIndex, status) {
@@ -455,18 +419,6 @@ const SheetService = {
     const email3Sent = schedule3.getFontLine() === 'line-through';
 
     return email1Sent && email2Sent && email3Sent;
-  },
-
-  /**
-   * 更新所有行的 Send Now 按鈕狀態
-   */
-  updateAllSendNowButtons(sheet) {
-    const lastRow = sheet.getLastRow();
-    if (lastRow <= 1) return;
-    
-    for (let i = 2; i <= lastRow; i++) {
-      this.setupSendNowButton(sheet, i);
-    }
   },
 
   /**

@@ -198,28 +198,6 @@ const ContentGenerator = {
     }
   },
 
-  /**
-   * 測試解析邮件切入点功能
-   * 用於驗證新的XML標籤解析是否正常工作
-   */
-  testParseMailAngles() {
-    const testResponse = `
-<aspect1>負責公司數位轉型決策，面臨技術選擇與投資效益評估的挑戰，需要平衡創新與風險控制</aspect1>
-
-<aspect2>參加活動是為了解決數位化轉型痛點，最適合透過具體案例分享和量化效益證明來建立信任</aspect2>
-
-<angle1>強調數位轉型ROI計算方法，邀請參與一對一諮詢會議</angle1>
-
-<angle2>分享同業成功轉型案例，提供免費評估服務</angle2>
-
-<angle3>提醒錯過數位轉型黃金時機的風險，最後機會預約專家諮詢</angle3>
-    `;
-
-    console.log('=== 測試新的解析功能 ===');
-    const result = this.parseMailAngles(testResponse);
-    console.log('解析結果:', result);
-    return result;
-  },
 
 
   /**
