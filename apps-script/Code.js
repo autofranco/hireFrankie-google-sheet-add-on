@@ -23,23 +23,24 @@
  * =============================================================================
  *
  * 主入口文件 - 核心入口函數和選單設置
- * @OnlyCurrentDoc
  *
  * 必要权限：
- * - https://www.googleapis.com/auth/script.external_request
+ * - https://www.googleapis.com/auth/spreadsheets
  * - https://www.googleapis.com/auth/gmail.send
- * - 電子表格權限由 @OnlyCurrentDoc 自動提供 (容器綁定腳本)
+ * - https://www.googleapis.com/auth/gmail.readonly
+ * - https://www.googleapis.com/auth/script.external_request
  */
 
 /**
  * 當 Google Sheets 開啟時，建立自訂選單
  * 設置 Auto Lead Warmer 的主選單和子選單項目
- * 
+ *
  * @function onOpen
  * @description 初始化插件的用戶介面選單，包含主要功能和調試工具
+ * @param {Object} e - Event object (for add-on compatibility)
  * @returns {void}
  */
-function onOpen() {
+function onOpen(e) {
   const ui = SpreadsheetApp.getUi();
 
   ui.createMenu('Auto Lead Warmer')
