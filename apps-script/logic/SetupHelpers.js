@@ -309,10 +309,10 @@ function testCreateHeaderRow() {
   const headers = SetupHelpers.createHeaderRow();
 
   console.log('Headers:', headers);
-  console.assert(Array.isArray(headers), 'Should return array');
-  console.assert(headers.length === 18, 'Should have 18 columns');
-  console.assert(headers[0] === 'Email Address*', 'First column should be Email Address*');
-  console.assert(headers[17] === 'info', 'Last column should be info');
+  assert(Array.isArray(headers), 'Should return array');
+  assert(headers.length === 18, 'Should have 18 columns');
+  assert(headers[0] === 'Email Address*', 'First column should be Email Address*');
+  assert(headers[17] === 'info', 'Last column should be info');
 
   console.log('✅ createHeaderRow tests passed');
 }
@@ -326,9 +326,9 @@ function testGetColumnWidthConfig() {
   const config = SetupHelpers.getColumnWidthConfig();
 
   console.log('Column widths:', config);
-  console.assert(typeof config === 'object', 'Should return object');
-  console.assert(config[1] === 110, 'Email column should be 110px');
-  console.assert(config[18] === 200, 'Info column should be 200px');
+  assert(typeof config === 'object', 'Should return object');
+  assert(config[1] === 110, 'Email column should be 110px');
+  assert(config[18] === 200, 'Info column should be 200px');
 
   console.log('✅ getColumnWidthConfig tests passed');
 }
@@ -343,9 +343,9 @@ function testGetGrayHeaderIndices() {
   const grayIndices = SetupHelpers.getGrayHeaderIndices(headers);
 
   console.log('Gray header indices:', grayIndices);
-  console.assert(Array.isArray(grayIndices), 'Should return array');
-  console.assert(grayIndices.length === 13, 'Should have 13 gray headers');
-  console.assert(grayIndices.includes(6), 'Should include Leads Profile column (6)');
+  assert(Array.isArray(grayIndices), 'Should return array');
+  assert(grayIndices.length === 13, 'Should have 13 gray headers');
+  assert(grayIndices.includes(6), 'Should include Leads Profile column (6)');
 
   console.log('✅ getGrayHeaderIndices tests passed');
 }
@@ -359,9 +359,9 @@ function testGetStatusDropdownValues() {
   const values = SetupHelpers.getStatusDropdownValues();
 
   console.log('Status values:', values);
-  console.assert(Array.isArray(values), 'Should return array');
-  console.assert(values.length === 4, 'Should have 4 status values');
-  console.assert(values.includes('Running'), 'Should include Running');
+  assert(Array.isArray(values), 'Should return array');
+  assert(values.length === 4, 'Should have 4 status values');
+  assert(values.includes('Running'), 'Should include Running');
 
   console.log('✅ getStatusDropdownValues tests passed');
 }
@@ -378,8 +378,8 @@ function testGetStatusColor() {
   console.log('Running color:', runningColor);
   console.log('Done color:', doneColor);
 
-  console.assert(runningColor.background === '#f0f0f0', 'Running should have gray background');
-  console.assert(doneColor.background === null, 'Done should have no background');
+  assert(runningColor.background === '#f0f0f0', 'Running should have gray background');
+  assert(doneColor.background === null, 'Done should have no background');
 
   console.log('✅ getStatusColor tests passed');
 }
@@ -400,10 +400,10 @@ function testGetInfoColor() {
   console.log('Replied color:', repliedColor);
   console.log('Normal color:', normalColor);
 
-  console.assert(bouncedColor.background === '#ffebee', 'Bounced should have red background');
-  console.assert(openedColor.background === '#e8f5e8', 'Opened should have green background');
-  console.assert(repliedColor.background === '#e3f2fd', 'Replied should have blue background');
-  console.assert(normalColor.background === null, 'Normal should have no background');
+  assert(bouncedColor.background === '#ffebee', 'Bounced should have red background');
+  assert(openedColor.background === '#e8f5e8', 'Opened should have green background');
+  assert(repliedColor.background === '#e3f2fd', 'Replied should have blue background');
+  assert(normalColor.background === null, 'Normal should have no background');
 
   console.log('✅ getInfoColor tests passed');
 }
@@ -422,9 +422,9 @@ function testGenerateSpreadsheetTitle() {
   console.log('New title:', title1);
   console.log('Existing title:', title2);
 
-  console.assert(title1.includes('Auto Lead Warmer'), 'Should add marker');
-  console.assert(title1.includes('01/08'), 'Should include date');
-  console.assert(title2 === 'My Sheet - Auto Lead Warmer (01/08 14:30)', 'Should not modify existing');
+  assert(title1.includes('Auto Lead Warmer'), 'Should add marker');
+  assert(title1.includes('01/08'), 'Should include date');
+  assert(title2 === 'My Sheet - Auto Lead Warmer (01/08 14:30)', 'Should not modify existing');
 
   console.log('✅ generateSpreadsheetTitle tests passed');
 }
@@ -444,9 +444,9 @@ function testValidateHeaderRow() {
   console.log('Valid result:', result1);
   console.log('Invalid result:', result2);
 
-  console.assert(result1.isValid === true, 'Valid headers should pass');
-  console.assert(result2.isValid === false, 'Invalid headers should fail');
-  console.assert(result2.errors.length > 0, 'Invalid headers should have errors');
+  assert(result1.isValid === true, 'Valid headers should pass');
+  assert(result2.isValid === false, 'Invalid headers should fail');
+  assert(result2.errors.length > 0, 'Invalid headers should have errors');
 
   console.log('✅ validateHeaderRow tests passed');
 }

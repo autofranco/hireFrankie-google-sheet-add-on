@@ -243,11 +243,11 @@ function testCreateBatches() {
   const batches = BatchProcessor.createBatches(rows, indexes, 5);
 
   console.log('Batches:', batches);
-  console.assert(batches.length === 3, 'Should create 3 batches');
-  console.assert(batches[0].rows.length === 5, 'First batch should have 5 items');
-  console.assert(batches[2].rows.length === 2, 'Last batch should have 2 items');
-  console.assert(batches[0].batchNumber === 1, 'First batch number should be 1');
-  console.assert(batches[0].totalBatches === 3, 'Total batches should be 3');
+  assert(batches.length === 3, 'Should create 3 batches');
+  assert(batches[0].rows.length === 5, 'First batch should have 5 items');
+  assert(batches[2].rows.length === 2, 'Last batch should have 2 items');
+  assert(batches[0].batchNumber === 1, 'First batch number should be 1');
+  assert(batches[0].totalBatches === 3, 'Total batches should be 3');
 
   console.log('✅ createBatches tests passed');
 }
@@ -264,9 +264,9 @@ function testMapRowsWithIndexes() {
   const result = BatchProcessor.mapRowsWithIndexes(rows, indexes);
 
   console.log('Mapped result:', result);
-  console.assert(result.length === 3, 'Should have 3 mapped items');
-  console.assert(result[0].rowIndex === 2, 'First item should have index 2');
-  console.assert(result[0].row[0] === 'a', 'First row data should match');
+  assert(result.length === 3, 'Should have 3 mapped items');
+  assert(result[0].rowIndex === 2, 'First item should have index 2');
+  assert(result[0].row[0] === 'a', 'First row data should match');
 
   console.log('✅ mapRowsWithIndexes tests passed');
 }
@@ -288,10 +288,10 @@ function testCollectBatchResults() {
   const summary = BatchProcessor.collectBatchResults(results);
 
   console.log('Summary:', summary);
-  console.assert(summary.successCount === 3, 'Should have 3 successes');
-  console.assert(summary.errorCount === 2, 'Should have 2 errors');
-  console.assert(summary.totalCount === 5, 'Should have 5 total');
-  console.assert(summary.successRate === 60, 'Success rate should be 60%');
+  assert(summary.successCount === 3, 'Should have 3 successes');
+  assert(summary.errorCount === 2, 'Should have 2 errors');
+  assert(summary.totalCount === 5, 'Should have 5 total');
+  assert(summary.successRate === 60, 'Success rate should be 60%');
 
   console.log('✅ collectBatchResults tests passed');
 }
@@ -306,9 +306,9 @@ function testChunkArray() {
   const chunks = BatchProcessor.chunkArray(array, 3);
 
   console.log('Chunks:', chunks);
-  console.assert(chunks.length === 4, 'Should have 4 chunks');
-  console.assert(chunks[0].length === 3, 'First chunk should have 3 items');
-  console.assert(chunks[3].length === 1, 'Last chunk should have 1 item');
+  assert(chunks.length === 4, 'Should have 4 chunks');
+  assert(chunks[0].length === 3, 'First chunk should have 3 items');
+  assert(chunks[3].length === 1, 'Last chunk should have 1 item');
 
   console.log('✅ chunkArray tests passed');
 }
@@ -324,9 +324,9 @@ function testCalculateProgress() {
   const progress4 = BatchProcessor.calculateProgress(4, 4);
 
   console.log('Progress:', { progress1, progress2, progress4 });
-  console.assert(progress1 === 25, 'Progress should be 25%');
-  console.assert(progress2 === 50, 'Progress should be 50%');
-  console.assert(progress4 === 100, 'Progress should be 100%');
+  assert(progress1 === 25, 'Progress should be 25%');
+  assert(progress2 === 50, 'Progress should be 50%');
+  assert(progress4 === 100, 'Progress should be 100%');
 
   console.log('✅ calculateProgress tests passed');
 }
@@ -337,9 +337,9 @@ function testCalculateProgress() {
 function testHasMoreBatches() {
   console.log('=== Testing hasMoreBatches ===');
 
-  console.assert(BatchProcessor.hasMoreBatches(1, 4) === true, 'Should have more batches');
-  console.assert(BatchProcessor.hasMoreBatches(3, 4) === true, 'Should have more batches');
-  console.assert(BatchProcessor.hasMoreBatches(4, 4) === false, 'Should not have more batches');
+  assert(BatchProcessor.hasMoreBatches(1, 4) === true, 'Should have more batches');
+  assert(BatchProcessor.hasMoreBatches(3, 4) === true, 'Should have more batches');
+  assert(BatchProcessor.hasMoreBatches(4, 4) === false, 'Should not have more batches');
 
   console.log('✅ hasMoreBatches tests passed');
 }
@@ -368,9 +368,9 @@ function testValidateBatch() {
   console.log('Valid batch result:', result1);
   console.log('Invalid batch result:', result2);
 
-  console.assert(result1.isValid === true, 'Valid batch should pass');
-  console.assert(result2.isValid === false, 'Invalid batch should fail');
-  console.assert(result2.errors.length > 0, 'Invalid batch should have errors');
+  assert(result1.isValid === true, 'Valid batch should pass');
+  assert(result2.isValid === false, 'Invalid batch should fail');
+  assert(result2.errors.length > 0, 'Invalid batch should have errors');
 
   console.log('✅ validateBatch tests passed');
 }
@@ -390,7 +390,7 @@ function testFlattenBatchResults() {
   const flattened = BatchProcessor.flattenBatchResults(batchResults);
 
   console.log('Flattened:', flattened);
-  console.assert(flattened.length === 6, 'Should have 6 total results');
+  assert(flattened.length === 6, 'Should have 6 total results');
 
   console.log('✅ flattenBatchResults tests passed');
 }
@@ -412,8 +412,8 @@ function testGroupResultsByStatus() {
   const grouped = BatchProcessor.groupResultsByStatus(results);
 
   console.log('Grouped:', grouped);
-  console.assert(grouped.successful.length === 3, 'Should have 3 successful');
-  console.assert(grouped.failed.length === 2, 'Should have 2 failed');
+  assert(grouped.successful.length === 3, 'Should have 3 successful');
+  assert(grouped.failed.length === 2, 'Should have 2 failed');
 
   console.log('✅ groupResultsByStatus tests passed');
 }

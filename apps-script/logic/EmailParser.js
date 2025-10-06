@@ -273,21 +273,21 @@ function testParseEmailContent() {
   const content1 = '主旨：Test Subject\n內容：\nThis is the body\nMultiple lines';
   const result1 = EmailParser.parseEmailContent(content1);
   console.log('Result 1:', result1);
-  console.assert(result1.subject === 'Test Subject', 'Subject should be extracted');
-  console.assert(result1.body.includes('This is the body'), 'Body should be extracted');
+  assert(result1.subject === 'Test Subject', 'Subject should be extracted');
+  assert(result1.body.includes('This is the body'), 'Body should be extracted');
 
   // Test with alternative format
   const content2 = '主旨:Another Subject\n內容:Body starts here';
   const result2 = EmailParser.parseEmailContent(content2);
   console.log('Result 2:', result2);
-  console.assert(result2.subject === 'Another Subject', 'Subject with : should work');
+  assert(result2.subject === 'Another Subject', 'Subject with : should work');
 
   // Test without markers
   const content3 = 'Just plain content';
   const result3 = EmailParser.parseEmailContent(content3);
   console.log('Result 3:', result3);
-  console.assert(result3.subject === null, 'No subject should be null');
-  console.assert(result3.body === 'Just plain content', 'Content should be in body');
+  assert(result3.subject === null, 'No subject should be null');
+  assert(result3.body === 'Just plain content', 'Content should be in body');
 
   console.log('✅ parseEmailContent tests passed');
 }
@@ -307,11 +307,11 @@ angle3: Third angle content`;
   const result = EmailParser.parseMailAngles(response);
   console.log('Parsed angles:', result);
 
-  console.assert(result.aspect1 === 'First aspect content', 'aspect1 should be parsed');
-  console.assert(result.aspect2 === 'Second aspect content', 'aspect2 should be parsed');
-  console.assert(result.angle1 === 'First angle content', 'angle1 should be parsed');
-  console.assert(result.angle2 === 'Second angle content', 'angle2 should be parsed');
-  console.assert(result.angle3 === 'Third angle content', 'angle3 should be parsed');
+  assert(result.aspect1 === 'First aspect content', 'aspect1 should be parsed');
+  assert(result.aspect2 === 'Second aspect content', 'aspect2 should be parsed');
+  assert(result.angle1 === 'First angle content', 'angle1 should be parsed');
+  assert(result.angle2 === 'Second angle content', 'angle2 should be parsed');
+  assert(result.angle3 === 'Third angle content', 'angle3 should be parsed');
 
   console.log('✅ parseMailAngles tests passed');
 }
@@ -322,11 +322,11 @@ angle3: Third angle content`;
 function testIsValidEmail() {
   console.log('=== Testing isValidEmail ===');
 
-  console.assert(EmailParser.isValidEmail('test@example.com') === true, 'Valid email should pass');
-  console.assert(EmailParser.isValidEmail('user.name+tag@example.co.uk') === true, 'Complex email should pass');
-  console.assert(EmailParser.isValidEmail('invalid.email') === false, 'Invalid email should fail');
-  console.assert(EmailParser.isValidEmail('') === false, 'Empty email should fail');
-  console.assert(EmailParser.isValidEmail(null) === false, 'Null should fail');
+  assert(EmailParser.isValidEmail('test@example.com') === true, 'Valid email should pass');
+  assert(EmailParser.isValidEmail('user.name+tag@example.co.uk') === true, 'Complex email should pass');
+  assert(EmailParser.isValidEmail('invalid.email') === false, 'Invalid email should fail');
+  assert(EmailParser.isValidEmail('') === false, 'Empty email should fail');
+  assert(EmailParser.isValidEmail(null) === false, 'Null should fail');
 
   console.log('✅ isValidEmail tests passed');
 }
@@ -341,8 +341,8 @@ function testSanitizeEmailContent() {
   const result = EmailParser.sanitizeEmailContent(content);
 
   console.log('Sanitized:', result);
-  console.assert(!result.includes('<script>'), 'Should escape HTML tags');
-  console.assert(result.includes('&lt;'), 'Should have escaped characters');
+  assert(!result.includes('<script>'), 'Should escape HTML tags');
+  assert(result.includes('&lt;'), 'Should have escaped characters');
 
   console.log('✅ sanitizeEmailContent tests passed');
 }
@@ -357,8 +357,8 @@ function testTextToHtml() {
   const result = EmailParser.textToHtml(text);
 
   console.log('HTML:', result);
-  console.assert(result.includes('<br>'), 'Should contain <br> tags');
-  console.assert(result === 'Line 1<br>Line 2<br>Line 3', 'Should format correctly');
+  assert(result.includes('<br>'), 'Should contain <br> tags');
+  assert(result === 'Line 1<br>Line 2<br>Line 3', 'Should format correctly');
 
   console.log('✅ textToHtml tests passed');
 }
@@ -373,7 +373,7 @@ function testExtractSubject() {
   const result = EmailParser.extractSubject(content);
 
   console.log('Extracted subject:', result);
-  console.assert(result === 'Test Subject', 'Should extract subject');
+  assert(result === 'Test Subject', 'Should extract subject');
 
   console.log('✅ extractSubject tests passed');
 }
@@ -388,7 +388,7 @@ function testExtractBody() {
   const result = EmailParser.extractBody(content);
 
   console.log('Extracted body:', result);
-  console.assert(result.includes('Body content'), 'Should extract body');
+  assert(result.includes('Body content'), 'Should extract body');
 
   console.log('✅ extractBody tests passed');
 }
@@ -403,13 +403,13 @@ function testTruncateText() {
   const result = EmailParser.truncateText(longText, 20);
 
   console.log('Truncated:', result);
-  console.assert(result.length <= 23, 'Should be truncated (20 + "...")');
-  console.assert(result.endsWith('...'), 'Should end with ellipsis');
+  assert(result.length <= 23, 'Should be truncated (20 + "...")');
+  assert(result.endsWith('...'), 'Should end with ellipsis');
 
   // Test short text
   const shortText = 'Short';
   const result2 = EmailParser.truncateText(shortText, 20);
-  console.assert(result2 === 'Short', 'Short text should not be truncated');
+  assert(result2 === 'Short', 'Short text should not be truncated');
 
   console.log('✅ truncateText tests passed');
 }
@@ -420,10 +420,10 @@ function testTruncateText() {
 function testIsEmpty() {
   console.log('=== Testing isEmpty ===');
 
-  console.assert(EmailParser.isEmpty('') === true, 'Empty string should be empty');
-  console.assert(EmailParser.isEmpty('   ') === true, 'Whitespace should be empty');
-  console.assert(EmailParser.isEmpty(null) === true, 'Null should be empty');
-  console.assert(EmailParser.isEmpty('content') === false, 'Non-empty should not be empty');
+  assert(EmailParser.isEmpty('') === true, 'Empty string should be empty');
+  assert(EmailParser.isEmpty('   ') === true, 'Whitespace should be empty');
+  assert(EmailParser.isEmpty(null) === true, 'Null should be empty');
+  assert(EmailParser.isEmpty('content') === false, 'Non-empty should not be empty');
 
   console.log('✅ isEmpty tests passed');
 }

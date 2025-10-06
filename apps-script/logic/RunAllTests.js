@@ -77,24 +77,24 @@ function runSmokeTests() {
     validRow[2] = 'https://company.com';
     validRow[3] = 'Engineering';
     validRow[4] = 'CTO';
-    console.assert(LeadValidation.isValidLead(validRow).isValid === true, 'LeadValidation works');
+    assert(LeadValidation.isValidLead(validRow).isValid === true, 'LeadValidation works');
 
     // ScheduleCalculator
     const date = new Date(2025, 0, 8, 14, 30, 0);
-    console.assert(ScheduleCalculator.formatScheduleTime(date) === '01/08 14:00', 'ScheduleCalculator works');
+    assert(ScheduleCalculator.formatScheduleTime(date) === '01/08 14:00', 'ScheduleCalculator works');
 
     // EmailParser
     const content = '主旨：Test\n內容：\nBody';
     const parsed = EmailParser.parseEmailContent(content);
-    console.assert(parsed.subject === 'Test', 'EmailParser works');
+    assert(parsed.subject === 'Test', 'EmailParser works');
 
     // BatchProcessor
     const batches = BatchProcessor.createBatches([1, 2, 3], [2, 3, 4], 2);
-    console.assert(batches.length === 2, 'BatchProcessor works');
+    assert(batches.length === 2, 'BatchProcessor works');
 
     // SetupHelpers
     const headers = SetupHelpers.createHeaderRow();
-    console.assert(headers.length === 18, 'SetupHelpers works');
+    assert(headers.length === 18, 'SetupHelpers works');
 
     console.log('✅ All smoke tests passed!');
 

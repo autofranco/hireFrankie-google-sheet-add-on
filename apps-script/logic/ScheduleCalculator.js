@@ -226,20 +226,20 @@ function testGetNextHourSlot() {
   const wed10am = new Date(2025, 0, 8, 10, 0, 0); // Wednesday
   const result1 = ScheduleCalculator.getNextHourSlot(wed10am);
   console.log('Next slot from Wed 10:00:', ScheduleCalculator.formatScheduleTime(result1));
-  console.assert(result1.getHours() === 11, 'Should be 11:00');
+  assert(result1.getHours() === 11, 'Should be 11:00');
 
   // Test end of work day (Friday 17:00)
   const fri5pm = new Date(2025, 0, 10, 17, 0, 0); // Friday 5pm
   const result2 = ScheduleCalculator.getNextHourSlot(fri5pm);
   console.log('Next slot from Fri 17:00:', ScheduleCalculator.formatScheduleTime(result2));
-  console.assert(result2.getDay() === 1, 'Should be Monday');
-  console.assert(result2.getHours() === 8, 'Should be 8:00');
+  assert(result2.getDay() === 1, 'Should be Monday');
+  assert(result2.getHours() === 8, 'Should be 8:00');
 
   // Test weekend (Saturday)
   const sat = new Date(2025, 0, 11, 10, 0, 0); // Saturday
   const result3 = ScheduleCalculator.getNextHourSlot(sat);
   console.log('Next slot from Sat 10:00:', ScheduleCalculator.formatScheduleTime(result3));
-  console.assert(result3.getDay() === 1, 'Should skip to Monday');
+  assert(result3.getDay() === 1, 'Should skip to Monday');
 
   console.log('✅ getNextHourSlot tests passed');
 }
@@ -256,8 +256,8 @@ function testGetNextWeekHourSlot() {
   console.log('Original:', ScheduleCalculator.formatScheduleTime(date));
   console.log('Next week:', ScheduleCalculator.formatScheduleTime(result));
 
-  console.assert(result.getDate() === 15, 'Should be 7 days later');
-  console.assert(result.getHours() === 10, 'Hours should match');
+  assert(result.getDate() === 15, 'Should be 7 days later');
+  assert(result.getHours() === 10, 'Hours should match');
 
   console.log('✅ getNextWeekHourSlot tests passed');
 }
@@ -272,11 +272,11 @@ function testFormatScheduleTime() {
   const result = ScheduleCalculator.formatScheduleTime(date);
 
   console.log('Formatted:', result);
-  console.assert(result === '01/08 14:00', 'Should format correctly');
+  assert(result === '01/08 14:00', 'Should format correctly');
 
   // Test invalid input
   const result2 = ScheduleCalculator.formatScheduleTime(null);
-  console.assert(result2 === '', 'Should return empty string for null');
+  assert(result2 === '', 'Should return empty string for null');
 
   console.log('✅ formatScheduleTime tests passed');
 }
@@ -291,14 +291,14 @@ function testParseScheduleTime() {
   const result = ScheduleCalculator.parseScheduleTime(scheduleText);
 
   console.log('Parsed:', result);
-  console.assert(result instanceof Date, 'Should return Date object');
-  console.assert(result.getMonth() === 0, 'Month should be January (0)');
-  console.assert(result.getDate() === 8, 'Date should be 8');
-  console.assert(result.getHours() === 14, 'Hours should be 14');
+  assert(result instanceof Date, 'Should return Date object');
+  assert(result.getMonth() === 0, 'Month should be January (0)');
+  assert(result.getDate() === 8, 'Date should be 8');
+  assert(result.getHours() === 14, 'Hours should be 14');
 
   // Test invalid input
   const result2 = ScheduleCalculator.parseScheduleTime('invalid');
-  console.assert(result2 === null, 'Should return null for invalid input');
+  assert(result2 === null, 'Should return null for invalid input');
 
   console.log('✅ parseScheduleTime tests passed');
 }
@@ -313,9 +313,9 @@ function testIsScheduleDue() {
   const beforeTime = new Date(2025, 0, 8, 9, 0, 0);
   const afterTime = new Date(2025, 0, 8, 11, 0, 0);
 
-  console.assert(ScheduleCalculator.isScheduleDue(scheduleTime, beforeTime) === false, 'Should not be due before');
-  console.assert(ScheduleCalculator.isScheduleDue(scheduleTime, afterTime) === true, 'Should be due after');
-  console.assert(ScheduleCalculator.isScheduleDue(scheduleTime, scheduleTime) === true, 'Should be due at exact time');
+  assert(ScheduleCalculator.isScheduleDue(scheduleTime, beforeTime) === false, 'Should not be due before');
+  assert(ScheduleCalculator.isScheduleDue(scheduleTime, afterTime) === true, 'Should be due after');
+  assert(ScheduleCalculator.isScheduleDue(scheduleTime, scheduleTime) === true, 'Should be due at exact time');
 
   console.log('✅ isScheduleDue tests passed');
 }
@@ -330,7 +330,7 @@ function testFormatDate() {
   const result = ScheduleCalculator.formatDate(date);
 
   console.log('Formatted date:', result);
-  console.assert(result === '2025-01-08 14:30', 'Should format correctly');
+  assert(result === '2025-01-08 14:30', 'Should format correctly');
 
   console.log('✅ formatDate tests passed');
 }
@@ -346,7 +346,7 @@ function testGetHoursDifference() {
 
   const result = ScheduleCalculator.getHoursDifference(start, end);
   console.log('Hours difference:', result);
-  console.assert(result === 4, 'Should be 4 hours');
+  assert(result === 4, 'Should be 4 hours');
 
   console.log('✅ getHoursDifference tests passed');
 }
@@ -362,10 +362,10 @@ function testIsWorkHours() {
   const wed7am = new Date(2025, 0, 8, 7, 0, 0); // Wednesday 7:00
   const wed6pm = new Date(2025, 0, 8, 18, 0, 0); // Wednesday 18:00
 
-  console.assert(ScheduleCalculator.isWorkHours(wed10am) === true, 'Wed 10am should be work hours');
-  console.assert(ScheduleCalculator.isWorkHours(sat10am) === false, 'Saturday should not be work hours');
-  console.assert(ScheduleCalculator.isWorkHours(wed7am) === false, '7am should not be work hours');
-  console.assert(ScheduleCalculator.isWorkHours(wed6pm) === false, '6pm should not be work hours');
+  assert(ScheduleCalculator.isWorkHours(wed10am) === true, 'Wed 10am should be work hours');
+  assert(ScheduleCalculator.isWorkHours(sat10am) === false, 'Saturday should not be work hours');
+  assert(ScheduleCalculator.isWorkHours(wed7am) === false, '7am should not be work hours');
+  assert(ScheduleCalculator.isWorkHours(wed6pm) === false, '6pm should not be work hours');
 
   console.log('✅ isWorkHours tests passed');
 }

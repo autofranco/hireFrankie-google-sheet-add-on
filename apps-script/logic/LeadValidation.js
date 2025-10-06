@@ -164,8 +164,8 @@ function testIsValidLead() {
 
   const result1 = LeadValidation.isValidLead(validRow);
   console.log('Valid lead:', result1);
-  console.assert(result1.isValid === true, 'Should be valid');
-  console.assert(result1.errors.length === 0, 'Should have no errors');
+  assert(result1.isValid === true, 'Should be valid');
+  assert(result1.errors.length === 0, 'Should have no errors');
 
   // Test invalid lead (missing email)
   const invalidRow = new Array(18).fill('');
@@ -173,8 +173,8 @@ function testIsValidLead() {
 
   const result2 = LeadValidation.isValidLead(invalidRow);
   console.log('Invalid lead:', result2);
-  console.assert(result2.isValid === false, 'Should be invalid');
-  console.assert(result2.errors.length > 0, 'Should have errors');
+  assert(result2.isValid === false, 'Should be invalid');
+  assert(result2.errors.length > 0, 'Should have errors');
 
   console.log('✅ isValidLead tests passed');
 }
@@ -193,20 +193,20 @@ function testShouldProcess() {
   validRow[COLUMNS.POSITION] = 'CTO';
 
   // Should process empty status
-  console.assert(LeadValidation.shouldProcess('', validRow) === true, 'Should process empty status');
+  assert(LeadValidation.shouldProcess('', validRow) === true, 'Should process empty status');
 
   // Should process 'Processing' status
-  console.assert(LeadValidation.shouldProcess('Processing', validRow) === true, 'Should process Processing status');
+  assert(LeadValidation.shouldProcess('Processing', validRow) === true, 'Should process Processing status');
 
   // Should NOT process 'Done' status
-  console.assert(LeadValidation.shouldProcess('Done', validRow) === false, 'Should not process Done status');
+  assert(LeadValidation.shouldProcess('Done', validRow) === false, 'Should not process Done status');
 
   // Should NOT process 'Running' status
-  console.assert(LeadValidation.shouldProcess('Running', validRow) === false, 'Should not process Running status');
+  assert(LeadValidation.shouldProcess('Running', validRow) === false, 'Should not process Running status');
 
   // Should NOT process invalid row
   const invalidRow = new Array(18).fill('');
-  console.assert(LeadValidation.shouldProcess('', invalidRow) === false, 'Should not process invalid row');
+  assert(LeadValidation.shouldProcess('', invalidRow) === false, 'Should not process invalid row');
 
   console.log('✅ shouldProcess tests passed');
 }
@@ -236,10 +236,10 @@ function testFilterUnprocessedRows() {
   const result = LeadValidation.filterUnprocessedRows(dataRows, rowIndexes);
 
   console.log('Filtered result:', result);
-  console.assert(result.rows.length === 2, 'Should return 2 unprocessed rows');
-  console.assert(result.indexes.length === 2, 'Should return 2 indexes');
-  console.assert(result.indexes[0] === 2, 'First index should be 2');
-  console.assert(result.indexes[1] === 4, 'Second index should be 4');
+  assert(result.rows.length === 2, 'Should return 2 unprocessed rows');
+  assert(result.indexes.length === 2, 'Should return 2 indexes');
+  assert(result.indexes[0] === 2, 'First index should be 2');
+  assert(result.indexes[1] === 4, 'Second index should be 4');
 
   console.log('✅ filterUnprocessedRows tests passed');
 }
@@ -252,17 +252,17 @@ function testValidateCharacterLimit() {
 
   // Valid length
   const result1 = LeadValidation.validateCharacterLimit('Hello', 10, 'Test Field');
-  console.assert(result1.isValid === true, 'Should be valid');
-  console.assert(result1.length === 5, 'Length should be 5');
+  assert(result1.isValid === true, 'Should be valid');
+  assert(result1.length === 5, 'Length should be 5');
 
   // Exceeds limit
   const result2 = LeadValidation.validateCharacterLimit('Hello World!', 5, 'Test Field');
-  console.assert(result2.isValid === false, 'Should be invalid');
-  console.assert(result2.error.includes('超出字符限制'), 'Should have error message');
+  assert(result2.isValid === false, 'Should be invalid');
+  assert(result2.error.includes('超出字符限制'), 'Should have error message');
 
   // Empty string
   const result3 = LeadValidation.validateCharacterLimit('', 10, 'Test Field');
-  console.assert(result3.isValid === true, 'Empty should be valid');
+  assert(result3.isValid === true, 'Empty should be valid');
 
   console.log('✅ validateCharacterLimit tests passed');
 }
@@ -273,11 +273,11 @@ function testValidateCharacterLimit() {
 function testIsValidEmail() {
   console.log('=== Testing isValidEmail ===');
 
-  console.assert(LeadValidation.isValidEmail('test@example.com') === true, 'Valid email should pass');
-  console.assert(LeadValidation.isValidEmail('user.name+tag@example.co.uk') === true, 'Complex email should pass');
-  console.assert(LeadValidation.isValidEmail('invalid.email') === false, 'Invalid email should fail');
-  console.assert(LeadValidation.isValidEmail('') === false, 'Empty email should fail');
-  console.assert(LeadValidation.isValidEmail(null) === false, 'Null should fail');
+  assert(LeadValidation.isValidEmail('test@example.com') === true, 'Valid email should pass');
+  assert(LeadValidation.isValidEmail('user.name+tag@example.co.uk') === true, 'Complex email should pass');
+  assert(LeadValidation.isValidEmail('invalid.email') === false, 'Invalid email should fail');
+  assert(LeadValidation.isValidEmail('') === false, 'Empty email should fail');
+  assert(LeadValidation.isValidEmail(null) === false, 'Null should fail');
 
   console.log('✅ isValidEmail tests passed');
 }
