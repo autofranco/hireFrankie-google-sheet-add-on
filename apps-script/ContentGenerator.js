@@ -201,93 +201,6 @@ const ContentGenerator = {
 
 
   /**
-   * 生成單封追蹤信件
-   */
-  generateSingleFollowUpMail(leadsProfile, mailAngle, firstName, emailNumber, department, position) {
-    try {
-      const userInfo = UserInfoService.getUserInfo();
-      const seminarBrief = userInfo.seminarBrief || '';
-      let promptField, emailPrompt;
-      
-      // 根據郵件編號選擇對應的提示詞
-      switch(emailNumber) {
-        case 1:
-          promptField = 'email1Prompt';
-          emailPrompt = userInfo.email1Prompt;
-          break;
-        case 2:
-          promptField = 'email2Prompt';  
-          emailPrompt = userInfo.email2Prompt;
-          break;
-        case 3:
-          promptField = 'email3Prompt';
-          emailPrompt = userInfo.email3Prompt;
-          break;
-        default:
-          throw new Error(`無效的郵件編號: ${emailNumber}`);
-      }
-      
-      const prompt = `${emailPrompt}
-- 開場使用Leads Profile的資訊展現對客戶職位與其公司的了解
-- 內容要使用 Mail Angle 的角度切入，使用Leads Profile的資訊讓客戶感覺此封信件是專門為'他'和'他的公司'寫的
-- 特別考慮客戶在${department}部門擔任${position}職位的特殊需求和關注重點
-- 客戶稱謂只有中階管理層以上才需要加上簡短職稱，不然用姓名即可
-- 在撰寫郵件時，請根據Leads Profile中的客戶公司的國家或文化的商業信件書寫慣例，判斷在正式郵件中最合適的客戶稱謂。郵件主旨與郵件正文務必使用同樣稱呼
-- 切勿翻譯客戶姓名，無論語言
-
-# 客戶方資訊
-- 收件人: ${firstName}
-- 職位: ${position}
-- 部門: ${department}
-- Leads Profile : ${leadsProfile}
-
-# 我方舉辦的活動資訊
-${seminarBrief}
-
-# 信件切入點
-Mail Angle: ${mailAngle}
-
-# 輸出
-請按照以下格式提供：
-主旨：[郵件主旨]
-內容：[郵件正文]
-
-# 注意
-- 嚴禁生成不存在的公司、品牌、解決方案、產品、案例、數據，只能使用上的資訊。
-- 不要在信中提及客戶以外的個人姓名，只能提到公司名
-- 請不要使用任何 Markdown 格式（如 **粗體** 或 *斜體*），請使用純文字格式，可以用「」符號來強調重點內容。
-- 嚴禁輸出任何簽名、祝福或聯絡方式，只寫郵件正文內容
-- 嚴格限制不在郵件正文中提及客戶公司的資本額與人數
-- 郵件正文請分段排版，避免過長段落。相同主題或邏輯相關的內容，請群聚為同一段落。不同段落之間請空一行，確保層次清楚、內容更易讀。`;
-
-      console.log(`生成第${emailNumber}封郵件...`);
-      const result = APIService.callLLMAPI(prompt, 'gpt', 'gpt-5-mini-2025-08-07');
-      let mailContent = result.content;
-
-      // 添加用戶簽名
-      const signature = UserInfoService.generateEmailSignature();
-      if (signature) {
-        mailContent += signature;
-      }
-
-      console.log(`第${emailNumber}封郵件生成成功`);
-
-      // 返回包含統計資訊的完整結果
-      return {
-        content: mailContent,
-        provider: result.provider,
-        model: result.model,
-        usage: result.usage,
-        tracking: result.tracking
-      };
-      
-    } catch (error) {
-      console.error(`生成第${emailNumber}封郵件失敗:`, error);
-      throw new Error(`生成第${emailNumber}封郵件失敗: ${error.message}`);
-    }
-  },
-
-  /**
    * 生成研習活動簡介 (Seminar Brief)
    */
   generateSeminarBrief(seminarInfo) {
@@ -335,6 +248,93 @@ Mail Angle: ${mailAngle}
     } catch (error) {
       console.error('生成研習活動簡介失敗:', error);
       throw new Error(`生成研習活動簡介失敗: ${error.message}`);
+    }
+  },
+
+  /**
+   * 構建郵件生成提示詞
+   * @private
+   */
+  buildMailPrompt(emailPrompt, data, seminarBrief) {
+    const promptTemplate = EMAIL_PROMPT_TEMPLATE
+      .replace(/{department}/g, data.department)
+      .replace(/{position}/g, data.position)
+      .replace(/{firstName}/g, data.firstName)
+      .replace(/{leadsProfile}/g, data.leadsProfile)
+      .replace(/{seminarBrief}/g, seminarBrief)
+      .replace(/{mailAngle}/g, data.mailAngle);
+
+    return `${emailPrompt}${promptTemplate}`;
+  },
+
+  /**
+   * 批次生成郵件（統一函數處理所有郵件編號）
+   * @param {Array} batchData - 批次資料陣列，每個元素包含 leadsProfile, mailAngle, firstName, department, position, emailNumber (1/2/3)
+   * @param {Object} userInfo - 用戶資訊物件 (避免重複獲取)
+   * @returns {Array} 生成結果陣列
+   */
+  generateMailsBatch(batchData, userInfo = null) {
+    try {
+      console.log(`開始批次生成 ${batchData.length} 封郵件...`);
+
+      const user = userInfo || UserInfoService.getUserInfo();
+      const seminarBrief = user.seminarBrief || '';
+
+      // 準備所有 API 請求
+      const requests = batchData.map((data) => {
+        let emailPrompt;
+        switch(data.emailNumber) {
+          case 1: emailPrompt = user.email1Prompt; break;
+          case 2: emailPrompt = user.email2Prompt; break;
+          case 3: emailPrompt = user.email3Prompt; break;
+          default: throw new Error(`無效的郵件編號: ${data.emailNumber}`);
+        }
+
+        return {
+          prompt: this.buildMailPrompt(emailPrompt, data, seminarBrief),
+          provider: 'gpt',
+          model: 'gpt-5-mini-2025-08-07'
+        };
+      });
+
+      // 批次調用 API
+      const responses = APIService.callLLMAPIBatch(requests);
+
+      // 處理回應結果
+      const results = responses.map((response, index) => {
+        if (response.success) {
+          let mailContent = response.result.content;
+
+          const signature = UserInfoService.generateEmailSignature();
+          if (signature) {
+            mailContent += signature;
+          }
+
+          console.log(`第${batchData[index].emailNumber}封郵件 ${index + 1} 生成成功`);
+
+          return {
+            success: true,
+            content: mailContent,
+            provider: response.result.provider,
+            model: response.result.model,
+            usage: response.result.usage,
+            tracking: response.result.tracking
+          };
+        } else {
+          console.error(`第${batchData[index].emailNumber}封郵件 ${index + 1} 生成失敗:`, response.error);
+          return {
+            success: false,
+            error: response.error,
+            content: null
+          };
+        }
+      });
+
+      return results;
+
+    } catch (error) {
+      console.error('批次生成郵件失敗:', error);
+      throw new Error(`批次生成郵件失敗: ${error.message}`);
     }
   },
 
@@ -496,210 +496,5 @@ Mail Angle: ${mailAngle}
     }
   },
 
-  /**
-   * 批次生成多封第一封追蹤郵件
-   * @param {Array} batchData - 批次資料陣列，每個元素包含 leadsProfile, mailAngle, firstName, department, position
-   * @param {Object} userInfo - 用戶資訊物件 (避免重複獲取)
-   * @returns {Array} 生成結果陣列
-   */
-  generateFirstMailsBatch(batchData, userInfo = null) {
-    try {
-      console.log(`開始批次生成 ${batchData.length} 封第一封追蹤郵件...`);
-
-      // 使用傳入的 userInfo 或獲取新的（向後兼容）
-      const user = userInfo || UserInfoService.getUserInfo();
-      const seminarBrief = user.seminarBrief || '';
-      const emailPrompt = user.email1Prompt;
-
-      // 準備所有 API 請求
-      const requests = batchData.map((data, index) => {
-        const prompt = `${emailPrompt}
-- 開場使用Leads Profile的資訊展現對客戶職位與其公司的了解
-- 內容要使用 Mail Angle 的角度切入，使用Leads Profile的資訊讓客戶感覺此封信件是專門為'他'和'他的公司'寫的
-- 特別考慮客戶在${data.department}部門擔任${data.position}職位的特殊需求和關注重點
-- 客戶稱謂只有中階管理層以上才需要加上簡短職稱，不然用姓名即可
-- 在撰寫郵件時，請根據Leads Profile中的客戶公司的國家或文化的商業信件書寫慣例，判斷在正式郵件中最合適的客戶稱謂。郵件主旨與郵件正文務必使用同樣稱呼
-- 切勿翻譯客戶姓名，無論語言
-
-# 客戶方資訊
-- 收件人: ${data.firstName}
-- 職位: ${data.position}
-- 部門: ${data.department}
-- Leads Profile : ${data.leadsProfile}
-
-# 我方舉辦的活動資訊
-${seminarBrief}
-
-# 信件切入點
-Mail Angle: ${data.mailAngle}
-
-# 輸出
-請按照以下格式提供：
-主旨：[郵件主旨]
-內容：[郵件正文]
-
-# 注意
-- 嚴禁生成不存在的公司、品牌、解決方案、產品、案例、數據，只能使用上的資訊。
-- 不要在信中提及客戶以外的個人姓名，只能提到公司名
-- 請不要使用任何 Markdown 格式（如 **粗體** 或 *斜體*），請使用純文字格式，可以用「」符號來強調重點內容。
-- 嚴禁輸出任何簽名、祝福或聯絡方式，只寫郵件正文內容
-- 嚴格限制不在郵件正文中提及客戶公司的資本額與人數
-- 郵件正文請分行排版，避免過長段落。相同主題或邏輯相關的內容，請群聚為同一段落。不同段落之間請空一行，確保層次清楚、內容更易讀。`;
-
-        return {
-          prompt: prompt,
-          provider: 'gpt',
-          model: 'gpt-5-mini-2025-08-07'
-        };
-      });
-
-      // 批次調用 API
-      const responses = APIService.callLLMAPIBatch(requests);
-
-      // 處理回應結果
-      const results = responses.map((response, index) => {
-        if (response.success) {
-          let mailContent = response.result.content;
-
-          // 添加用戶簽名
-          const signature = UserInfoService.generateEmailSignature();
-          if (signature) {
-            mailContent += signature;
-          }
-
-          return {
-            success: true,
-            content: mailContent,
-            provider: response.result.provider,
-            model: response.result.model,
-            usage: response.result.usage,
-            tracking: response.result.tracking
-          };
-        } else {
-          console.error(`第一封郵件 ${index + 1} 生成失敗:`, response.error);
-          return {
-            success: false,
-            error: response.error,
-            content: null
-          };
-        }
-      });
-
-      return results;
-
-    } catch (error) {
-      console.error('批次生成第一封郵件失敗:', error);
-      throw new Error(`批次生成第一封郵件失敗: ${error.message}`);
-    }
-  },
-
-  /**
-   * 批次生成多封後續追蹤郵件（第二/三封）
-   * @param {Array} batchData - 批次資料陣列，每個元素包含 leadsProfile, mailAngle, firstName, emailNumber, department, position
-   * @returns {Array} 生成結果陣列
-   */
-  generateFollowUpMailsBatch(batchData) {
-    try {
-      console.log(`開始批次生成 ${batchData.length} 封後續追蹤郵件...`);
-
-      const userInfo = UserInfoService.getUserInfo();
-      const seminarBrief = userInfo.seminarBrief || '';
-
-      // 準備所有 API 請求
-      const requests = batchData.map((data, index) => {
-        // 根據郵件編號選擇對應的提示詞
-        let emailPrompt;
-        switch(data.emailNumber) {
-          case 2:
-            emailPrompt = userInfo.email2Prompt;
-            break;
-          case 3:
-            emailPrompt = userInfo.email3Prompt;
-            break;
-          default:
-            throw new Error(`無效的郵件編號: ${data.emailNumber}`);
-        }
-
-        const prompt = `${emailPrompt}
-- 開場使用Leads Profile的資訊展現對客戶職位與其公司的了解
-- 內容要使用 Mail Angle 的角度切入，使用Leads Profile的資訊讓客戶感覺此封信件是專門為'他'和'他的公司'寫的
-- 特別考慮客戶在${data.department}部門擔任${data.position}職位的特殊需求和關注重點
-- 客戶稱謂只有中階管理層以上才需要加上簡短職稱，不然用姓名即可
-- 在撰寫郵件時，請根據Leads Profile中的客戶公司的國家或文化的商業信件書寫慣例，判斷在正式郵件中最合適的客戶稱謂。郵件主旨與郵件正文務必使用同樣稱呼
-- 切勿翻譯客戶姓名，無論語言
-
-# 客戶方資訊
-- 收件人: ${data.firstName}
-- 職位: ${data.position}
-- 部門: ${data.department}
-- Leads Profile : ${data.leadsProfile}
-
-# 我方舉辦的活動資訊
-${seminarBrief}
-
-# 信件切入點
-Mail Angle: ${data.mailAngle}
-
-# 輸出
-請按照以下格式提供：
-主旨：[郵件主旨]
-內容：[郵件正文]
-
-# 注意
-- 嚴禁生成不存在的公司、品牌、解決方案、產品、案例、數據，只能使用上的資訊。
-- 不要在信中提及客戶以外的個人姓名，只能提到公司名
-- 請不要使用任何 Markdown 格式（如 **粗體** 或 *斜體*），請使用純文字格式，可以用「」符號來強調重點內容。
-- 嚴禁輸出任何簽名、祝福或聯絡方式，只寫郵件正文內容
-- 嚴格限制不在郵件正文中提及客戶公司的資本額與人數
-- 郵件正文請分段排版，避免過長段落。相同主題或邏輯相關的內容，請群聚為同一段落。不同段落之間請空一行，確保層次清楚、內容更易讀。`;
-
-        return {
-          prompt: prompt,
-          provider: 'gpt',
-          model: 'gpt-5-mini-2025-08-07'
-        };
-      });
-
-      // 批次調用 API
-      const responses = APIService.callLLMAPIBatch(requests);
-
-      // 處理回應結果
-      const results = responses.map((response, index) => {
-        if (response.success) {
-          let mailContent = response.result.content;
-
-          // 添加用戶簽名
-          const signature = UserInfoService.generateEmailSignature();
-          if (signature) {
-            mailContent += signature;
-          }
-
-          console.log(`第${batchData[index].emailNumber}封郵件 ${index + 1} 生成成功`);
-
-          return {
-            success: true,
-            content: mailContent,
-            provider: response.result.provider,
-            model: response.result.model,
-            usage: response.result.usage,
-            tracking: response.result.tracking
-          };
-        } else {
-          console.error(`第${batchData[index].emailNumber}封郵件 ${index + 1} 生成失敗:`, response.error);
-          return {
-            success: false,
-            error: response.error,
-            content: null
-          };
-        }
-      });
-
-      return results;
-
-    } catch (error) {
-      console.error('批次生成後續追蹤郵件失敗:', error);
-      throw new Error(`批次生成後續追蹤郵件失敗: ${error.message}`);
-    }
-  }
 };
 

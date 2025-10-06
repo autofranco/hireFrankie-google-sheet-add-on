@@ -366,18 +366,24 @@ const EmailService = {
         return;
       }
 
-      // 生成下一封郵件
-      const nextMailResult = ContentGenerator.generateSingleFollowUpMail(
-        leadsProfile,
-        nextMailAngle,
-        firstName,
-        nextMailNumber,
-        department,
-        position
-      );
+      // 生成下一封郵件（使用 1-item 批次處理）
+      const results = ContentGenerator.generateMailsBatch([{
+        leadsProfile: leadsProfile,
+        mailAngle: nextMailAngle,
+        firstName: firstName,
+        emailNumber: nextMailNumber,
+        department: department,
+        position: position
+      }]);
+
+      const nextMailResult = results[0];
+
+      if (!nextMailResult.success) {
+        throw new Error(nextMailResult.error || '郵件生成失敗');
+      }
 
       // 只提取郵件內容，排除 metadata
-      const nextMailContent = nextMailResult.content || nextMailResult;
+      const nextMailContent = nextMailResult.content;
 
       // 寫入生成的內容
       sheet.getRange(rowIndex, nextContentColumn).setValue(nextMailContent);
@@ -476,7 +482,7 @@ const EmailService = {
 
       // 第二階段：批量調用 API
       console.log(`準備批量生成 ${batchData.length} 封郵件...`);
-      const results = ContentGenerator.generateFollowUpMailsBatch(batchData);
+      const results = ContentGenerator.generateMailsBatch(batchData);
 
       // 第三階段：寫入結果
       let successCount = 0;

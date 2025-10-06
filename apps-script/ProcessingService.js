@@ -221,9 +221,9 @@ const ProcessingService = {
 
           if (leadsProfileSuccess && mailAnglesSuccess && firstMailSuccess) {
             // 設定排程和觸發器
-            RowProcessor.setupSchedules(sheet, row, rowIndex);
-            RowProcessor.setupEmailTriggers(sheet, row, rowIndex);
-            RowProcessor.setupRowFormatting(sheet, rowIndex);
+            this.setupSchedules(sheet, row, rowIndex);
+            this.setupEmailTriggers(sheet, row, rowIndex);
+            this.setupRowFormatting(sheet, rowIndex);
 
             // 記錄統計資料
             StatisticsService.recordRowProcessing(
@@ -253,18 +253,10 @@ const ProcessingService = {
     } catch (error) {
       console.error('批次處理發生錯誤:', error);
 
-      // 如果並行處理失敗，回到逐一處理模式
-      console.log('回到逐一處理模式...');
-      batchRows.forEach((row, index) => {
-        const rowIndex = batchRowIndexes[index];
-        try {
-          const success = RowProcessor.processRow(sheet, row, rowIndex);
-          if (success) successCount++;
-        } catch (error) {
-          console.error(`處理第 ${rowIndex} 行失敗:`, error);
-          SheetService.markRowError(sheet, rowIndex, error.message);
-          errorCount++;
-        }
+      // 標記所有未處理的行為錯誤
+      batchRowIndexes.forEach(rowIndex => {
+        SheetService.markRowError(sheet, rowIndex, `批次處理失敗: ${error.message}`);
+        errorCount++;
       });
     }
 
@@ -419,7 +411,8 @@ const ProcessingService = {
           mailAngle: mailAnglesResult.content.angle1,
           firstName: row[COLUMNS.FIRST_NAME],
           department: row[COLUMNS.DEPARTMENT],
-          position: row[COLUMNS.POSITION]
+          position: row[COLUMNS.POSITION],
+          emailNumber: 1
         };
       });
 
@@ -439,7 +432,7 @@ const ProcessingService = {
       });
 
       // 批次生成
-      const results = ContentGenerator.generateFirstMailsBatch(validBatchData, userInfo);
+      const results = ContentGenerator.generateMailsBatch(validBatchData, userInfo);
 
       // 填入工作表
       const allResults = batchRows.map(() => ({ success: false, error: '跳過處理' }));
@@ -467,6 +460,83 @@ const ProcessingService = {
     }
   },
 
+
+  /**
+   * 設定排程時間
+   */
+  setupSchedules(sheet, row, rowIndex) {
+    console.log('步骤4: 设定排程时间...');
+    SheetService.updateInfo(sheet, rowIndex, '正在設定郵件排程時間...');
+    SpreadsheetApp.flush();
+
+    const schedules = Utils.generateScheduleTimes();
+
+    // 逐個填入排程時間為格式化字串，設定為純文字格式
+    this.setScheduleCell(sheet, rowIndex, COLUMNS.SCHEDULE_1 + 1, schedules.schedule1);
+    this.setScheduleCell(sheet, rowIndex, COLUMNS.SCHEDULE_2 + 1, schedules.schedule2);
+    this.setScheduleCell(sheet, rowIndex, COLUMNS.SCHEDULE_3 + 1, schedules.schedule3);
+
+    SheetService.updateInfo(sheet, rowIndex, '✅ 排程時間已設定');
+    SpreadsheetApp.flush();
+    console.log('排程时间设定成功');
+
+    return schedules;
+  },
+
+  /**
+   * 設定單個排程儲存格
+   */
+  setScheduleCell(sheet, rowIndex, columnIndex, scheduleTime) {
+    const scheduleCell = sheet.getRange(rowIndex, columnIndex);
+    scheduleCell.setNumberFormat('@'); // 設定為純文字格式
+    scheduleCell.setValue(Utils.formatScheduleTime(scheduleTime)); // 存為格式化字串
+    scheduleCell.setFontLine('none'); // 確保沒有刪除線
+  },
+
+  /**
+   * 設定郵件發送觸發器
+   */
+  setupEmailTriggers(sheet, row, rowIndex) {
+    console.log('步骤5: 設定郵件發送觸發器...');
+    SheetService.updateInfo(sheet, rowIndex, '正在設定郵件發送排程...');
+    SpreadsheetApp.flush();
+
+    const firstMail = sheet.getRange(rowIndex, COLUMNS.FOLLOW_UP_1 + 1).getValue();
+    const schedules = {
+      schedule1: Utils.parseScheduleTime(sheet.getRange(rowIndex, COLUMNS.SCHEDULE_1 + 1).getValue()),
+      schedule2: Utils.parseScheduleTime(sheet.getRange(rowIndex, COLUMNS.SCHEDULE_2 + 1).getValue()),
+      schedule3: Utils.parseScheduleTime(sheet.getRange(rowIndex, COLUMNS.SCHEDULE_3 + 1).getValue())
+    };
+
+    EmailService.scheduleEmails(
+      row[COLUMNS.EMAIL],
+      row[COLUMNS.FIRST_NAME],
+      { mail1: firstMail, mail2: null, mail3: null },
+      schedules,
+      rowIndex
+    );
+  },
+
+  /**
+   * 設定行格式（包括行高和 mail angle 文字換行）
+   */
+  setupRowFormatting(sheet, rowIndex) {
+    try {
+      // 設定行高為 200px
+      sheet.setRowHeight(rowIndex, 200);
+
+      // 設定 mail angle 欄位的文字換行
+      const mailAngleColumns = [COLUMNS.MAIL_ANGLE_1 + 1, COLUMNS.MAIL_ANGLE_2 + 1, COLUMNS.MAIL_ANGLE_3 + 1];
+      mailAngleColumns.forEach(col => {
+        const cell = sheet.getRange(rowIndex, col);
+        cell.setWrap(true);
+      });
+
+      console.log(`已設定第 ${rowIndex} 行的格式（行高200px + mail angle換行）`);
+    } catch (error) {
+      console.error(`設定第 ${rowIndex} 行格式時發生錯誤:`, error);
+    }
+  },
 
   /**
    * 顯示完成訊息
