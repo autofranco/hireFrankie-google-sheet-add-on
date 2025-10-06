@@ -53,10 +53,11 @@ const EmailService = {
 
   /**
    * 核心郵件發送功能
+   * Uses EmailParser for pure logic
    */
   sendEmail(email, firstName, content, subject, rowIndex = null, emailType = null) {
-    // 使用 Utils 函數解析郵件內容
-    const parsed = Utils.parseEmailContent(content);
+    // Use EmailParser for pure logic
+    const parsed = EmailParser.parseEmailContent(content);
 
     const finalSubject = parsed.subject || subject || `來自業務團隊的訊息 - ${firstName}`;
     let finalBody = parsed.body || content;
@@ -238,15 +239,15 @@ const EmailService = {
             continue;
           }
           
-          // 解析排程時間
-          const scheduleTime = Utils.parseScheduleTime(scheduleText);
+          // Use ScheduleCalculator for pure logic
+          const scheduleTime = ScheduleCalculator.parseScheduleTime(scheduleText);
           if (!scheduleTime) {
             console.log(`第 ${rowIndex} 行 ${emailInfo.type}: 無效排程時間格式 "${scheduleText}"`);
             continue;
           }
-          
+
           // 檢查是否到了發送時間
-          if (now >= scheduleTime) {
+          if (ScheduleCalculator.isScheduleDue(scheduleTime, now)) {
             const content = sheet.getRange(rowIndex, emailInfo.contentColumn).getValue();
             
             if (!content) {

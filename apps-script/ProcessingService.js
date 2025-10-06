@@ -139,27 +139,26 @@ const ProcessingService = {
 
     let processedCount = 0;
     let errorCount = 0;
-    const batchSize = 10;
+
+    // Use BatchProcessor for pure logic
+    const batches = BatchProcessor.createBatches(data.rows, data.rowIndexes, 10);
 
     // 分批處理
-    for (let i = 0; i < data.rows.length; i += batchSize) {
+    for (let i = 0; i < batches.length; i++) {
+      const batch = batches[i];
 
-      // 取得當前批次的資料
-      const batchRows = data.rows.slice(i, i + batchSize);
-      const batchRowIndexes = data.rowIndexes.slice(i, i + batchSize);
-
-      console.log(`--- 開始處理第 ${Math.floor(i/batchSize) + 1} 批次 (${batchRows.length} 筆資料) ---`);
+      console.log(`--- 開始處理第 ${batch.batchNumber} / ${batch.totalBatches} 批次 (${batch.rows.length} 筆資料) ---`);
 
       // 並行處理當前批次
-      const batchResult = this.processBatchConcurrently(sheet, batchRows, batchRowIndexes);
+      const batchResult = this.processBatchConcurrently(sheet, batch.rows, batch.indexes);
 
       processedCount += batchResult.successCount;
       errorCount += batchResult.errorCount;
 
-      console.log(`第 ${Math.floor(i/batchSize) + 1} 批次完成: 成功 ${batchResult.successCount}，失敗 ${batchResult.errorCount}`);
+      console.log(`第 ${batch.batchNumber} 批次完成: 成功 ${batchResult.successCount}，失敗 ${batchResult.errorCount}`);
 
       // 批次間休息，避免API限制
-      if (i + batchSize < data.rows.length) {
+      if (BatchProcessor.hasMoreBatches(batch.batchNumber, batch.totalBatches)) {
         console.log('批次間休息 5 秒避免 API 限制...');
         Utilities.sleep(5000);
       }

@@ -159,60 +159,31 @@ const Utils = {
 
   /**
    * 格式化排程時間為 MM/DD HH:00 格式
-   * 將 Date 物件轉換為簡潔的排程顯示格式，易於解析
-   * 
+   * Delegates to ScheduleCalculator for pure logic
+   *
    * @function formatScheduleTime
    * @param {Date} date - 要格式化的日期物件
    * @returns {string} MM/DD HH:00 格式的字串，空值時返回空字串
    */
   formatScheduleTime(date) {
-    if (!date || !(date instanceof Date)) {
-      return '';
-    }
-    
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    
-    return `${month}/${day} ${hours}:00`;
+    return ScheduleCalculator.formatScheduleTime(date);
   },
 
   /**
    * 解析排程時間字串回 Date 物件
-   * 將 MM/DD HH:MM 格式的字串轉換回 Date 物件
-   * 
+   * Delegates to ScheduleCalculator for pure logic
+   *
    * @function parseScheduleTime
    * @param {string} scheduleText - 排程時間字串 (格式: "MM/DD HH:MM")
    * @returns {Date|null} 解析後的 Date 物件，解析失敗時返回 null
    */
   parseScheduleTime(scheduleText) {
-    if (!scheduleText || typeof scheduleText !== 'string') {
-      return null;
-    }
-    
-    try {
-      // 格式: "08/10 18:00" 
-      const currentYear = new Date().getFullYear();
-      const fullDateString = `${currentYear}/${scheduleText}`;
-      const parsedDate = new Date(fullDateString);
-      
-      // 驗證解析結果
-      if (isNaN(parsedDate.getTime())) {
-        console.error(`無效的排程時間格式: ${scheduleText}`);
-        return null;
-      }
-      
-      return parsedDate;
-    } catch (error) {
-      console.error(`解析排程時間錯誤: ${scheduleText}`, error);
-      return null;
-    }
+    return ScheduleCalculator.parseScheduleTime(scheduleText);
   },
 
   /**
    * 解析郵件內容，分離主旨和內文
-   * 從結構化的郵件內容中提取主旨和正文
-   * 輸入格式：主旨：標題\n內容：\n正文內容
+   * Delegates to EmailParser for pure logic
    *
    * @function parseEmailContent
    * @param {string} content - 原始郵件內容字串
@@ -221,94 +192,36 @@ const Utils = {
    * @returns {string} returns.body - 郵件正文內容
    */
   parseEmailContent(content) {
-    if (!content || typeof content !== 'string') {
-      return { subject: null, body: content || '' };
-    }
-
-    const lines = content.split('\n');
-    let subject = null;
-    let bodyLines = [];
-    let inBodySection = false;
-
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      const trimmedLine = line.trim();
-
-      // 檢查主旨行
-      if (trimmedLine.includes('主旨：') || trimmedLine.includes('主旨:')) {
-        subject = trimmedLine.replace(/主旨[:：]/g, '').trim();
-        continue;
-      }
-
-      // 檢查內容開始行
-      if (trimmedLine.includes('內容：') || trimmedLine.includes('內容:')) {
-        inBodySection = true;
-
-        // 檢查內容標記後是否有文字在同一行
-        const contentAfterMarker = line.replace(/.*?內容[:：]\s*/, '');
-        if (contentAfterMarker.trim() !== '') {
-          bodyLines.push(contentAfterMarker);
-        }
-        continue;
-      }
-
-      // 如果在內容區域，收集所有後續行
-      if (inBodySection) {
-        bodyLines.push(line); // 保持原始格式和縮排
-      }
-    }
-
-    // 如果沒有找到內容標記，但找到主旨，則將剩餘內容作為body
-    if (!inBodySection && subject && lines.length > 1) {
-      const subjectLineIndex = lines.findIndex(line => line.includes('主旨'));
-      if (subjectLineIndex >= 0 && subjectLineIndex < lines.length - 1) {
-        bodyLines = lines.slice(subjectLineIndex + 1);
-      }
-    }
-
-    // 如果都沒有標記，將整個內容作為body
-    if (!subject && !inBodySection) {
-      bodyLines = lines;
-    }
-
-    return {
-      subject: subject,
-      body: bodyLines.join('\n').trim()
-    };
+    return EmailParser.parseEmailContent(content);
   },
 
   /**
    * 驗證郵件地址格式
-   * 使用正則表達式驗證郵件地址是否符合標準格式
-   * 
+   * Delegates to EmailParser for pure logic
+   *
    * @function isValidEmail
    * @param {string} email - 要驗證的郵件地址
    * @returns {boolean} 郵件地址有效時返回 true，否則返回 false
    */
   isValidEmail(email) {
-    if (!email || typeof email !== 'string') {
-      return false;
-    }
-    
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email.trim());
+    return EmailParser.isValidEmail(email);
   },
 
   /**
    * 檢查字串是否為空
-   * 檢查字串是否為 null、undefined 或只包含空白字元
+   * Delegates to EmailParser for pure logic
    *
    * @function isEmpty
    * @param {string} str - 要檢查的字串
    * @returns {boolean} 字串為空或只包含空白時返回 true
    */
   isEmpty(str) {
-    return !str || typeof str !== 'string' || str.trim().length === 0;
+    return EmailParser.isEmpty(str);
   },
 
   /**
    * 截斷文本到指定長度
-   * 如果文本超過指定長度，則截斷並添加省略號
+   * Delegates to EmailParser for pure logic
    *
    * @function truncateText
    * @param {string} text - 要截斷的文本
@@ -316,20 +229,12 @@ const Utils = {
    * @returns {string} 截斷後的文本，空值時返回空字串
    */
   truncateText(text, maxLength = 100) {
-    if (!text || typeof text !== 'string') {
-      return '';
-    }
-
-    if (text.length <= maxLength) {
-      return text;
-    }
-
-    return text.substring(0, maxLength) + '...';
+    return EmailParser.truncateText(text, maxLength);
   },
 
   /**
    * 驗證字符長度
-   * 檢查文本是否超過指定的字符限制
+   * Delegates to LeadValidation for pure logic
    *
    * @function validateCharacterLimit
    * @param {string} text - 要檢查的文本
@@ -341,25 +246,7 @@ const Utils = {
    * @returns {number} returns.currentLength - 當前字符數
    */
   validateCharacterLimit(text, limit, fieldName) {
-    if (!text || typeof text !== 'string') {
-      return { isValid: true, error: null, currentLength: 0 };
-    }
-
-    const currentLength = text.length;
-
-    if (currentLength > limit) {
-      return {
-        isValid: false,
-        error: `${fieldName} 超過字符限制！當前 ${currentLength} 字符，限制 ${limit} 字符`,
-        currentLength: currentLength
-      };
-    }
-
-    return {
-      isValid: true,
-      error: null,
-      currentLength: currentLength
-    };
+    return LeadValidation.validateCharacterLimit(text, limit, fieldName);
   },
 
   /**

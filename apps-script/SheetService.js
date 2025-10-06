@@ -58,58 +58,23 @@ const SheetService = {
         console.log('ℹ️ 電子表格已包含 Auto Lead Warmer 標識，跳過重命名');
       }
     
-    const headers = [
-      'Email Address*',
-      'First Name*',
-      'Company url*',
-      'Department*',
-      'Position*',
-      'Leads Profile',
-      '1st mail angle',
-      '1st follow up mail',
-      '1st mail schedule',
-      '2nd mail angle',
-      '2nd follow up mail',
-      '2nd mail schedule',
-      '3rd mail angle',
-      '3rd follow up mail',
-      '3rd mail schedule',
-      'send now',
-      'status',
-      'info'
-    ];
-    
+    // Use SetupHelpers for pure logic
+    const headers = SetupHelpers.createHeaderRow();
+    const headerStyle = SetupHelpers.getHeaderRowStyle();
+
     // 设定表头
     const headerRange = sheet.getRange(1, 1, 1, headers.length);
     headerRange.setValues([headers]);
-    headerRange.setFontWeight('bold');
-    headerRange.setBackground('#f0f0f0');
-    
-    // 設定特定表頭的字體顏色為灰色 #949494
-    const grayHeaders = [
-      'Leads Profile',     // column 5 (E)
-      '1st mail angle',    // column 6 (F) 
-      '1st follow up mail', // column 7 (G)
-      '1st mail schedule', // column 8 (H)
-      '2nd mail angle',    // column 9 (I)
-      '2nd follow up mail', // column 10 (J)
-      '2nd mail schedule', // column 11 (K)
-      '3rd mail angle',    // column 12 (L)
-      '3rd follow up mail', // column 13 (M)
-      '3rd mail schedule', // column 14 (N)
-      'send now',          // column 15 (O)
-      'status',            // column 16 (P)
-      'info'               // column 17 (Q)
-    ];
-    
-      console.log('🔧 設置表頭中...');
-      grayHeaders.forEach((headerText) => {
-        const columnIndex = headers.indexOf(headerText) + 1;
-        if (columnIndex > 0) {
-          sheet.getRange(1, columnIndex).setFontColor('#949494');
-        }
-      });
-      console.log('✅ 表頭設置完成');
+    headerRange.setFontWeight(headerStyle.fontWeight);
+    headerRange.setBackground(headerStyle.background);
+
+    // 設定特定表頭的字體顏色為灰色
+    console.log('🔧 設置表頭中...');
+    const grayHeaderIndices = SetupHelpers.getGrayHeaderIndices(headers);
+    grayHeaderIndices.forEach((columnIndex) => {
+      sheet.getRange(1, columnIndex).setFontColor(headerStyle.grayFontColor);
+    });
+    console.log('✅ 表頭設置完成');
     
     // 凍結第一行（標題行）
     sheet.setFrozenRows(1);
@@ -155,37 +120,26 @@ const SheetService = {
 
   /**
    * 获取未处理的数据
+   * Uses LeadValidation for pure business logic
    */
   getUnprocessedData(sheet) {
     const lastRow = sheet.getLastRow();
     if (lastRow <= 1) {
-      return { rows: [], startRow: 2 };
+      return { rows: [], startRow: 2, rowIndexes: [] };
     }
-    
+
     const dataRange = sheet.getRange(2, 1, lastRow - 1, Object.keys(COLUMNS).length);
     const data = dataRange.getValues();
-    
-    // 过滤未处理的数据 (status 為空白的)
-    const unprocessedRows = [];
-    const unprocessedRowIndexes = [];
-    
-    data.forEach((row, index) => {
-      if ((!row[COLUMNS.STATUS] || row[COLUMNS.STATUS] === 'Processing') && // status 為空白或 Processing
-          row[COLUMNS.EMAIL] &&
-          row[COLUMNS.FIRST_NAME] &&
-          row[COLUMNS.COMPANY_URL] &&
-          row[COLUMNS.DEPARTMENT] &&
-          row[COLUMNS.POSITION]) {
-        unprocessedRows.push(row);
-        unprocessedRowIndexes.push(index + 2); // +2 因為從第2行開始且index從0開始
-      }
-    });
-    
+
+    // Use pure logic from LeadValidation module
+    const allRowIndexes = data.map((_, index) => index + 2); // +2 因為從第2行開始且index從0開始
+    const filtered = LeadValidation.filterUnprocessedRows(data, allRowIndexes);
+
     return {
-      rows: unprocessedRows,
+      rows: filtered.rows,
       startRow: 2,
       allData: data,
-      rowIndexes: unprocessedRowIndexes
+      rowIndexes: filtered.indexes
     };
   },
 
@@ -466,31 +420,22 @@ const SheetService = {
 
   /**
    * 根據狀態值應用顏色
+   * Uses SetupHelpers for pure color logic
    */
   applyStatusColor(sheet, rowIndex) {
     const cell = sheet.getRange(rowIndex, COLUMNS.STATUS + 1);
     const status = cell.getValue();
 
-    switch (status) {
-      case 'Running':
-        cell.setBackground('#f0f0f0'); // 淺灰色
-        cell.setFontColor('#666666'); // 深灰色字體
-        break;
-      case 'Processing':
-      case 'Done':
-        cell.setBackground(null); // 無背景色
-        cell.setFontColor(null); // 預設字體顏色
-        break;
-      default:
-        cell.setBackground(null); // 透明背景
-        cell.setFontColor(null); // 預設字體顏色
-        break;
-    }
+    // Use pure logic from SetupHelpers
+    const colors = SetupHelpers.getStatusColor(status);
+    cell.setBackground(colors.background);
+    cell.setFontColor(colors.fontColor);
   },
 
   /**
    * 更新Info欄位顏色
    * 根據訊息內容自動套用對應的背景顏色
+   * Uses SetupHelpers for pure color logic
    *
    * @function updateInfoColor
    * @param {GoogleAppsScript.Spreadsheet.Sheet} sheet - 工作表物件
@@ -499,21 +444,11 @@ const SheetService = {
    */
   updateInfoColor(sheet, rowIndex, infoMessage) {
     const cell = sheet.getRange(rowIndex, COLUMNS.INFO + 1);
-    const message = infoMessage.toLowerCase();
 
-    if (message.includes('bounced') || message.includes('退信')) {
-      cell.setBackground('#ffebee'); // 淺紅色 - 退信
-      cell.setFontColor('#c62828'); // 深紅色字體
-    } else if (message.includes('已開信') || message.includes('開信')) {
-      cell.setBackground('#e8f5e8'); // 淺綠色 - 開信
-      cell.setFontColor('#2e7d32'); // 深綠色字體
-    } else if (message.includes('已回信') || message.includes('回信')) {
-      cell.setBackground('#e3f2fd'); // 淺藍色 - 回信
-      cell.setFontColor('#1565c0'); // 深藍色字體
-    } else {
-      cell.setBackground(null); // 無背景色
-      cell.setFontColor(null); // 預設字體顏色
-    }
+    // Use pure logic from SetupHelpers
+    const colors = SetupHelpers.getInfoColor(infoMessage);
+    cell.setBackground(colors.background);
+    cell.setFontColor(colors.fontColor);
   },
 
   /**
@@ -609,8 +544,9 @@ const SheetService = {
       }
 
       // 如果有字符限制，進行驗證
+      // Use LeadValidation for pure logic
       if (limit !== null && value && typeof value === 'string') {
-        const validation = Utils.validateCharacterLimit(value, limit, fieldName);
+        const validation = LeadValidation.validateCharacterLimit(value, limit, fieldName);
 
         if (!validation.isValid) {
           // 顯示錯誤消息
