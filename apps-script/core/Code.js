@@ -48,8 +48,6 @@ function onOpen(e) {
     .addItem('🚀 Run', 'runAutoLeadWarmer')
     .addItem('📧 Send Now', 'sendNowFromMenu')
     .addItem('👀 Check Opens & Replies', 'checkOpenAndReplies')
-    .addSeparator()
-    .addItem('🧪 Test Create Triggers (with delay)', 'testCreateTriggersWithDelay')
     .addToUi();
 }
 
