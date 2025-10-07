@@ -47,7 +47,7 @@ function onOpen(e) {
     .addItem('⚙️ Initial Setup & Format', 'setupHeadersAndFormat')
     .addItem('🚀 Run', 'runAutoLeadWarmer')
     .addItem('📧 Send Now', 'sendNowFromMenu')
-    .addItem('👀 Check Opens & Replies', 'checkOpenAndReplies')
+    // .addItem('👀 Check Opens & Replies', 'checkOpenAndReplies')  // Temporarily disabled for OAuth verification
     .addToUi();
 }
 

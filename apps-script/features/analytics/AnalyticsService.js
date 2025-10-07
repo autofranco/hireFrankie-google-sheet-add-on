@@ -15,10 +15,11 @@ const AnalyticsService = {
       const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
 
       // 獲取各項統計資料（以潛在客戶為單位）
-      const bounceStats = this.getBounceStatistics();
+      // const bounceStats = this.getBounceStatistics(); // DISABLED for OAuth verification
       const openStats = this.getOpenStatistics();
-      const replyStats = this.getReplyStatistics();
+      // const replyStats = this.getReplyStatistics(); // DISABLED for OAuth verification
 
+      /* DISABLED for OAuth verification - Requires gmail.readonly scope
       // 更新 S1: Bounce Rate (紅色背景)
       const bounceText = `Bounce Rate: ${bounceStats.bounceRate}% (${bounceStats.totalBounced}/${bounceStats.totalLeads})`;
       const bounceCell = sheet.getRange('S1');
@@ -26,6 +27,7 @@ const AnalyticsService = {
       bounceCell.setBackground('#ffebee'); // 淺紅色背景
       bounceCell.setFontColor('#c62828'); // 深紅色字體
       bounceCell.setFontWeight('bold');
+      */
 
       // 更新 T1: Open Rate (綠色背景) - 基於送達郵件計算
       const openText = `Open Rate: ${openStats.openRate}% (${openStats.totalOpened}/${openStats.deliveredLeads})`;
@@ -35,6 +37,7 @@ const AnalyticsService = {
       openCell.setFontColor('#2e7d32'); // 深綠色字體
       openCell.setFontWeight('bold');
 
+      /* DISABLED for OAuth verification - Requires gmail.readonly scope
       // 更新 U1: Reply Rate (藍色背景) - 基於送達郵件計算
       const replyText = `Reply Rate: ${replyStats.replyRate}% (${replyStats.totalReplied}/${replyStats.deliveredLeads})`;
       const replyCell = sheet.getRange('U1');
@@ -42,17 +45,18 @@ const AnalyticsService = {
       replyCell.setBackground('#e3f2fd'); // 淺藍色背景
       replyCell.setFontColor('#1976d2'); // 深藍色字體
       replyCell.setFontWeight('bold');
+      */
 
       console.log(`✅ 統計更新完成:`);
-      console.log(`   - ${bounceText}`);
+      // console.log(`   - ${bounceText}`); // DISABLED for OAuth verification
       console.log(`   - ${openText}`);
-      console.log(`   - ${replyText}`);
+      // console.log(`   - ${replyText}`); // DISABLED for OAuth verification
 
       return {
         success: true,
-        bounceStats,
+        // bounceStats, // DISABLED for OAuth verification
         openStats,
-        replyStats
+        // replyStats // DISABLED for OAuth verification
       };
 
     } catch (error) {

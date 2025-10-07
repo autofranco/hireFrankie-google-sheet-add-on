@@ -157,8 +157,13 @@ const MenuService = {
 
   /**
    * 檢查開信與回覆 - 綜合測試功能
+   * TEMPORARILY DISABLED for OAuth verification (gmail.readonly scope removed)
    */
   checkOpenAndReplies() {
+    console.log('⚠️ Check Opens & Replies feature is temporarily disabled for OAuth verification');
+    return { error: 'Feature temporarily disabled for OAuth verification. Will be re-enabled after marketplace approval.' };
+
+    /* DISABLED CODE - Will be re-enabled after OAuth verification
     try {
       const ui = SpreadsheetApp.getUi();
 
@@ -255,6 +260,7 @@ const MenuService = {
       console.error('❌ 開信與回覆檢查失敗:', error.message);
       return { error: error.message };
     }
+    */ // END DISABLED CODE
   }
 };
 

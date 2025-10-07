@@ -253,8 +253,13 @@ const BounceDetectionService = {
 
   /**
    * 批量檢查所有 Running 狀態的潛在客戶退信
+   * TEMPORARILY DISABLED for OAuth verification (gmail.readonly scope removed)
    */
   checkAllRunningLeadsForBounces() {
+    console.log('⚠️ Bounce detection feature is temporarily disabled for OAuth verification');
+    return { checked: 0, bouncesFound: 0, error: 'Feature temporarily disabled for OAuth verification. Will be re-enabled after marketplace approval.' };
+
+    /* DISABLED CODE - Will be re-enabled after OAuth verification
     try {
       console.log('=== 開始檢查所有潛在客戶退信 ===');
 
@@ -309,6 +314,7 @@ const BounceDetectionService = {
       console.error('批量檢查退信時發生錯誤:', error);
       return { error: error.message };
     }
+    */ // END DISABLED CODE
   },
 
   /**

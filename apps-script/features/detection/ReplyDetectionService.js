@@ -102,8 +102,13 @@ const ReplyDetectionService = {
 
   /**
    * 批量檢查所有 Running 狀態的潛在客戶回覆
+   * TEMPORARILY DISABLED for OAuth verification (gmail.readonly scope removed)
    */
   checkAllRunningLeadsForReplies() {
+    console.log('⚠️ Reply detection feature is temporarily disabled for OAuth verification');
+    return { checked: 0, repliesFound: 0, error: 'Feature temporarily disabled for OAuth verification. Will be re-enabled after marketplace approval.' };
+
+    /* DISABLED CODE - Will be re-enabled after OAuth verification
     try {
       console.log('=== 開始檢查所有潛在客戶回覆 ===');
       
@@ -167,6 +172,7 @@ const ReplyDetectionService = {
       console.error('批量檢查回覆時發生錯誤:', error);
       return { error: error.message };
     }
+    */ // END DISABLED CODE
   },
 
   /**
