@@ -53,19 +53,6 @@ const TriggerManager = {
   },
 
   /**
-   * 刪除全域郵件發送觸發器
-   */
-  deleteGlobalEmailTrigger() {
-    const triggers = this.getAllTriggers();
-    triggers.forEach(trigger => {
-      if (trigger.getHandlerFunction() === 'checkAndSendMails') {
-        this.deleteTrigger(trigger);
-        console.log('已刪除全域郵件發送觸發器');
-      }
-    });
-  },
-
-  /**
    * 創建回覆檢測觸發器（每小時執行一次）
    */
   createReplyDetectionTrigger() {
@@ -229,24 +216,6 @@ const TriggerManager = {
 
 
   /**
-   * 清理退信檢測觸發器（退信檢測已整合至 checkAndSendMails 中）
-   */
-  cleanupBounceDetectionTriggers() {
-    const triggers = this.getAllTriggers();
-    let deletedCount = 0;
-
-    triggers.forEach(trigger => {
-      if (trigger.getHandlerFunction() === 'checkAllRunningLeadsForBounces') {
-        this.deleteTrigger(trigger);
-        console.log('已刪除多餘的退信檢測觸發器（已整合至全域觸發器）');
-        deletedCount++;
-      }
-    });
-
-    return deletedCount;
-  },
-
-  /**
    * 獲取觸發器統計資訊
    */
   getTriggerStats() {
@@ -264,10 +233,107 @@ const TriggerManager = {
       bounceTriggers,
       others: triggers.length - globalTriggers - replyTriggers - pixelTriggers - bounceTriggers
     };
+  },
+
+  /**
+   * 測試觸發器創建（帶延遲）- 診斷配額問題
+   */
+  testCreateTriggersWithDelay() {
+    try {
+      console.log('=== 開始測試觸發器創建（帶 5 秒延遲）===');
+
+      // 1. 清理所有現有觸發器
+      console.log('步驟 1: 清理現有觸發器...');
+      const deletedCount = this.deleteAllLeadWarmerTriggers();
+      console.log(`✅ 已刪除 ${deletedCount} 個觸發器`);
+
+      // 等待刪除完成
+      console.log('等待 3 秒讓刪除操作完成...');
+      Utilities.sleep(3000);
+
+      const results = {
+        deleted: deletedCount,
+        triggers: []
+      };
+
+      // 2. 創建第一個觸發器: checkAndSendMails
+      console.log('\n步驟 2: 創建 checkAndSendMails 觸發器...');
+      try {
+        this.createGlobalEmailTrigger();
+        console.log('✅ checkAndSendMails 觸發器創建成功');
+        results.triggers.push({ name: 'checkAndSendMails', success: true });
+      } catch (error) {
+        console.error('❌ checkAndSendMails 觸發器創建失敗:', error.message);
+        results.triggers.push({ name: 'checkAndSendMails', success: false, error: error.message });
+      }
+
+      // 等待 5 秒
+      console.log('等待 5 秒...');
+      Utilities.sleep(5000);
+
+      // 3. 創建第二個觸發器: checkAllRunningLeadsForReplies
+      console.log('\n步驟 3: 創建 checkAllRunningLeadsForReplies 觸發器...');
+      try {
+        this.createReplyDetectionTrigger();
+        console.log('✅ checkAllRunningLeadsForReplies 觸發器創建成功');
+        results.triggers.push({ name: 'checkAllRunningLeadsForReplies', success: true });
+      } catch (error) {
+        console.error('❌ checkAllRunningLeadsForReplies 觸發器創建失敗:', error.message);
+        results.triggers.push({ name: 'checkAllRunningLeadsForReplies', success: false, error: error.message });
+      }
+
+      // 等待 5 秒
+      console.log('等待 5 秒...');
+      Utilities.sleep(5000);
+
+      // 4. 創建第三個觸發器: checkPixelOpens
+      console.log('\n步驟 4: 創建 checkPixelOpens 觸發器...');
+      try {
+        this.createPixelTrackingTrigger();
+        console.log('✅ checkPixelOpens 觸發器創建成功');
+        results.triggers.push({ name: 'checkPixelOpens', success: true });
+      } catch (error) {
+        console.error('❌ checkPixelOpens 觸發器創建失敗:', error.message);
+        results.triggers.push({ name: 'checkPixelOpens', success: false, error: error.message });
+      }
+
+      // 5. 總結
+      console.log('\n=== 測試完成 ===');
+      const successCount = results.triggers.filter(t => t.success).length;
+      const failCount = results.triggers.filter(t => !t.success).length;
+      console.log(`成功: ${successCount} 個`);
+      console.log(`失敗: ${failCount} 個`);
+
+      results.triggers.forEach(trigger => {
+        if (trigger.success) {
+          console.log(`  ✅ ${trigger.name}`);
+        } else {
+          console.log(`  ❌ ${trigger.name}: ${trigger.error}`);
+        }
+      });
+
+      // 顯示提示給用戶
+      SpreadsheetApp.getUi().alert(
+        '測試完成',
+        `觸發器創建測試結果：\n\n成功: ${successCount} 個\n失敗: ${failCount} 個\n\n詳細結果請查看執行日誌 (Apps Script → 執行)`,
+        SpreadsheetApp.getUi().ButtonSet.OK
+      );
+
+      return results;
+
+    } catch (error) {
+      console.error('測試過程發生錯誤:', error);
+      SpreadsheetApp.getUi().alert('測試失敗', `錯誤: ${error.message}`, SpreadsheetApp.getUi().ButtonSet.OK);
+      throw error;
+    }
   }
 };
 
 // 全局函数包装器
 function cleanupTriggers() {
   return TriggerManager.cleanupOldTriggers();
+}
+
+function testCreateTriggersWithDelay() {
+  return TriggerManager.testCreateTriggersWithDelay();
 }

@@ -101,17 +101,6 @@ const ReplyDetectionService = {
   },
 
   /**
-   * 將日期格式化為 Gmail 搜尋格式
-   */
-  formatDateForGmail(date) {
-    const year = date.getFullYear();
-    const month = date.getMonth() + 1;
-    const day = date.getDate();
-    
-    return `${year}/${month}/${day}`;
-  },
-
-  /**
    * 批量檢查所有 Running 狀態的潛在客戶回覆
    */
   checkAllRunningLeadsForReplies() {

@@ -91,39 +91,6 @@ const MenuService = {
   },
 
   /**
-   * 批量生成下一封郵件
-   */
-  batchGenerateNextMails(needsNextMailList) {
-    try {
-      console.log(`開始批量生成 ${needsNextMailList.length} 封第二封郵件...`);
-
-      let successCount = 0;
-      let errorCount = 0;
-
-      for (const item of needsNextMailList) {
-        try {
-          console.log(`生成第 ${item.rowIndex} 行的第二封郵件 (${item.emailType})`);
-          EmailService.generateNextMailIfNeeded(item.rowIndex, 'mail1', item.firstName);
-          successCount++;
-        } catch (error) {
-          console.error(`第 ${item.rowIndex} 行第二封郵件生成失敗:`, error);
-          errorCount++;
-        }
-      }
-
-      // 顯示生成結果 - 使用非阻塞toast通知
-      ToastService.showBatchResult('第二封郵件生成', successCount, errorCount, 5);
-
-      console.log(`批量生成第二封郵件完成: 成功 ${successCount}/${needsNextMailList.length}`);
-
-    } catch (error) {
-      console.error('批量生成第二封郵件失敗:', error);
-      SpreadsheetApp.getUi().alert('生成錯誤', `第二封郵件生成失敗: ${error.message}`, SpreadsheetApp.getUi().ButtonSet.OK);
-    }
-  },
-
-
-  /**
    * 刪除所有觸發器（選單功能）
    */
   deleteAllTriggersMenu() {
@@ -142,121 +109,6 @@ const MenuService = {
       } catch (error) {
         ui.alert('錯誤', `刪除觸發器失敗: ${error.message}`, ui.ButtonSet.OK);
       }
-    }
-  },
-
-  /**
-   * 手動測試全域郵件檢查功能（調試用）
-   */
-  testGlobalEmailCheckManually() {
-    try {
-      const ui = SpreadsheetApp.getUi();
-      
-      console.log('=== 手動測試全域郵件檢查 ===');
-      
-      // 執行全域郵件檢查
-      const result = EmailService.checkAndSendMails();
-      
-      let message = `📧 全域郵件檢查測試結果：\n\n`;
-      
-      if (result.error) {
-        message += `❌ 錯誤：${result.error}`;
-      } else {
-        message += `✅ 檢查了 ${result.checked} 個潛在客戶\n📬 發送了 ${result.sent} 封郵件`;
-      }
-      
-      // 檢查工作表狀態
-      const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('工作表1');
-      const lastRow = sheet.getLastRow();
-      let runningCount = 0;
-      
-      if (lastRow > 1) {
-        for (let i = 2; i <= lastRow; i++) {
-          const status = sheet.getRange(i, 15).getValue(); // STATUS column
-          if (status === 'Running') {
-            runningCount++;
-          }
-        }
-      }
-      
-      message += `\n\n📊 工作表狀態：\n🔄 Running 狀態的潛客數: ${runningCount}`;
-      
-      // 全域郵件檢查測試結果改為console log輸出，不中斷用戶操作
-      console.log('📬 全域郵件檢查測試結果:', message);
-      
-      console.log('測試結果:', result);
-      
-    } catch (error) {
-      console.error('手動測試全域郵件檢查失敗:', error);
-      // 測試失敗改為console log輸出，不中斷用戶操作
-      console.error('❌ 全域郵件檢查測試失敗:', error.message);
-    }
-  },
-
-  /**
-   * 手動測試回覆檢測功能（調試用）
-   */
-  testReplyDetectionManually() {
-    try {
-      const ui = SpreadsheetApp.getUi();
-      
-      console.log('=== 手動測試回覆檢測 ===');
-      
-      // 檢查觸發器是否存在
-      const triggers = ScriptApp.getProjectTriggers();
-      const replyTrigger = triggers.find(t => t.getHandlerFunction() === 'checkAllRunningLeadsForReplies');
-      
-      let triggerInfo = '';
-      if (replyTrigger) {
-        triggerInfo = `\n\n觸發器狀態：✅ 已存在\n觸發器 ID：${replyTrigger.getUniqueId()}`;
-      } else {
-        triggerInfo = `\n\n觸發器狀態：❌ 不存在`;
-      }
-      
-      // 執行回覆檢測
-      const result = ReplyDetectionService.checkAllRunningLeadsForReplies();
-      
-      let message = `📬 回覆檢測測試結果：\n\n`;
-      
-      if (result.error) {
-        message += `❌ 錯誤：${result.error}`;
-      } else {
-        message += `✅ 檢查了 ${result.checked} 個潛在客戶\n📧 發現 ${result.repliesFound} 個回覆`;
-      }
-      
-      message += triggerInfo;
-      
-      // 檢查 Gmail 權限
-      try {
-        const testThreads = GmailApp.search('is:unread', 0, 1);
-        message += `\n\n📮 Gmail 權限：✅ 正常 (找到 ${testThreads.length} 個未讀對話)`;
-      } catch (gmailError) {
-        message += `\n\n📮 Gmail 權限：❌ 錯誤 - ${gmailError.message}`;
-      }
-      
-      // 回覆檢測測試結果改為console log輸出，不中斷用戶操作
-      console.log('🔄 回覆檢測測試結果:', message);
-      
-      console.log('測試結果:', result);
-      
-    } catch (error) {
-      console.error('手動測試回覆檢測失敗:', error);
-      // 測試失敗改為console log輸出，不中斷用戶操作
-      console.error('❌ 回覆檢測測試失敗:', error.message);
-    }
-  },
-
-  /**
-   * 手動測試像素追蹤功能
-   */
-  testPixelTrackingManually() {
-    try {
-      return PixelTrackingService.testPixelTracking();
-    } catch (error) {
-      console.error('測試像素追蹤功能時發生錯誤:', error);
-      // 測試錯誤改為console log輸出，不中斷用戶操作
-      console.error('❌ 像素追蹤測試失敗:', error.message);
-      return { error: error.message };
     }
   },
 
@@ -418,18 +270,6 @@ function sendNowFromMenu() {
 
 function deleteAllTriggersMenu() {
   return MenuService.deleteAllTriggersMenu();
-}
-
-function testGlobalEmailCheckManually() {
-  return MenuService.testGlobalEmailCheckManually();
-}
-
-function testReplyDetectionManually() {
-  return MenuService.testReplyDetectionManually();
-}
-
-function testPixelTrackingManually() {
-  return MenuService.testPixelTrackingManually();
 }
 
 function showPixelTrackingStats() {

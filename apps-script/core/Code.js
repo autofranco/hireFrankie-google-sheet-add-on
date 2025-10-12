@@ -34,7 +34,7 @@
 /**
  * 當 Google Sheets 開啟時，建立自訂選單
  * 設置 Auto Lead Warmer 的主選單和子選單項目
- * 
+ *
  * @function onOpen
  * @description 初始化插件的用戶介面選單，包含主要功能和調試工具
  * @returns {void}

@@ -258,25 +258,4 @@ const StatisticsService = {
     };
   },
 
-  /**
-   * 獲取當前統計資料（用於調試）
-   */
-  getCurrentStats() {
-    return this.runStats;
-  },
-
-  /**
-   * 格式化時間顯示
-   */
-  formatDuration(milliseconds) {
-    const seconds = Math.floor(milliseconds / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-
-    if (minutes > 0) {
-      return `${minutes}分${remainingSeconds}秒`;
-    } else {
-      return `${remainingSeconds}秒`;
-    }
-  }
 };
