@@ -88,7 +88,7 @@ const USER_INFO_FIELDS = {
 - 必須20個字以內
 
 # 內容動機
-- 這是最後一次追蹤，必須融合Leads Profile和mail angle，回顧之前提到的客戶需求和挑戰
+- 這是最後一次追蹤，必須融合Leads Profile和mail angle，重述客戶需求和挑戰
 - 強調錯過的成本
 - 提供最後的價值
 - 包含明確的行動呼籲，目標是邀約客戶進行線上產品演示說明或是線上諮詢
