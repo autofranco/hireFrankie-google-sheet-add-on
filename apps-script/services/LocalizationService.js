@@ -12,6 +12,28 @@ const LocalizationService = {
   DEFAULT_LANGUAGE: 'en',
 
   /**
+   * 自動偵測使用者的語言設定（基於 Google 帳戶設定）
+   * @returns {string} 語言代碼 ('en' 或 'zh')
+   */
+  getAutoDetectedLanguage() {
+    try {
+      const userLocale = Session.getActiveUserLocale();
+      console.log('User locale detected:', userLocale);
+
+      // 如果語言代碼以 'zh' 開頭（zh-TW, zh-CN, zh-HK 等），返回中文
+      if (userLocale && userLocale.toLowerCase().startsWith('zh')) {
+        return 'zh';
+      }
+
+      // 其他情況返回英文
+      return 'en';
+    } catch (error) {
+      console.error('偵測語言設定失敗:', error);
+      return this.DEFAULT_LANGUAGE;
+    }
+  },
+
+  /**
    * 取得當前語言設定
    * @returns {string} 語言代碼 ('en' 或 'zh')
    */
@@ -20,12 +42,13 @@ const LocalizationService = {
       const userProperties = PropertiesService.getUserProperties();
       const language = userProperties.getProperty('LANGUAGE');
 
-      // 如果沒有設定，返回預設語言（英文）
-      if (!language || !this.SUPPORTED_LANGUAGES.includes(language)) {
-        return this.DEFAULT_LANGUAGE;
+      // 如果使用者已手動設定語言，使用該設定
+      if (language && this.SUPPORTED_LANGUAGES.includes(language)) {
+        return language;
       }
 
-      return language;
+      // 否則自動偵測使用者的語言設定
+      return this.getAutoDetectedLanguage();
     } catch (error) {
       console.error('取得語言設定失敗:', error);
       return this.DEFAULT_LANGUAGE;
@@ -152,22 +175,28 @@ Please analyze the company background and output strictly in this format:
       language = this.getCurrentLanguage();
     }
 
+    // Handle empty department
+    const hasDepartment = department && department.toString().trim() !== '';
+    const departmentLine = hasDepartment ? `Client Department: ${department}` : '';
+    const departmentContext = hasDepartment ? ` in the ${department} department` : '';
+    const departmentContextChinese = hasDepartment ? `在${department}部門` : '';
+
     const prompts = {
       'en': `# Our Event Information: ${seminarBrief}
 # Client Information:
 Client Name: ${firstName}
 Client Position: ${position}
-Client Department: ${department}
+${departmentLine}
 Client Company Info: ${leadsProfile}
 
 # Task
 Based on the above information about our event and the client, please analyze and concisely generate the following 2 aspects and 3 email content angles.
 The user has already attended our event, and the purpose of the email is to invite the client to take follow-up actions, with the email angles centered on the seminar content.
-The three angles should be based on the client's most concerned pain points and areas with the greatest impact on them, especially considering their special needs and focus points as ${position} in the ${department} department.
+The three angles should be based on the client's most concerned pain points and areas with the greatest impact on them${hasDepartment ? `, especially considering their special needs and focus points as ${position}${departmentContext}` : ` as ${position}`}.
 
 Please strictly follow this format, with each angle as a separate paragraph:
 
-<aspect1>(**Authority and Challenges, within 100 words, decision-making power and focus points, and common pain points for this position in the ${department} department**)</aspect1>
+<aspect1>(**Authority and Challenges, within 100 words, decision-making power and focus points, and common pain points for this position${departmentContext}**)</aspect1>
 
 <aspect2>(**Participation Motivation and Communication Strategy, within 100 words, the client's possible needs for attending this seminar, and the most suitable follow-up methods and value propositions after the event**)</aspect2>
 
@@ -182,7 +211,7 @@ Please strictly follow this format, with each angle as a separate paragraph:
 - Must use XML format, such as <aspect1>content</aspect1> and <angle1>content</angle1>
 - Please answer in English, total word count must be controlled within 320~380 words
 - Each aspect should be expressed in concise paragraphs, avoiding lengthy descriptions
-- Especially consider the work characteristics of the ${department} department and the business focus of this position
+${hasDepartment ? `- Especially consider the work characteristics of the ${department} department and the business focus of this position` : '- Focus on the business focus of this position'}
 - Strictly prohibited from generating non-existent companies, brands, solutions, products, cases, data - only use the above information
 - Do not use Markdown format, use quotation marks to emphasize key points`,
 
@@ -190,17 +219,17 @@ Please strictly follow this format, with each angle as a separate paragraph:
 # 參與活動的客戶方資訊:
 客戶姓名：${firstName}
 客戶職位：${position}
-客戶部門：${department}
+${hasDepartment ? `客戶部門：${department}` : ''}
 客戶公司資訊：${leadsProfile}
 
 # 任務
 基於以上我方活動與客戶方資訊，請協助分析並簡潔的生成以下2個面向和3個信件內容切入點。
 用戶已經參加過我方舉辦的活動，信件的目的是邀約客戶做後續的動作，信件切入點以研習活動的內容為主軸。
-三個切入點應該根據客戶本人選擇最在意的痛點與對他影響最大的地方，特別考慮其在${department}部門擔任${position}職位的特殊需求和關注重點。
+三個切入點應該根據客戶本人選擇最在意的痛點與對他影響最大的地方${hasDepartment ? `，特別考慮其${departmentContextChinese}擔任${position}職位的特殊需求和關注重點` : `，特別考慮其擔任${position}職位的特殊需求和關注重點`}。
 
 請嚴格按照以下格式回答，每個切入點獨立成段：
 
-<aspect1>(**職權與挑戰，100字內，決策權力和關注重點與此職位在${department}部門常見的痛點**)</aspect1>
+<aspect1>(**職權與挑戰，100字內，決策權力和關注重點與此職位${hasDepartment ? `在${department}部門` : ''}常見的痛點**)</aspect1>
 
 <aspect2>(**參與動機與溝通策略，100字內，客戶參加本研習活動的可能需求，以及活動後最適合的追蹤方式和價值主張**)</aspect2>
 
@@ -215,7 +244,7 @@ Please strictly follow this format, with each angle as a separate paragraph:
 - 必須使用XML格式，如 <aspect1>內容</aspect1> 和 <angle1>內容</angle1>
 - 請用繁體中文回答，總字數必須控制在320~380個字
 - 每個面向用簡潔的段落表達，避免冗長描述
-- 特別考慮${department}部門的工作特性和該職位的業務重點
+${hasDepartment ? `- 特別考慮${department}部門的工作特性和該職位的業務重點` : '- 特別考慮該職位的業務重點'}
 - 嚴禁生成不存在的公司、品牌、解決方案、產品、案例、數據，只能使用上述的資訊
 - 不使用 Markdown 格式，用「」符號強調重點`
     };
@@ -415,15 +444,14 @@ Please write the third follow-up email based on the following information. Pleas
       'en': `
 - Start by using Leads Profile information to demonstrate understanding of the client's position and their company
 - Content should use the Mail Angle perspective, using Leads Profile information to make the client feel this email is specifically written for 'them' and 'their company'
-- Especially consider the special needs and focus points of the client as {position} in the {department} department
+- Especially consider the special needs and focus points of the client as {position}{departmentContext}
 - Client title should only include a brief job title for mid-level management and above, otherwise use name only
 - When writing the email, based on the country or culture of the client company in Leads Profile, determine the most appropriate client title for formal emails according to business letter writing conventions. Email subject and email body must use the same title
 - Never translate the client's name, regardless of language
 
 # Client Information
 - Recipient: {firstName}
-- Position: {position}
-- Department: {department}
+- Position: {position}{departmentLine}
 - Leads Profile: {leadsProfile}
 
 # Our Event Information
@@ -448,15 +476,14 @@ Content: [Email Body]
       'zh': `
 - 開場使用Leads Profile的資訊展現對客戶職位與其公司的了解
 - 內容要使用 Mail Angle 的角度切入，使用Leads Profile的資訊讓客戶感覺此封信件是專門為'他'和'他的公司'寫的
-- 特別考慮客戶在{department}部門擔任{position}職位的特殊需求和關注重點
+- 特別考慮客戶{departmentContextChinese}擔任{position}職位的特殊需求和關注重點
 - 客戶稱謂只有中階管理層以上才需要加上簡短職稱，不然用姓名即可
 - 在撰寫郵件時，請根據Leads Profile中的客戶公司的國家或文化的商業信件書寫慣例，判斷在正式郵件中最合適的客戶稱謂。郵件主旨與郵件正文務必使用同樣稱呼
 - 切勿翻譯客戶姓名，無論語言
 
 # 客戶方資訊
 - 收件人: {firstName}
-- 職位: {position}
-- 部門: {department}
+- 職位: {position}{departmentLineChinese}
 - Leads Profile : {leadsProfile}
 
 # 我方舉辦的活動資訊

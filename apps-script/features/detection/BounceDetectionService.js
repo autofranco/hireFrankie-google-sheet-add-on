@@ -277,7 +277,7 @@ const BounceDetectionService = {
           const info = sheet.getRange(i, COLUMNS.INFO + 1).getValue();
 
           // 跳過已經標記為退信的潛客（優化 Gmail 配額使用）
-          if (info && info.toString().toLowerCase().includes('bounced')) {
+          if (info && info.toString().toLowerCase().includes('bounce')) {
             continue;
           }
 
@@ -291,7 +291,7 @@ const BounceDetectionService = {
               bouncesFound++;
 
               // 更新 INFO 欄位顯示退信狀態
-              const bounceInfo = `Email bounced (${bounceResult.bounceDate.toLocaleString('en-US')})`;
+              const bounceInfo = `Bounce (${bounceResult.bounceDate.toLocaleString('en-US')})`;
               SheetService.updateInfo(sheet, i, bounceInfo);
 
               console.log(`✅ 發現退信: ${firstName} (${email}) - 已標記退信狀態`);
@@ -344,7 +344,7 @@ const BounceDetectionService = {
           totalSent += emailsSent;
 
           // 檢查是否有退信
-          if (info && info.toString().toLowerCase().includes('bounced')) {
+          if (info && info.toString().toLowerCase().includes('bounce')) {
             totalBounced++;
           }
         }

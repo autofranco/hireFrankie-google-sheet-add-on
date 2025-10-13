@@ -18,7 +18,7 @@ const SetupHelpers = {
       'Email Address*',
       'First Name*',
       'Company url*',
-      'Department*',
+      'Department',
       'Position*',
       'Leads Profile',
       '1st mail angle',
@@ -149,17 +149,17 @@ const SetupHelpers = {
 
     const message = infoMessage.toLowerCase();
 
-    if (message.includes('bounced')) {
+    if (message.includes('bounce')) {
       return {
         background: '#ffebee', // Light red
         fontColor: '#c62828'   // Dark red
       };
-    } else if (message.includes('email opened') || message.includes('opened')) {
+    } else if (message.includes('open')) {
       return {
         background: '#e8f5e8', // Light green
         fontColor: '#2e7d32'   // Dark green
       };
-    } else if (message.includes('lead replied') || message.includes('replied')) {
+    } else if (message.includes('reply')) {
       return {
         background: '#e3f2fd', // Light blue
         fontColor: '#1565c0'   // Dark blue
@@ -390,9 +390,9 @@ function testGetStatusColor() {
 function testGetInfoColor() {
   console.log('=== Testing getInfoColor ===');
 
-  const bouncedColor = SetupHelpers.getInfoColor('Email bounced');
-  const openedColor = SetupHelpers.getInfoColor('已開信');
-  const repliedColor = SetupHelpers.getInfoColor('已回信');
+  const bouncedColor = SetupHelpers.getInfoColor('Bounce (1/15/2025, 10:30:00 AM)');
+  const openedColor = SetupHelpers.getInfoColor('Open (1/15/2025, 10:30:00 AM)');
+  const repliedColor = SetupHelpers.getInfoColor('Reply (1/15/2025, 10:30:00 AM)');
   const normalColor = SetupHelpers.getInfoColor('Normal message');
 
   console.log('Bounced color:', bouncedColor);

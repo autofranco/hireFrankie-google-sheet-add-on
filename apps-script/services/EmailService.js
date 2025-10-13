@@ -46,7 +46,7 @@ const EmailService = {
     } catch (error) {
       console.error('立即發送郵件失敗:', error);
       const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
-      SheetService.updateInfo(sheet, rowIndex, `[Error] Send Now failed: ${error.message}`);
+      SheetService.updateInfo(sheet, rowIndex, `[Error] Send Now fail: ${error.message}`);
       throw error;
     }
   },
@@ -277,11 +277,11 @@ const EmailService = {
               console.log(`✅ 發送成功: ${emailInfo.type} -> ${firstName} (${email})`);
 
               // 更新 info
-              SheetService.updateInfo(sheet, rowIndex, `${emailInfo.type} auto-sent (${now.toLocaleString('en-US')})`);
+              SheetService.updateInfo(sheet, rowIndex, `${emailInfo.type} sent (${now.toLocaleString('en-US')})`);
 
             } catch (error) {
               console.error(`❌ 發送失敗: ${emailInfo.type} -> ${firstName} (${email})`, error);
-              SheetService.updateInfo(sheet, rowIndex, `[Error] ${emailInfo.type} send failed: ${error.message}`);
+              SheetService.updateInfo(sheet, rowIndex, `[Error] ${emailInfo.type} send fail: ${error.message}`);
             }
           }
         }
@@ -289,10 +289,10 @@ const EmailService = {
         // 檢查是否所有三封郵件都已發送完成
         if (totalEmailsSent >= 3) {
           SheetService.updateStatus(sheet, rowIndex, 'Done');
-          SheetService.updateInfo(sheet, rowIndex, 'All emails auto-sent');
+          SheetService.updateInfo(sheet, rowIndex, 'All email sent');
           console.log(`🎉 完成所有郵件發送: Row ${rowIndex} - ${firstName}`);
         } else if (emailsSentThisRound > 0) {
-          SheetService.updateInfo(sheet, rowIndex, `Sent ${totalEmailsSent}/3 emails`);
+          SheetService.updateInfo(sheet, rowIndex, `Sent ${totalEmailsSent}/3 email`);
         }
       }
       
@@ -392,7 +392,7 @@ const EmailService = {
       console.log(`✅ 第 ${rowIndex} 行: 第${nextMailNumber}封郵件生成成功`);
 
       // 更新 info 欄位
-      SheetService.updateInfo(sheet, rowIndex, `Email ${nextMailNumber} auto-generated`);
+      SheetService.updateInfo(sheet, rowIndex, `Email ${nextMailNumber} done`);
 
     } catch (error) {
       console.error(`生成下一封郵件時發生錯誤 (第 ${rowIndex} 行):`, error);
@@ -400,7 +400,7 @@ const EmailService = {
       // 在 info 欄位記錄錯誤
       try {
         const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
-        SheetService.updateInfo(sheet, rowIndex, `[Error] Email generation failed: ${error.message}`);
+        SheetService.updateInfo(sheet, rowIndex, `[Error] Email fail: ${error.message}`);
       } catch (updateError) {
         console.error('更新錯誤資訊失敗:', updateError);
       }
@@ -501,14 +501,14 @@ const EmailService = {
             console.log(`✅ 第 ${mapping.rowIndex} 行: 第${mapping.nextMailNumber}封郵件生成成功`);
 
             // 更新 info 欄位
-            SheetService.updateInfo(sheet, mapping.rowIndex, `Email ${mapping.nextMailNumber} auto-generated`);
+            SheetService.updateInfo(sheet, mapping.rowIndex, `Email ${mapping.nextMailNumber} done`);
 
             successCount++;
           } else {
             console.error(`第 ${mapping.rowIndex} 行第${mapping.nextMailNumber}封郵件生成失敗:`, result.error);
 
             // 在 info 欄位記錄錯誤
-            SheetService.updateInfo(sheet, mapping.rowIndex, `[Error] Email ${mapping.nextMailNumber} generation failed: ${result.error}`);
+            SheetService.updateInfo(sheet, mapping.rowIndex, `[Error] Email ${mapping.nextMailNumber} fail: ${result.error}`);
 
             errorCount++;
           }

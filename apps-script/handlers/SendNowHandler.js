@@ -19,9 +19,9 @@ const SendNowHandler = {
       
       // 找出下一封待寄的信件
       const nextEmail = this.findNextEmailToSend(row, rowIndex);
-      
+
       if (!nextEmail) {
-        SpreadsheetApp.getUi().alert('沒有待發送的郵件');
+        SpreadsheetApp.getUi().alert('No email to send');
         return;
       }
       
@@ -45,7 +45,7 @@ const SendNowHandler = {
       
     } catch (error) {
       console.error('Send Now 點擊處理錯誤:', error);
-      SpreadsheetApp.getUi().alert(`Send Now 錯誤: ${error.message}`);
+      SpreadsheetApp.getUi().alert(`Send Now error: ${error.message}`);
     }
   },
 
@@ -63,13 +63,13 @@ const SendNowHandler = {
   validateRowForSendNow(row) {
     // 檢查必要欄位
     if (!row[COLUMNS.EMAIL] || !row[COLUMNS.FIRST_NAME]) {
-      SpreadsheetApp.getUi().alert('該行缺少必要的 Email 或姓名資料');
+      SpreadsheetApp.getUi().alert('This row missing Email or Name');
       return false;
     }
-    
+
     // 檢查狀態是否為 Running
     if (row[COLUMNS.STATUS] !== 'Running') {
-      SpreadsheetApp.getUi().alert('只能對狀態為 "Running" 的行使用 Send Now 功能');
+      SpreadsheetApp.getUi().alert('Can only use Send Now when status is "Running"');
       return false;
     }
     
@@ -150,7 +150,7 @@ const SendNowHandler = {
       // 如果所有郵件都已發送（都有刪除線）
       if (mail1Sent && mail2Sent && mail3Sent) {
         SheetService.updateStatus(sheet, rowIndex, 'Done');
-        SheetService.updateInfo(sheet, rowIndex, 'All emails manually sent');
+        SheetService.updateInfo(sheet, rowIndex, 'All emails sent by you');
 
         // 清除 Send Now 復選框
         SheetService.setupSendNowButton(sheet, rowIndex);

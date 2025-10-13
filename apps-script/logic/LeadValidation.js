@@ -29,10 +29,6 @@ const LeadValidation = {
       errors.push('Missing company URL');
     }
 
-    if (!row[COLUMNS.DEPARTMENT] || row[COLUMNS.DEPARTMENT].toString().trim() === '') {
-      errors.push('Missing department');
-    }
-
     if (!row[COLUMNS.POSITION] || row[COLUMNS.POSITION].toString().trim() === '') {
       errors.push('Missing position');
     }

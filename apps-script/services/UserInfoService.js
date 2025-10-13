@@ -55,8 +55,13 @@ const UserInfoService = {
       inputCell.setBackground('#f0f8ff');
       inputCell.setBorder(true, true, true, true, false, false);
 
-      // 如果有預設值，設定預設值
-      if (field.default) {
+      // 根據語言設定預設值
+      if (field.row === USER_INFO_FIELDS.GREETING.row) {
+        // Greeting 根據語言使用不同預設值
+        const defaultGreeting = currentLang === 'en' ? 'Best Regards' : '順頌商祺';
+        inputCell.setValue(defaultGreeting);
+      } else if (field.default) {
+        // 其他欄位使用原本的預設值
         inputCell.setValue(field.default);
       }
     }
@@ -108,7 +113,10 @@ const UserInfoService = {
       return userInfo;
     } catch (error) {
       console.error('獲取用戶資訊時發生錯誤:', error);
-      return { greeting: '順頌商祺', name: '', company: '', title: '', contact: '', seminarInfo: '', seminarBrief: '', email1Prompt: '', email2Prompt: '', email3Prompt: '' };
+      // 根據語言返回不同的預設問候語
+      const currentLang = LocalizationService.getCurrentLanguage();
+      const defaultGreeting = currentLang === 'en' ? 'Best Regards' : '順頌商祺';
+      return { greeting: defaultGreeting, name: '', company: '', title: '', contact: '', seminarInfo: '', seminarBrief: '', email1Prompt: '', email2Prompt: '', email3Prompt: '' };
     }
   },
 
@@ -186,6 +194,10 @@ const UserInfoService = {
       sheet.getRange(USER_INFO_FIELDS.EMAIL2_PROMPT.row, USER_INFO_FIELDS.EMAIL2_PROMPT.col).setValue(prompts.email2);
       sheet.getRange(USER_INFO_FIELDS.EMAIL3_PROMPT.row, USER_INFO_FIELDS.EMAIL3_PROMPT.col).setValue(prompts.email3);
 
+      // 更新問候語
+      const defaultGreeting = language === 'en' ? 'Best Regards' : '順頌商祺';
+      sheet.getRange(USER_INFO_FIELDS.GREETING.row, USER_INFO_FIELDS.GREETING.col).setValue(defaultGreeting);
+
       console.log(`郵件提示詞已更新為 ${language} 語言`);
     } catch (error) {
       console.error('更新郵件提示詞語言失敗:', error);
@@ -262,7 +274,7 @@ function setupUserInfoSheet() {
   const sheet = UserInfoService.getUserInfoSheet();
   if (sheet) {
     // 使用非阻塞toast通知顯示用戶資訊工作表準備完成
-    ToastService.showInfo('用戶資訊工作表已準備就緒！請在 "User Info" 工作表中填入個人資訊', 4);
+    ToastService.showInfo('User Info sheet ready! Please fill your info in "User Info" sheet', 4);
   }
 }
 

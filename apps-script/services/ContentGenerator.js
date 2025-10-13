@@ -203,8 +203,20 @@ const ContentGenerator = {
   buildMailPrompt(emailPrompt, data, seminarBrief) {
     // 取得當前語言的郵件提示詞模板
     const currentLang = LocalizationService.getCurrentLanguage();
+
+    // Handle empty department
+    const hasDepartment = data.department && data.department.toString().trim() !== '';
+    const departmentContext = hasDepartment ? ` in the ${data.department} department` : '';
+    const departmentLine = hasDepartment ? `\n- Department: ${data.department}` : '';
+    const departmentContextChinese = hasDepartment ? `在${data.department}部門` : '';
+    const departmentLineChinese = hasDepartment ? `\n- 部門: ${data.department}` : '';
+
     const promptTemplate = LocalizationService.getEmailPromptTemplate(currentLang)
-      .replace(/{department}/g, data.department)
+      .replace(/{departmentContext}/g, departmentContext)
+      .replace(/{departmentLine}/g, departmentLine)
+      .replace(/{departmentContextChinese}/g, departmentContextChinese)
+      .replace(/{departmentLineChinese}/g, departmentLineChinese)
+      .replace(/{department}/g, data.department || '')
       .replace(/{position}/g, data.position)
       .replace(/{firstName}/g, data.firstName)
       .replace(/{leadsProfile}/g, data.leadsProfile)

@@ -31,7 +31,7 @@ const ProcessingService = {
 
     } catch (error) {
       console.error('執行錯誤:', error);
-      SpreadsheetApp.getUi().alert('執行錯誤', `發生未預期的錯誤: ${error.message}\n\n請檢查：\n1. API Key是否正確\n2. 網路連接是否正常\n3. 工作表格式是否正確`, SpreadsheetApp.getUi().ButtonSet.OK);
+      SpreadsheetApp.getUi().alert('Run error', `Error happen: ${error.message}\n\nPlease check:\n1. API Key correct?\n2. Network OK?\n3. Sheet format correct?`, SpreadsheetApp.getUi().ButtonSet.OK);
 
       // 即使發生錯誤也結束統計追蹤
       StatisticsService.endRun();
@@ -52,8 +52,8 @@ const ProcessingService = {
         if (seminarResult.needsUserInput) {
           // Seminar Info 為空，提醒用戶填寫
           SpreadsheetApp.getUi().alert(
-            '⚠️ 缺少研習活動資訊', 
-            `${seminarResult.message}\n\n請到 "User Info" 工作表的 "Seminar Info" 欄位填寫研習活動資訊（如活動名稱、網址等）。\n\n系統將根據此資訊自動生成 "Seminar Brief"，用於所有潛在客戶的分析。`, 
+            '⚠️ Missing seminar info',
+            `${seminarResult.message}\n\nPlease go to "User Info" sheet, fill "Seminar Info" (event name, URL, etc).\n\nSystem will auto create "Seminar Brief" for all customer analysis.`,
             SpreadsheetApp.getUi().ButtonSet.OK
           );
           return false; // 停止執行，等用戶填寫資訊
@@ -61,8 +61,8 @@ const ProcessingService = {
           // 生成失敗，但不阻止流程繼續
           console.error('研習活動簡介生成失敗，但繼續執行:', seminarResult.message);
           SpreadsheetApp.getUi().alert(
-            '⚠️ 研習活動簡介生成失敗', 
-            `${seminarResult.message}\n\n將使用現有的 Seminar Brief 繼續執行。`, 
+            '⚠️ Seminar Brief create fail',
+            `${seminarResult.message}\n\nWill use existing Seminar Brief to continue.`,
             SpreadsheetApp.getUi().ButtonSet.OK
           );
         }
@@ -70,8 +70,8 @@ const ProcessingService = {
         // 成功生成，提供用戶反饋但不停止執行
         console.log('研習活動簡介自動生成成功');
         SpreadsheetApp.getActiveSpreadsheet().toast(
-          '✅ 研習活動簡介已更新，將用於所有潛在客戶分析',
-          '研習活動簡介生成完成',
+          '✅ Seminar Brief updated, will use for all customer analysis',
+          'Seminar Brief create done',
           3
         );
 
@@ -131,7 +131,7 @@ const ProcessingService = {
     const data = SheetService.getUnprocessedData(sheet);
 
     if (data.rows.length === 0) {
-      SpreadsheetApp.getUi().alert('沒有資料需要處理。\n\n請確保：\n1. 已設置表頭\n2. 已填入客戶資料\n3. 資料未被標記為已處理');
+      SpreadsheetApp.getUi().alert('No data to process.\n\nPlease check:\n1. Headers set up?\n2. Customer data filled?\n3. Data not marked as processed?');
       return;
     }
 
@@ -234,7 +234,7 @@ const ProcessingService = {
 
             // 標記為已處理
             SheetService.markRowProcessed(sheet, rowIndex);
-            SheetService.updateInfo(sheet, rowIndex, '🎉 Complete! All email schedules set');
+            SheetService.updateInfo(sheet, rowIndex, '🎉 Done! All ready');
             successCount++;
             console.log(`第 ${rowIndex} 行處理成功`);
           } else {
@@ -281,7 +281,7 @@ const ProcessingService = {
 
       // 更新狀態
       batchRowIndexes.forEach(rowIndex => {
-        SheetService.updateInfo(sheet, rowIndex, 'Generating leads profile...');
+        SheetService.updateInfo(sheet, rowIndex, 'Building leads profile...');
       });
 
       // 批次生成
@@ -292,9 +292,9 @@ const ProcessingService = {
         const rowIndex = batchRowIndexes[index];
         if (result.success) {
           sheet.getRange(rowIndex, COLUMNS.LEADS_PROFILE + 1).setValue(result.content);
-          SheetService.updateInfo(sheet, rowIndex, '✅ Leads profile generated');
+          SheetService.updateInfo(sheet, rowIndex, '✅ Leads profile done');
         } else {
-          SheetService.updateInfo(sheet, rowIndex, `❌ Leads profile generation failed: ${result.error}`);
+          SheetService.updateInfo(sheet, rowIndex, `❌ Leads profile fail: ${result.error}`);
         }
       });
 
@@ -339,7 +339,7 @@ const ProcessingService = {
       // 更新狀態
       validIndexes.forEach(index => {
         const rowIndex = batchRowIndexes[index];
-        SheetService.updateInfo(sheet, rowIndex, 'Generating mail angles...');
+        SheetService.updateInfo(sheet, rowIndex, 'Building mail angles...');
       });
 
       // 批次生成
@@ -372,9 +372,9 @@ const ProcessingService = {
           sheet.getRange(rowIndex, COLUMNS.MAIL_ANGLE_2 + 1).setValue(mailAngles.angle2);
           sheet.getRange(rowIndex, COLUMNS.MAIL_ANGLE_3 + 1).setValue(mailAngles.angle3);
 
-          SheetService.updateInfo(sheet, rowIndex, '✅ All mail angles generated');
+          SheetService.updateInfo(sheet, rowIndex, '✅ Mail angles done');
         } else {
-          SheetService.updateInfo(sheet, rowIndex, `❌ Mail angles generation failed: ${result.error}`);
+          SheetService.updateInfo(sheet, rowIndex, `❌ Mail angles fail: ${result.error}`);
         }
       });
 
@@ -428,7 +428,7 @@ const ProcessingService = {
       // 更新狀態
       validIndexes.forEach(index => {
         const rowIndex = batchRowIndexes[index];
-        SheetService.updateInfo(sheet, rowIndex, 'Generating follow-up email 1...');
+        SheetService.updateInfo(sheet, rowIndex, 'Building email 1...');
       });
 
       // 批次生成
@@ -445,9 +445,9 @@ const ProcessingService = {
 
         if (result.success) {
           sheet.getRange(rowIndex, COLUMNS.FOLLOW_UP_1 + 1).setValue(result.content);
-          SheetService.updateInfo(sheet, rowIndex, '✅ Follow-up email 1 generated');
+          SheetService.updateInfo(sheet, rowIndex, '✅ Email 1 done');
         } else {
-          SheetService.updateInfo(sheet, rowIndex, `❌ Email 1 generation failed: ${result.error}`);
+          SheetService.updateInfo(sheet, rowIndex, `❌ Email 1 fail: ${result.error}`);
         }
       });
 
@@ -466,7 +466,7 @@ const ProcessingService = {
    */
   setupSchedules(sheet, row, rowIndex) {
     console.log('步骤4: 设定排程时间...');
-    SheetService.updateInfo(sheet, rowIndex, 'Setting email schedules...');
+    SheetService.updateInfo(sheet, rowIndex, 'Setting time...');
     SpreadsheetApp.flush();
 
     const schedules = Utils.generateScheduleTimes();
@@ -476,7 +476,7 @@ const ProcessingService = {
     this.setScheduleCell(sheet, rowIndex, COLUMNS.SCHEDULE_2 + 1, schedules.schedule2);
     this.setScheduleCell(sheet, rowIndex, COLUMNS.SCHEDULE_3 + 1, schedules.schedule3);
 
-    SheetService.updateInfo(sheet, rowIndex, '✅ Schedules set');
+    SheetService.updateInfo(sheet, rowIndex, '✅ Time set');
     SpreadsheetApp.flush();
     console.log('排程时间设定成功');
 
@@ -542,8 +542,7 @@ const ProcessingService = {
    * 顯示完成訊息
    */
   showCompletionMessage(processedCount, errorCount) {
-    const operation = "Auto Lead Warmer 處理";
-    const message = `成功處理: ${processedCount} 筆 | 失敗: ${errorCount} 筆\n已設置 ${processedCount * 3} 個郵件發送排程`;
+    const operation = "Auto Lead Warmer Run";
 
     // Show non-blocking toast notification instead of blocking alert
     ToastService.showBatchResult(operation, processedCount, errorCount, 6);

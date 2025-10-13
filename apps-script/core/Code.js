@@ -89,11 +89,11 @@ async function setupHeadersAndFormat() {
     }
 
     // 使用非阻塞toast通知顯示初始設置完成
-    ToastService.showSuccess('初始設置完成！表頭設置、格式化、統計儀表板初始化已完成', 4);
+    ToastService.showSuccess('Setup done! Headers set, format done, dashboard init done', 4);
 
   } catch (error) {
     console.error('初始設置和格式化失敗:', error);
-    SpreadsheetApp.getUi().alert('❌ 設置失敗', `初始設置失敗: ${error.message}`, SpreadsheetApp.getUi().ButtonSet.OK);
+    SpreadsheetApp.getUi().alert('❌ Setup fail', `Setup fail: ${error.message}`, SpreadsheetApp.getUi().ButtonSet.OK);
   }
 }
 

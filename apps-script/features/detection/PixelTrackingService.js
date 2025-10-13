@@ -52,21 +52,21 @@ const PixelTrackingService = {
           // 獲取當前狀態
           const currentInfo = sheet.getRange(rowIndex, COLUMNS.INFO + 1).getValue();
 
-          // 檢查狀態優先級：只在不是 'Lead replied' 時更新為 'Email opened'
-          if (currentInfo && currentInfo.includes('Lead replied')) {
-            console.log(`第 ${rowIndex} 行已經是 'Lead replied' 狀態，跳過開信更新`);
+          // 檢查狀態優先級：只在不是 'Reply' 時更新為 'Open'
+          if (currentInfo && currentInfo.toLowerCase().includes('reply')) {
+            console.log(`第 ${rowIndex} 行已經是 'Reply' 狀態，跳過開信更新`);
             return;
           }
 
           // 檢查是否已經是退信狀態，退信狀態優先級高於開信
-          if (currentInfo && currentInfo.toLowerCase().includes('bounced')) {
-            console.log(`第 ${rowIndex} 行已經是 'bounced' 狀態，跳過開信更新`);
+          if (currentInfo && currentInfo.toLowerCase().includes('bounce')) {
+            console.log(`第 ${rowIndex} 行已經是 'Bounce' 狀態，跳過開信更新`);
             return;
           }
 
           // 更新為已開信狀態
           const openedTimeStr = new Date(openedTime).toLocaleString('en-US');
-          const newInfo = `Email opened (${openedTimeStr})`;
+          const newInfo = `Open (${openedTimeStr})`;
 
           SheetService.updateInfo(sheet, rowIndex, newInfo);
           openedCount++;
@@ -211,17 +211,17 @@ const PixelTrackingService = {
 
           // 檢查是否為退信郵件
           const infoLower = info ? info.toString().toLowerCase() : '';
-          const isBounced = infoLower.includes('bounced');
+          const isBounced = infoLower.includes('bounce');
 
           if (isBounced) {
             bouncedCount++;
             console.log(`第 ${i} 行為退信郵件: ${info}`);
           } else {
             // 只統計未退信的郵件的開信和回信狀態
-            if (info && info.includes('Lead replied')) {
+            if (info && infoLower.includes('reply')) {
               repliedCount++;
               openedCount++; // 回信的客戶肯定也開信了
-            } else if (info && info.includes('Email opened')) {
+            } else if (info && infoLower.includes('open')) {
               openedCount++;
             }
           }

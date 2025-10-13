@@ -126,7 +126,7 @@ const ReplyDetectionService = {
           const info = sheet.getRange(i, COLUMNS.INFO + 1).getValue();
 
           // 跳過已經標記為回覆的潛客（優化 Gmail 配額使用）
-          if (info && info.toString().includes('Lead replied')) {
+          if (info && info.toString().toLowerCase().includes('reply')) {
             continue;
           }
 
@@ -142,8 +142,8 @@ const ReplyDetectionService = {
               // 更新狀態為 Done
               SheetService.updateStatus(sheet, i, 'Done');
               const replyInfo = replyResult.originalEmailType ?
-                `Lead replied to ${replyResult.originalEmailType} (${replyResult.replyDate.toLocaleString('en-US')})` :
-                `Lead replied (${replyResult.replyDate.toLocaleString('en-US')})`;
+                `Reply ${replyResult.originalEmailType} (${replyResult.replyDate.toLocaleString('en-US')})` :
+                `Reply (${replyResult.replyDate.toLocaleString('en-US')})`;
               SheetService.updateInfo(sheet, i, replyInfo);
               
               // 清理該潛客的排程和發送記錄資料

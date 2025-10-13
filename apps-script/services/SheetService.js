@@ -148,9 +148,9 @@ const SheetService = {
       console.error('❌ Firebase 用戶初始化失敗:', error);
       // 不中斷設定流程，只記錄錯誤
     }
-    
+
       // 使用非阻塞toast通知顯示設定完成
-      ToastService.showCompletion('工作表設定', {setup: '工作表重新命名、User Info創建、Firebase初始化、列寬設定'}, 5);
+      ToastService.showCompletion('Sheet setup', {setup: 'Sheet rename, User Info create, Firebase init, column width set'}, 5);
 
       // 重要提醒仍使用console log
       console.log('💡 重要提醒：請到 "User Info" 工作表填入個人資訊，並在 "Seminar Info" 欄位填寫研習活動資訊');
@@ -208,7 +208,7 @@ const SheetService = {
    */
   markRowProcessed(sheet, rowIndex) {
     this.updateStatus(sheet, rowIndex, 'Running');
-    this.updateInfo(sheet, rowIndex, 'Content generated and schedules set');
+    this.updateInfo(sheet, rowIndex, 'Content ready, time set');
 
     // 當狀態變為 Running 時，設置 Send Now 按鈕
     this.setupSendNowButton(sheet, rowIndex);
@@ -344,15 +344,15 @@ const SheetService = {
       // 強制刷新
       SpreadsheetApp.flush();
       
-      const message = `✅ 格式化完成！\n\n已格式化 ${formattedCount} 行潛在客戶資料\n• 列寬已調整\n• Mail Angle 欄位已啟用文字換行`;
+      const message = `✅ Format done!\n\nFormatted ${formattedCount} row customer data\n• Column width set\n• Mail Angle field text wrap on`;
       // 使用非阻塞toast通知顯示格式化結果
-      ToastService.showSuccess(`格式化完成：${message}`, 3);
-      
+      ToastService.showSuccess(`Format done: ${message}`, 3);
+
       console.log(`格式化完成: ${formattedCount} 行`);
-      
+
     } catch (error) {
       console.error('格式化時發生錯誤:', error);
-      SpreadsheetApp.getUi().alert('格式化失敗', `錯誤: ${error.message}`, SpreadsheetApp.getUi().ButtonSet.OK);
+      SpreadsheetApp.getUi().alert('Format fail', `Error: ${error.message}`, SpreadsheetApp.getUi().ButtonSet.OK);
     }
   },
 
@@ -595,8 +595,8 @@ const SheetService = {
         if (!validation.isValid) {
           // 顯示錯誤消息
           SpreadsheetApp.getUi().alert(
-            '字符限制超出',
-            validation.error + '\n\n系統將自動截斷內容到允許的長度。',
+            'Text too long',
+            validation.error + '\n\nSystem will auto cut text to max length.',
             SpreadsheetApp.getUi().ButtonSet.OK
           );
 

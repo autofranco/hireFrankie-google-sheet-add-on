@@ -70,7 +70,7 @@ const EditHandler = {
     
     // 處理狀態改為 Done 的情況（手動停止）
     if (newValue === 'Done') {
-      SheetService.updateInfo(sheet, rowIndex, 'Manually stopped follow-up emails');
+      SheetService.updateInfo(sheet, rowIndex, 'Stopped by you');
       console.log(`第 ${rowIndex} 行狀態手動更改為 Done`);
     }
     

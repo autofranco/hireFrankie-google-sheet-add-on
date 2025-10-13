@@ -14,7 +14,7 @@ const ToastService = {
     try {
       SpreadsheetApp.getActiveSpreadsheet().toast(
         `✅ ${message}`,
-        '成功',
+        'OK',
         duration
       );
       console.log(`✅ Success Toast: ${message}`);
@@ -32,7 +32,7 @@ const ToastService = {
     try {
       SpreadsheetApp.getActiveSpreadsheet().toast(
         `ℹ️ ${message}`,
-        '資訊',
+        'Info',
         duration
       );
       console.log(`ℹ️ Info Toast: ${message}`);
@@ -50,7 +50,7 @@ const ToastService = {
     try {
       SpreadsheetApp.getActiveSpreadsheet().toast(
         `⚠️ ${message}`,
-        '警告',
+        'Warning',
         duration
       );
       console.log(`⚠️ Warning Toast: ${message}`);
@@ -66,13 +66,13 @@ const ToastService = {
    * @param {number} duration - Duration in seconds (default: 4)
    */
   showCompletion(operation, stats = null, duration = 4) {
-    let message = `${operation}已完成`;
+    let message = `${operation} done`;
 
     if (stats) {
       if (stats.success !== undefined && stats.error !== undefined) {
-        message += `\n成功: ${stats.success} | 失敗: ${stats.error}`;
+        message += `\nOK: ${stats.success} | Fail: ${stats.error}`;
       } else if (stats.count !== undefined) {
-        message += `\n處理數量: ${stats.count}`;
+        message += `\nCount: ${stats.count}`;
       }
     }
 
@@ -88,7 +88,7 @@ const ToastService = {
     try {
       SpreadsheetApp.getActiveSpreadsheet().toast(
         `⏳ ${message}`,
-        '處理中',
+        'Working',
         duration
       );
       console.log(`⏳ Processing Toast: ${message}`);
@@ -104,7 +104,7 @@ const ToastService = {
    * @param {number} duration - Duration in seconds (default: 3)
    */
   showEmailSuccess(emailType, recipientName, duration = 3) {
-    const message = `${emailType} 已發送給 ${recipientName}`;
+    const message = `${emailType} sent to ${recipientName}`;
     this.showSuccess(message, duration);
   },
 
@@ -116,7 +116,7 @@ const ToastService = {
    * @param {number} duration - Duration in seconds (default: 5)
    */
   showBatchResult(operation, successCount, errorCount, duration = 5) {
-    const message = `${operation}\n✅ 成功: ${successCount} | ❌ 失敗: ${errorCount}`;
+    const message = `${operation}\n✅ OK: ${successCount} | ❌ Fail: ${errorCount}`;
 
     if (errorCount > 0) {
       this.showWarning(message, duration);

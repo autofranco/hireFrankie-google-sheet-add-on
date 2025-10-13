@@ -13,7 +13,7 @@ const MenuService = {
       const lastRow = sheet.getLastRow();
 
       if (lastRow <= 1) {
-        SpreadsheetApp.getUi().alert('沒有資料', '工作表中沒有資料可以處理', SpreadsheetApp.getUi().ButtonSet.OK);
+        SpreadsheetApp.getUi().alert('No data', 'Sheet has no data', SpreadsheetApp.getUi().ButtonSet.OK);
         return;
       }
 
@@ -38,7 +38,7 @@ const MenuService = {
 
           } catch (error) {
             console.error(`第 ${i} 行 Send Now 失敗:`, error);
-            SheetService.updateInfo(sheet, i, `[Error] Send Now failed: ${error.message}`);
+            SheetService.updateInfo(sheet, i, `[Error] Send Now fail: ${error.message}`);
             errorCount++;
           }
         }
@@ -46,22 +46,22 @@ const MenuService = {
 
       // 顯示結果
       if (processedCount === 0 && errorCount === 0) {
-        SpreadsheetApp.getUi().alert('沒有發現勾選項目', '請先勾選要立即發送郵件的行，然後再點擊 Send Now', SpreadsheetApp.getUi().ButtonSet.OK);
+        SpreadsheetApp.getUi().alert('No checkbox selected', 'Please check box first, then click Send Now', SpreadsheetApp.getUi().ButtonSet.OK);
       } else {
-        let message = `Send Now 完成！\n\n✅ 成功發送: ${processedCount} 封郵件`;
+        let message = `Send Now done!\n\n✅ Sent OK: ${processedCount} email`;
         if (errorCount > 0) {
-          message += `\n❌ 發送失敗: ${errorCount} 封郵件`;
+          message += `\n❌ Send fail: ${errorCount} email`;
         }
         if (processedCount > 0) {
-          message += `\n\n📧 郵件已發送完成，第二封郵件將自動生成`;
+          message += `\n\n📧 Email sent. Next email will auto create`;
         }
         // 使用非阻塞toast通知顯示Send Now結果
-        ToastService.showSuccess(`Send Now 完成：${message.replace(/\n/g, ' ')}`, 4);
+        ToastService.showSuccess(`Send Now done: ${message.replace(/\n/g, ' ')}`, 4);
       }
 
     } catch (error) {
       console.error('Send Now 從選單執行失敗:', error);
-      SpreadsheetApp.getUi().alert('錯誤', `Send Now 執行失敗: ${error.message}`, SpreadsheetApp.getUi().ButtonSet.OK);
+      SpreadsheetApp.getUi().alert('Error', `Send Now fail: ${error.message}`, SpreadsheetApp.getUi().ButtonSet.OK);
     }
   },
 
@@ -81,14 +81,14 @@ const MenuService = {
 
       // 顯示成功訊息
       const message = newLang === 'en'
-        ? `Language switched to: ${languageDisplayName}\n\nGenerated content (Leads Profile, Mail Angles) and Email Prompts will now be in English.`
-        : `語言已切換為: ${languageDisplayName}\n\n生成的內容（客戶畫像、郵件切入點）和郵件提示詞將使用繁體中文。`;
+        ? `Language change to: ${languageDisplayName}\n\nAll content (Leads Profile, Mail Angles) and Email Prompts now use English.`
+        : `Language change to: ${languageDisplayName}\n\nAll content (Leads Profile, Mail Angles) and Email Prompts now use Chinese.`;
 
       ToastService.showSuccess(message, 5);
 
     } catch (error) {
       console.error('切換語言失敗:', error);
-      SpreadsheetApp.getUi().alert('錯誤 / Error', `語言切換失敗 / Language switch failed: ${error.message}`, SpreadsheetApp.getUi().ButtonSet.OK);
+      SpreadsheetApp.getUi().alert('Error', `Language switch fail: ${error.message}`, SpreadsheetApp.getUi().ButtonSet.OK);
     }
   },
 
