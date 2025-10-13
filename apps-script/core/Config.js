@@ -31,7 +31,7 @@ const COLUMNS = {
 };
 
 // 其他配置常量
-const SHEET_NAME = '工作表1';
+const SHEET_NAME = 'Leads';
 const USER_INFO_SHEET_NAME = 'User Info';
 
 // 用戶資訊欄位對應

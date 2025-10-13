@@ -15,20 +15,64 @@ const SheetService = {
   getMainSheet() {
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
     if (!sheet) {
-      throw new Error(`找不到 ${SHEET_NAME}，請確認工作表名稱正確。`);
+      throw new Error(`找不到 Leads 工作表，請先執行 Initial Setup。`);
     }
     return sheet;
   },
 
   /**
+   * Ensure sheets are named correctly: 'Leads' and 'User Info'
+   * Renames first sheet to 'Leads' and second to 'User Info'
+   * Creates 'User Info' sheet if it doesn't exist
+   *
+   * @function ensureSheetNames
+   * @returns {void}
+   */
+  ensureSheetNames() {
+    const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    const sheets = spreadsheet.getSheets();
+
+    // Check if 'Leads' sheet already exists
+    let leadsSheet = spreadsheet.getSheetByName('Leads');
+
+    if (!leadsSheet && sheets.length > 0) {
+      // Rename first sheet to 'Leads'
+      const oldName = sheets[0].getName();
+      sheets[0].setName('Leads');
+      console.log(`✅ Renamed first sheet to 'Leads' (was: ${oldName})`);
+    }
+
+    // Check if 'User Info' sheet already exists
+    let userInfoSheet = spreadsheet.getSheetByName('User Info');
+
+    if (!userInfoSheet) {
+      if (sheets.length > 1) {
+        // Rename second sheet to 'User Info'
+        const oldName = sheets[1].getName();
+        sheets[1].setName('User Info');
+        console.log(`✅ Renamed second sheet to 'User Info' (was: ${oldName})`);
+      } else {
+        // Create 'User Info' sheet if only one sheet exists
+        spreadsheet.insertSheet('User Info');
+        console.log('✅ Created new User Info sheet');
+      }
+    }
+  },
+
+  /**
    * 設定表頭
    * 初始化工作表的標題行、格式和欄寶，並自動創建 Firebase 用戶
-   * 
+   *
    * @function setupHeaders
    * @returns {Promise<void>}
    */
   async setupHeaders() {
     try {
+      // Ensure correct sheet names before proceeding
+      console.log('🔧 Ensuring correct sheet names...');
+      this.ensureSheetNames();
+      console.log('✅ Sheet names verified');
+
       console.log('🔧 開始 setupHeaders - 獲取主工作表...');
       const sheet = this.getMainSheet();
       console.log('✅ 主工作表獲取成功');
