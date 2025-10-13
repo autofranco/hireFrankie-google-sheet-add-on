@@ -266,16 +266,24 @@ const UserInfoService = {
 // 全局函數包裝器
 /**
  * 設定用戶資訊工作表 - 全域函數包裝器
- * 
+ *
  * @function setupUserInfoSheet
  * @returns {void}
  */
 function setupUserInfoSheet() {
-  const sheet = UserInfoService.getUserInfoSheet();
-  if (sheet) {
-    // 使用非阻塞toast通知顯示用戶資訊工作表準備完成
-    ToastService.showInfo('User Info sheet ready! Please fill your info in "User Info" sheet', 4);
+  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = spreadsheet.getSheetByName(USER_INFO_SHEET_NAME);
+
+  if (!sheet) {
+    // 創建新的用戶資訊工作表
+    sheet = spreadsheet.insertSheet(USER_INFO_SHEET_NAME);
   }
+
+  // 無論工作表是新創建還是已存在，都執行設置
+  UserInfoService.setupUserInfoSheet(sheet);
+
+  // 使用非阻塞toast通知顯示用戶資訊工作表準備完成
+  ToastService.showInfo('User Info sheet ready! Please fill your info in "User Info" sheet', 4);
 }
 
 /**

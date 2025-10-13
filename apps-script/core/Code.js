@@ -79,6 +79,9 @@ async function setupHeadersAndFormat() {
     // 然後執行格式化
     SheetService.formatAllLeadRows();
 
+    // 設置 User Info 工作表
+    setupUserInfoSheet();
+
     // 初始化統計資料儀表板
     console.log('初始化統計資料儀表板...');
     const statsResult = AnalyticsService.updateSummaryStatistics();

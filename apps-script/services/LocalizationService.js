@@ -316,8 +316,8 @@ Please write a professional follow-up email based on the following information. 
 - The client has already attended our event, this email is for follow-up
 
 # Email Subject
-- Use a similar sentence pattern: <Benefit mentioned in Mail Angle that can help the client achieve> Suggestions for <Client Title>
-- Must be within 20 words
+- Use a similar sentence pattern: <Benefit mentioned in Mail Angle that can help the client achieve> Suggestions for <Client Name>
+- Must be within 8 words
 
 # Content Motivation
 - Start by thanking them for participating in the event, empathize with the difficulties their position faces in their company and industry
@@ -334,8 +334,8 @@ Please write the second follow-up email based on the following information. Plea
 - The client has already attended our event, this is the second follow-up email
 
 # Email Subject
-- Use a similar sentence pattern: <Benefit mentioned in Mail Angle that can help the client achieve> Suggestions for <Client Title>
-- Must be within 20 words
+- Use a similar sentence pattern: <Benefit mentioned in Mail Angle that can help the client achieve> Suggestions for <Client Name>
+- Must be within 8 words
 
 # Content Motivation
 - Start by saying it's great to contact you again, empathize with the difficulties their position faces in their company and industry
@@ -352,8 +352,8 @@ Please write the third follow-up email based on the following information. Pleas
 - The client has already attended our event, this is the third follow-up email
 
 # Email Subject
-- Use a similar sentence pattern: <Benefit mentioned in Mail Angle that can help the client achieve> Suggestions for <Client Title>
-- Must be within 20 words
+- Use a similar sentence pattern: <Benefit mentioned in Mail Angle that can help the client achieve> Suggestions for <Client Name>
+- Must be within 8 words
 
 # Content Motivation
 - This is the last follow-up, must integrate Leads Profile and mail angle, restate client needs and challenges
