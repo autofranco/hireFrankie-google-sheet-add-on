@@ -156,6 +156,30 @@ const MenuService = {
   },
 
   /**
+   * 切換語言並重新載入選單
+   */
+  toggleLanguageMenu() {
+    try {
+      const newLang = LocalizationService.toggleLanguage();
+      const languageDisplayName = LocalizationService.getLanguageDisplayName(newLang);
+
+      // 重新載入選單
+      onOpen();
+
+      // 顯示成功訊息
+      const message = newLang === 'en'
+        ? `Language switched to: ${languageDisplayName}\n\nGenerated content (Leads Profile, Mail Angles) will now be in English.`
+        : `語言已切換為: ${languageDisplayName}\n\n生成的內容（客戶畫像、郵件切入點）將使用繁體中文。`;
+
+      ToastService.showSuccess(message, 5);
+
+    } catch (error) {
+      console.error('切換語言失敗:', error);
+      SpreadsheetApp.getUi().alert('錯誤 / Error', `語言切換失敗 / Language switch failed: ${error.message}`, SpreadsheetApp.getUi().ButtonSet.OK);
+    }
+  },
+
+  /**
    * 檢查開信與回覆 - 綜合測試功能
    */
   checkOpenAndReplies() {
@@ -278,4 +302,8 @@ function showPixelTrackingStats() {
 
 function checkOpenAndReplies() {
   return MenuService.checkOpenAndReplies();
+}
+
+function toggleLanguageMenu() {
+  return MenuService.toggleLanguageMenu();
 }

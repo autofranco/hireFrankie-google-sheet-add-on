@@ -42,11 +42,18 @@
 function onOpen() {
   const ui = SpreadsheetApp.getUi();
 
+  // Get current language for language switcher display
+  const currentLang = LocalizationService.getCurrentLanguage();
+  const languageDisplayName = LocalizationService.getLanguageDisplayName(currentLang);
+
+  // Menu labels remain in English
   ui.createMenu('Auto Lead Warmer')
     .addItem('⚙️ Initial Setup & Format', 'setupHeadersAndFormat')
     .addItem('🚀 Run', 'runAutoLeadWarmer')
     .addItem('📧 Send Now', 'sendNowFromMenu')
     .addItem('👀 Check Opens & Replies', 'checkOpenAndReplies')
+    .addSeparator()
+    .addItem('🌐 Language: ' + languageDisplayName, 'toggleLanguageMenu')
     .addToUi();
 }
 

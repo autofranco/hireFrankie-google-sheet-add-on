@@ -11,23 +11,10 @@ const ContentGenerator = {
     // 獲取研習活動簡介資訊
     const userInfo = UserInfoService.getUserInfo();
     const seminarBrief = userInfo.seminarBrief || '';
-    
-    const prompt = `# 參與活動的客戶方資訊
-客戶公司：${companyUrl}
 
-# 任務
-請分析客戶公司背景，並嚴格用此格式輸出：
-- 規模:
-- 業務特色:
-- 近期公司活動:
-- 近期產業新聞:
-
-# 格式要求
-- 總字數必須控制在170~200字，用繁體中文回答
-- 簡潔的段落表達，避免冗長描述
-- 嚴禁生成不存在的公司、品牌、解決方案、產品、案例、數據，只能使用搜尋結果的資訊
-- 不使用 Markdown 或 HTML 格式，用「」符號強調重點
-`;
+    // 使用當前語言生成提示詞
+    const currentLang = LocalizationService.getCurrentLanguage();
+    const prompt = LocalizationService.getLeadsProfilePrompt(companyUrl, currentLang);
 
     try {
       const result = APIService.callLLMAPI(prompt, 'perplexity', 'sonar-pro');
@@ -76,38 +63,9 @@ const ContentGenerator = {
     const userInfo = UserInfoService.getUserInfo();
     const seminarBrief = userInfo.seminarBrief || '';
 
-    const prompt = `# 我方舉辦的活動資訊: ${seminarBrief}
-# 參與活動的客戶方資訊:
-客戶姓名：${firstName}
-客戶職位：${position}
-客戶部門：${department}
-客戶公司資訊：${leadsProfile}
-# 任務
-基於以上我方活動與客戶方資訊，請協助分析並簡潔的生成以下2個面向和3個信件內容切入點。
-用戶已經參加過我方舉辦的活動，信件的目的是邀約客戶做後續的動作，信件切入點以研習活動的內容為主軸。
-三個切入點應該根據客戶本人選擇最在意的痛點與對他影響最大的地方，特別考慮其在${department}部門擔任${position}職位的特殊需求和關注重點。
-
-請嚴格按照以下格式回答，每個切入點獨立成段：
-
-<aspect1>(**職權與挑戰，100字內，決策權力和關注重點與此職位在${department}部門常見的痛點**)</aspect1>
-
-<aspect2>(**參與動機與溝通策略，100字內，客戶參加本研習活動的可能需求，以及活動後最適合的追蹤方式和價值主張**)</aspect2>
-
-<angle1>(**信件1內容大綱，50字內，包括價值主張、行動呼籲**)</angle1>
-
-<angle2>(**信件2大綱，50字內，包括價值主張、行動呼籲**)</angle2>
-
-<angle3>(**信件3大綱，50字內，包括價值主張、行動呼籲**)</angle3>
-
-# 格式要求
-- 在parentheses()中被**包起來的說明文字不要輸出
-- 必須使用XML格式，如 <aspect1>內容</aspect1> 和 <angle1>內容</angle1>
-- 請用繁體中文回答，總字數必須控制在320~380個字
-- 每個面向用簡潔的段落表達，避免冗長描述
-- 特別考慮${department}部門的工作特性和該職位的業務重點
-- 嚴禁生成不存在的公司、品牌、解決方案、產品、案例、數據，只能使用上述的資訊
-- 不使用 Markdown 格式，用「」符號強調重點
-`;
+    // 使用當前語言生成提示詞
+    const currentLang = LocalizationService.getCurrentLanguage();
+    const prompt = LocalizationService.getMailAnglesPrompt(seminarBrief, firstName, position, department, leadsProfile, currentLang);
 
     try {
       console.log('开始生成邮件切入点...');
@@ -126,7 +84,7 @@ const ContentGenerator = {
         usage: result.usage,
         tracking: result.tracking
       };
-      
+
     } catch (error) {
       console.error('生成邮件切入点失败:', error);
       // 返回错误信息而不是默认值，这样更容易发现问题
@@ -204,22 +162,9 @@ const ContentGenerator = {
    * 生成研習活動簡介 (Seminar Brief)
    */
   generateSeminarBrief(seminarInfo) {
-    const prompt = `請根據以下研習活動資訊，搜索相關資料並整理出簡潔的活動簡介。請用繁體中文回答，總字數控制在400字內。
-
-研習活動資訊：${seminarInfo}
-
-請簡潔分析以下五個面向（每個面向約80-100字）：
-1. 活動概要：名稱、主辦單位、基本資訊
-2. 主題重點：活動核心內容和學習要點
-3. 目標族群：參加者職業背景和特質
-4. 學習價值：參與者可獲得的具體收穫
-5. 行業趨勢：相關領域的發展背景
-
-格式要求：
-- 每個面向用簡潔段落表達，避免冗長描述
-- 基於搜索結果提供準確資訊，嚴禁生成虛假內容
-- 不使用 Markdown 格式，用「」符號強調重點
-- 確保五個面向都完整呈現，有助後續潛客分析`;
+    // 使用當前語言生成提示詞
+    const currentLang = LocalizationService.getCurrentLanguage();
+    const prompt = LocalizationService.getSeminarBriefPrompt(seminarInfo, currentLang);
 
     try {
       console.log('開始生成研習活動簡介...');
@@ -348,23 +293,12 @@ const ContentGenerator = {
     try {
       console.log(`開始批次生成 ${batchData.length} 個客戶畫像...`);
 
+      // 取得當前語言
+      const currentLang = LocalizationService.getCurrentLanguage();
+
       // 準備所有 API 請求
       const requests = batchData.map((data, index) => {
-        const prompt = `# 參與活動的客戶方資訊
-客戶公司：${data.companyUrl}
-
-# 任務
-請分析客戶公司背景，並嚴格用此格式輸出：
-- 規模:
-- 業務特色:
-- 近期公司活動:
-- 近期產業新聞:
-
-# 格式要求
-- 總字數必須控制在170~200字，用繁體中文回答
-- 簡潔的段落表達，避免冗長描述
-- 嚴禁生成不存在的公司、品牌、解決方案、產品、案例、數據，只能使用搜尋結果的資訊
-- 不使用 Markdown 或 HTML 格式，用「」符號強調重點`;
+        const prompt = LocalizationService.getLeadsProfilePrompt(data.companyUrl, currentLang);
 
         return {
           prompt: prompt,
@@ -421,39 +355,19 @@ const ContentGenerator = {
       const user = userInfo || UserInfoService.getUserInfo();
       const seminarBrief = user.seminarBrief || '';
 
+      // 取得當前語言
+      const currentLang = LocalizationService.getCurrentLanguage();
+
       // 準備所有 API 請求
       const requests = batchData.map((data, index) => {
-        const prompt = `# 我方舉辦的活動資訊: ${seminarBrief}
-# 參與活動的客戶方資訊:
-客戶姓名：${data.firstName}
-客戶職位：${data.position}
-客戶部門：${data.department}
-客戶公司資訊：${data.leadsProfile}
-# 任務
-基於以上我方活動與客戶方資訊，請協助分析並簡潔的生成以下2個面向和3個信件內容切入點。
-用戶已經參加過我方舉辦的活動，信件的目的是邀約客戶做後續的動作，信件切入點以研習活動的內容為主軸。
-三個切入點應該根據客戶本人選擇最在意的痛點與對他影響最大的地方，特別考慮其在${data.department}部門擔任${data.position}職位的特殊需求和關注重點。
-
-請嚴格按照以下格式回答，每個切入點獨立成段：
-
-<aspect1>(**職權與挑戰，100字內，決策權力和關注重點與此職位在${data.department}部門常見的痛點**)</aspect1>
-
-<aspect2>(**參與動機與溝通策略，100字內，客戶參加本研習活動的可能需求，以及活動後最適合的追蹤方式和價值主張**)</aspect2>
-
-<angle1>(**信件1內容大綱，50字內，包括價值主張、行動呼籲**)</angle1>
-
-<angle2>(**信件2大綱，50字內，包括價值主張、行動呼籲**)</angle2>
-
-<angle3>(**信件3大綱，50字內，包括價值主張、行動呼籲**)</angle3>
-
-# 格式要求
-- 在parentheses()中被**包起來的說明文字不要輸出
-- 必須使用XML格式，如 <aspect1>內容</aspect1> 和 <angle1>內容</angle1>
-- 請用繁體中文回答，總字數必須控制在320~380個字
-- 每個面向用簡潔的段落表達，避免冗長描述
-- 特別考慮${data.department}部門的工作特性和該職位的業務重點
-- 嚴禁生成不存在的公司、品牌、解決方案、產品、案例、數據，只能使用上述的資訊
-- 不使用 Markdown 格式，用「」符號強調重點`;
+        const prompt = LocalizationService.getMailAnglesPrompt(
+          seminarBrief,
+          data.firstName,
+          data.position,
+          data.department,
+          data.leadsProfile,
+          currentLang
+        );
 
         return {
           prompt: prompt,

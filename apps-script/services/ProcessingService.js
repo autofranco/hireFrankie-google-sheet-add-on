@@ -360,9 +360,10 @@ const ProcessingService = {
           // 先將 aspect1 和 aspect2 添加到 Leads Profile 中
           if (mailAngles.aspect1 && mailAngles.aspect2) {
             const currentLeadsProfile = sheet.getRange(rowIndex, COLUMNS.LEADS_PROFILE + 1).getValue();
+            const labels = LocalizationService.getMailAnglesLabels();
             const updatedLeadsProfile = currentLeadsProfile +
-              '\n- 職權與挑戰：' + mailAngles.aspect1 +
-              '\n- 參與動機與溝通策略：' + mailAngles.aspect2;
+              '\n- ' + labels.aspect1 + mailAngles.aspect1 +
+              '\n- ' + labels.aspect2 + mailAngles.aspect2;
             sheet.getRange(rowIndex, COLUMNS.LEADS_PROFILE + 1).setValue(updatedLeadsProfile);
           }
 
