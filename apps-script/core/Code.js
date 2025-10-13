@@ -53,7 +53,7 @@ function onOpen() {
     .addItem('📧 Send Now', 'sendNowFromMenu')
     .addItem('👀 Check Opens & Replies', 'checkOpenAndReplies')
     .addSeparator()
-    .addItem('🌐 Language: ' + languageDisplayName, 'toggleLanguageMenu')
+    .addItem('🌐 Mail Language: ' + languageDisplayName, 'toggleLanguageMenu')
     .addToUi();
 }
 

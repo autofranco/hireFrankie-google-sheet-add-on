@@ -5,31 +5,6 @@
 const MenuService = {
   
   /**
-   * 顯示觸發器統計資訊
-   */
-  showTriggerStats() {
-    try {
-      const stats = TriggerManager.getTriggerStats();
-      
-      const message = `📊 觸發器統計資訊：
-      
-總觸發器數量: ${stats.total}
-
-🚀 全域郵件觸發器: ${stats.globalTriggers}
-📧 回覆檢測觸發器: ${stats.replyTriggers}
-🔧 其他觸發器: ${stats.others}
-
-運行模式: 正式模式 (每小時檢查)`;
-      
-      // 觸發器統計結果改為console log輸出，不中斷用戶操作
-      console.log('⚙️ 觸發器統計:', message);
-      
-    } catch (error) {
-      SpreadsheetApp.getUi().alert('錯誤', `無法取得觸發器統計: ${error.message}`, SpreadsheetApp.getUi().ButtonSet.OK);
-    }
-  },
-
-  /**
    * 從選單執行 Send Now（掃描所有勾選的復選框）
    */
   sendNowFromMenu() {
@@ -87,71 +62,6 @@ const MenuService = {
     } catch (error) {
       console.error('Send Now 從選單執行失敗:', error);
       SpreadsheetApp.getUi().alert('錯誤', `Send Now 執行失敗: ${error.message}`, SpreadsheetApp.getUi().ButtonSet.OK);
-    }
-  },
-
-  /**
-   * 刪除所有觸發器（選單功能）
-   */
-  deleteAllTriggersMenu() {
-    const ui = SpreadsheetApp.getUi();
-    const result = ui.alert(
-      '⚠️ 刪除所有觸發器',
-      '確定要刪除所有 Auto Lead Warmer 相關觸發器嗎？\n\n這將停止所有郵件發送和自動檢測功能。\n\n⚠️ 此操作無法復原！',
-      ui.ButtonSet.YES_NO
-    );
-    
-    if (result === ui.Button.YES) {
-      try {
-        const deletedCount = TriggerManager.deleteAllLeadWarmerTriggers();
-        // 使用非阻塞toast通知顯示刪除結果
-        ToastService.showSuccess(`已刪除 ${deletedCount} 個觸發器，所有自動功能已停止`, 4);
-      } catch (error) {
-        ui.alert('錯誤', `刪除觸發器失敗: ${error.message}`, ui.ButtonSet.OK);
-      }
-    }
-  },
-
-  /**
-   * 顯示像素追蹤統計
-   */
-  showPixelTrackingStats() {
-    try {
-      const stats = PixelTrackingService.getPixelTrackingStats();
-
-      let message = `📊 像素追蹤統計報告：\n\n`;
-
-      if (stats.error) {
-        message += `❌ 錯誤：${stats.error}`;
-      } else {
-        message += `📧 總發送數：${stats.totalRows} 個潛在客戶\n`;
-        if (stats.bouncedCount > 0) {
-          const bounceRate = (stats.bouncedCount / stats.totalRows * 100).toFixed(1);
-          message += `📤 退信數：${stats.bouncedCount} 個 (${bounceRate}%)\n`;
-          message += `✅ 成功送達：${stats.deliveredRows} 個\n`;
-        }
-        message += `👀 已開信數：${stats.openedCount} 人\n`;
-        message += `💬 已回信數：${stats.repliedCount} 人\n`;
-        message += `📈 開信率：${stats.openRate}%\n\n`;
-
-        if (stats.deliveredRows > 0) {
-          const replyRate = (stats.repliedCount / stats.deliveredRows * 100).toFixed(1);
-          message += `💌 回信率：${replyRate}% (基於送達郵件)`;
-        } else {
-          message += `尚無成功送達記錄`;
-        }
-      }
-
-      // 像素追蹤統計結果改為console log輸出，不中斷用戶操作
-      console.log('📈 像素追蹤統計:', message);
-
-      return stats;
-
-    } catch (error) {
-      console.error('顯示像素追蹤統計時發生錯誤:', error);
-      // 統計錯誤改為console log輸出，不中斷用戶操作
-      console.error('❌ 無法獲取像素追蹤統計:', error.message);
-      return { error: error.message };
     }
   },
 
@@ -286,21 +196,8 @@ const MenuService = {
 };
 
 // 全局函數包裝器
-function showTriggerStats() {
-  return MenuService.showTriggerStats();
-}
-
 function sendNowFromMenu() {
   return MenuService.sendNowFromMenu();
-}
-
-
-function deleteAllTriggersMenu() {
-  return MenuService.deleteAllTriggersMenu();
-}
-
-function showPixelTrackingStats() {
-  return MenuService.showPixelTrackingStats();
 }
 
 function checkOpenAndReplies() {
