@@ -325,7 +325,7 @@ Please write a professional follow-up email based on the following information. 
 
 # Writing Style:
 - Use a relaxed, natural tone close to handwritten letters, avoid being overly commercial, make the recipient feel it is person-to-person communication
-- Keep length between 270-330 words, content should be concise and powerful`,
+- Keep length between 100-200 words, content should be concise and powerful`,
 
         email2: `# Task
 Please write the second follow-up email based on the following information. Please write in English.
@@ -343,7 +343,7 @@ Please write the second follow-up email based on the following information. Plea
 
 # Writing Style:
 - Use a relaxed, natural tone close to handwritten letters, avoid being overly commercial, make the recipient feel it is person-to-person communication
-- Keep length between 270-330 words, content should be concise and powerful`,
+- Keep length between 100-200 words, content should be concise and powerful`,
 
         email3: `# Task
 Please write the third follow-up email based on the following information. Please write in English.
@@ -365,7 +365,7 @@ Please write the third follow-up email based on the following information. Pleas
 # Writing Style:
 - There should be a sense of urgency
 - Use a relaxed, natural tone close to handwritten letters, avoid being overly commercial, make the recipient feel it is person-to-person communication
-- Keep length between 270-330 words, content should be concise and powerful`
+- Keep length between 100-200 words, content should be concise and powerful`
       },
       'zh': {
         email1: `# 任務
@@ -384,7 +384,7 @@ Please write the third follow-up email based on the following information. Pleas
 
 # 寫作風格：
 - 內容採用輕鬆、接近手寫信感的自然語氣，避免過度商業化，讓對方覺得是人與人的溝通
-- 長度控制在270~330字，內容要簡潔有力`,
+- 長度控制在150~250字，內容要簡潔有力`,
 
         email2: `# 任務
 請根據以下資訊撰寫第二封追蹤信件。請用繁體中文撰寫。
@@ -402,7 +402,7 @@ Please write the third follow-up email based on the following information. Pleas
 
 # 寫作風格：
 - 內容採用輕鬆、接近手寫信感的自然語氣，避免過度商業化，讓對方覺得是人與人的溝通
-- 長度控制在270~330字，內容要簡潔有力`,
+- 長度控制在150~250字，內容要簡潔有力`,
 
         email3: `# 任務
 請根據以下資訊撰寫第三封追蹤信件。請用繁體中文撰寫。
@@ -424,7 +424,7 @@ Please write the third follow-up email based on the following information. Pleas
 # 寫作風格：
 - 要有緊迫感
 - 內容採用輕鬆、接近手寫信感的自然語氣，避免過度商業化，讓對方覺得是人與人的溝通
-- 長度控制在270~330字，內容要簡潔有力`
+- 長度控制在150~250字，內容要簡潔有力`
       }
     };
 
