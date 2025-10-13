@@ -35,51 +35,40 @@ const UserInfoService = {
   setupUserInfoSheet(sheet) {
     // 設定標題
     sheet.getRange(1, 1).setValue('Personal Information for Email Signatures').setFontWeight('bold').setFontSize(14);
-    
+
+    // 取得當前語言的郵件提示詞預設值
+    const currentLang = LocalizationService.getCurrentLanguage();
+    const emailPrompts = LocalizationService.getEmailPromptDefaults(currentLang);
+
     // 設定欄位標籤和格式
     const fields = Object.values(USER_INFO_FIELDS);
-    
+
     for (const field of fields) {
       // 設定標籤（第1列）
       const labelCell = sheet.getRange(field.row, 1);
       labelCell.setValue(field.label + ':');
       labelCell.setFontWeight('bold');
       labelCell.setHorizontalAlignment('right');
-      
+
       // 設定輸入區域格式（第2列）
       const inputCell = sheet.getRange(field.row, field.col);
       inputCell.setBackground('#f0f8ff');
       inputCell.setBorder(true, true, true, true, false, false);
-      
+
       // 如果有預設值，設定預設值
       if (field.default) {
         inputCell.setValue(field.default);
       }
     }
-    
+
+    // 設定郵件提示詞預設值（使用 LocalizationService）
+    sheet.getRange(USER_INFO_FIELDS.EMAIL1_PROMPT.row, USER_INFO_FIELDS.EMAIL1_PROMPT.col).setValue(emailPrompts.email1);
+    sheet.getRange(USER_INFO_FIELDS.EMAIL2_PROMPT.row, USER_INFO_FIELDS.EMAIL2_PROMPT.col).setValue(emailPrompts.email2);
+    sheet.getRange(USER_INFO_FIELDS.EMAIL3_PROMPT.row, USER_INFO_FIELDS.EMAIL3_PROMPT.col).setValue(emailPrompts.email3);
+
     // 設定列寬
     sheet.setColumnWidth(1, 120); // 標籤列
     sheet.setColumnWidth(2, 300); // 輸入列
-    
-    // 動態計算說明文字的位置
-    const maxFieldRow = Math.max(...fields.map(f => f.row));
-    const signatureHelpRow = maxFieldRow + 1;
-    const promptHelpRow = maxFieldRow + 3;
-    
-    // 添加簽名說明
-    sheet.getRange(signatureHelpRow, 1, 1, 2).merge();
-    sheet.getRange(signatureHelpRow, 1).setValue('💡 Personal information above will be automatically added to all generated emails as your signature.');
-    sheet.getRange(signatureHelpRow, 1).setFontStyle('italic').setFontColor('#666666');
-    
-    // 添加研習活動說明
-    sheet.getRange(signatureHelpRow + 1, 1, 1, 2).merge();
-    sheet.getRange(signatureHelpRow + 1, 1).setValue('🎯 Seminar Info will be used to auto-generate Seminar Brief for all leads analysis.');
-    sheet.getRange(signatureHelpRow + 1, 1).setFontStyle('italic').setFontColor('#666666');
-    
-    // 添加提示欄位的說明
-    sheet.getRange(promptHelpRow, 1, 1, 2).merge();
-    sheet.getRange(promptHelpRow, 1).setValue('✏️ Customize email generation prompts below. Leave blank to use default prompts.');
-    sheet.getRange(promptHelpRow, 1).setFontStyle('italic').setFontColor('#666666');
     
     console.log('用戶資訊工作表設定完成');
   },
@@ -176,6 +165,31 @@ const UserInfoService = {
       console.log('研習活動簡介已更新到工作表');
     } catch (error) {
       console.error('更新研習活動簡介到工作表失敗:', error);
+    }
+  },
+
+  /**
+   * 更新郵件提示詞語言
+   * 當語言切換時，將 Email Prompt 1-3 更新為新語言的預設值
+   *
+   * @function updateEmailPromptsLanguage
+   * @param {string} language - 語言代碼 ('en' 或 'zh')
+   * @returns {void}
+   */
+  updateEmailPromptsLanguage(language) {
+    try {
+      const sheet = this.getUserInfoSheet();
+      const prompts = LocalizationService.getEmailPromptDefaults(language);
+
+      // 更新三個郵件提示詞欄位
+      sheet.getRange(USER_INFO_FIELDS.EMAIL1_PROMPT.row, USER_INFO_FIELDS.EMAIL1_PROMPT.col).setValue(prompts.email1);
+      sheet.getRange(USER_INFO_FIELDS.EMAIL2_PROMPT.row, USER_INFO_FIELDS.EMAIL2_PROMPT.col).setValue(prompts.email2);
+      sheet.getRange(USER_INFO_FIELDS.EMAIL3_PROMPT.row, USER_INFO_FIELDS.EMAIL3_PROMPT.col).setValue(prompts.email3);
+
+      console.log(`郵件提示詞已更新為 ${language} 語言`);
+    } catch (error) {
+      console.error('更新郵件提示詞語言失敗:', error);
+      throw error;
     }
   },
 

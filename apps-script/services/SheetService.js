@@ -164,8 +164,8 @@ const SheetService = {
    */
   markRowProcessed(sheet, rowIndex) {
     this.updateStatus(sheet, rowIndex, 'Running');
-    this.updateInfo(sheet, rowIndex, '已完成內容生成並設定排程');
-    
+    this.updateInfo(sheet, rowIndex, 'Content generated and schedules set');
+
     // 當狀態變為 Running 時，設置 Send Now 按鈕
     this.setupSendNowButton(sheet, rowIndex);
   },

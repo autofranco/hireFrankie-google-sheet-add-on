@@ -149,17 +149,17 @@ const SetupHelpers = {
 
     const message = infoMessage.toLowerCase();
 
-    if (message.includes('bounced') || message.includes('退信')) {
+    if (message.includes('bounced')) {
       return {
         background: '#ffebee', // Light red
         fontColor: '#c62828'   // Dark red
       };
-    } else if (message.includes('已開信') || message.includes('開信')) {
+    } else if (message.includes('email opened') || message.includes('opened')) {
       return {
         background: '#e8f5e8', // Light green
         fontColor: '#2e7d32'   // Dark green
       };
-    } else if (message.includes('已回信') || message.includes('回信')) {
+    } else if (message.includes('lead replied') || message.includes('replied')) {
       return {
         background: '#e3f2fd', // Light blue
         fontColor: '#1565c0'   // Dark blue

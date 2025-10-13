@@ -63,7 +63,7 @@ const MenuService = {
 
           } catch (error) {
             console.error(`第 ${i} 行 Send Now 失敗:`, error);
-            SheetService.updateInfo(sheet, i, `[Error] Send Now 失敗: ${error.message}`);
+            SheetService.updateInfo(sheet, i, `[Error] Send Now failed: ${error.message}`);
             errorCount++;
           }
         }
@@ -163,13 +163,16 @@ const MenuService = {
       const newLang = LocalizationService.toggleLanguage();
       const languageDisplayName = LocalizationService.getLanguageDisplayName(newLang);
 
+      // 更新 User Info 工作表的郵件提示詞
+      UserInfoService.updateEmailPromptsLanguage(newLang);
+
       // 重新載入選單
       onOpen();
 
       // 顯示成功訊息
       const message = newLang === 'en'
-        ? `Language switched to: ${languageDisplayName}\n\nGenerated content (Leads Profile, Mail Angles) will now be in English.`
-        : `語言已切換為: ${languageDisplayName}\n\n生成的內容（客戶畫像、郵件切入點）將使用繁體中文。`;
+        ? `Language switched to: ${languageDisplayName}\n\nGenerated content (Leads Profile, Mail Angles) and Email Prompts will now be in English.`
+        : `語言已切換為: ${languageDisplayName}\n\n生成的內容（客戶畫像、郵件切入點）和郵件提示詞將使用繁體中文。`;
 
       ToastService.showSuccess(message, 5);
 

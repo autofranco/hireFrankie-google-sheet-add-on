@@ -147,13 +147,13 @@ const AnalyticsService = {
             // 檢查是否為退信
             const info = sheet.getRange(i, COLUMNS.INFO + 1).getValue();
             const infoLower = info ? info.toString().toLowerCase() : '';
-            const isBounced = infoLower.includes('bounced') || infoLower.includes('退信');
+            const isBounced = infoLower.includes('bounced');
 
             if (isBounced) {
               bouncedLeads++;
             } else {
               // 只統計未退信的潛在客戶的開信狀態
-              if (info && (info.toString().includes('已開信') || info.toString().includes('已回信'))) {
+              if (info && (info.toString().includes('Email opened') || info.toString().includes('Lead replied'))) {
                 totalOpened++;
               }
             }
@@ -212,13 +212,13 @@ const AnalyticsService = {
             // 檢查是否為退信
             const info = sheet.getRange(i, COLUMNS.INFO + 1).getValue();
             const infoLower = info ? info.toString().toLowerCase() : '';
-            const isBounced = infoLower.includes('bounced') || infoLower.includes('退信');
+            const isBounced = infoLower.includes('bounced');
 
             if (isBounced) {
               bouncedLeads++;
             } else {
               // 只統計未退信的潛在客戶的回信狀態
-              if (info && info.toString().includes('已回信')) {
+              if (info && info.toString().includes('Lead replied')) {
                 totalReplied++;
               }
             }

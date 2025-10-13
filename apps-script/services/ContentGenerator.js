@@ -201,7 +201,9 @@ const ContentGenerator = {
    * @private
    */
   buildMailPrompt(emailPrompt, data, seminarBrief) {
-    const promptTemplate = EMAIL_PROMPT_TEMPLATE
+    // 取得當前語言的郵件提示詞模板
+    const currentLang = LocalizationService.getCurrentLanguage();
+    const promptTemplate = LocalizationService.getEmailPromptTemplate(currentLang)
       .replace(/{department}/g, data.department)
       .replace(/{position}/g, data.position)
       .replace(/{firstName}/g, data.firstName)

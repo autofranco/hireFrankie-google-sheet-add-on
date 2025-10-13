@@ -268,6 +268,218 @@ Format Requirements:
     };
 
     return prompts[language] || prompts[this.DEFAULT_LANGUAGE];
+  },
+
+  /**
+   * 取得郵件提示詞預設值
+   */
+  getEmailPromptDefaults(language = null) {
+    if (!language) {
+      language = this.getCurrentLanguage();
+    }
+
+    const prompts = {
+      'en': {
+        email1: `# Task
+Please write a professional follow-up email based on the following information. Please write in English.
+
+# Background
+- The client has already attended our event, this email is for follow-up
+
+# Email Subject
+- Use a similar sentence pattern: <Benefit mentioned in Mail Angle that can help the client achieve> Suggestions for <Client Title>
+- Must be within 20 words
+
+# Content Motivation
+- Start by thanking them for participating in the event, empathize with the difficulties their position faces in their company and industry
+- Include a clear call to action, aiming to invite the client for an online product demonstration or online consultation
+
+# Writing Style:
+- Use a relaxed, natural tone close to handwritten letters, avoid being overly commercial, make the recipient feel it is person-to-person communication
+- Keep length between 270-330 words, content should be concise and powerful`,
+
+        email2: `# Task
+Please write the second follow-up email based on the following information. Please write in English.
+
+# Background
+- The client has already attended our event, this is the second follow-up email
+
+# Email Subject
+- Use a similar sentence pattern: <Benefit mentioned in Mail Angle that can help the client achieve> Suggestions for <Client Title>
+- Must be within 20 words
+
+# Content Motivation
+- Start by saying it's great to contact you again, empathize with the difficulties their position faces in their company and industry
+- Include a clear call to action, aiming to invite the client for an online product demonstration or online consultation
+
+# Writing Style:
+- Use a relaxed, natural tone close to handwritten letters, avoid being overly commercial, make the recipient feel it is person-to-person communication
+- Keep length between 270-330 words, content should be concise and powerful`,
+
+        email3: `# Task
+Please write the third follow-up email based on the following information. Please write in English.
+
+# Background
+- The client has already attended our event, this is the third follow-up email
+
+# Email Subject
+- Use a similar sentence pattern: <Benefit mentioned in Mail Angle that can help the client achieve> Suggestions for <Client Title>
+- Must be within 20 words
+
+# Content Motivation
+- This is the last follow-up, must integrate Leads Profile and mail angle, restate client needs and challenges
+- Emphasize the cost of missing out
+- Provide the final value
+- Include a clear call to action, aiming to invite the client for an online product demonstration or online consultation
+- Leave a good impression, pave the way for future cooperation
+
+# Writing Style:
+- There should be a sense of urgency
+- Use a relaxed, natural tone close to handwritten letters, avoid being overly commercial, make the recipient feel it is person-to-person communication
+- Keep length between 270-330 words, content should be concise and powerful`
+      },
+      'zh': {
+        email1: `# 任務
+請根據以下資訊撰寫一封專業的追蹤信件。請用繁體中文撰寫。
+
+# 背景
+- 客戶已參加過我方舉辦的活動，此信是做後續追蹤
+
+# 信件主旨
+- 用類似的句型：給 <客戶稱謂> 的 <Mail Angle中提及能幫助客戶達到的具體效益> 建議
+- 必須20個字以內
+
+# 內容動機
+- 開頭先感謝他參與活動，同理他的職位在該公司與該產業會碰到的困難
+- 包含明確的行動呼籲，目標是邀約客戶進行線上產品演示說明或是線上諮詢
+
+# 寫作風格：
+- 內容採用輕鬆、接近手寫信感的自然語氣，避免過度商業化，讓對方覺得是人與人的溝通
+- 長度控制在270~330字，內容要簡潔有力`,
+
+        email2: `# 任務
+請根據以下資訊撰寫第二封追蹤信件。請用繁體中文撰寫。
+
+# 背景
+- 客戶已參加過我方舉辦的活動，此信是第二封做後續追蹤的信
+
+# 信件主旨
+- 用類似的句型：給 <客戶稱謂> 的 <Mail Angle中提及能幫助客戶達到的具體效益> 建議
+- 必須20個字以內
+
+# 內容動機
+- 開頭說很開心能再聯絡您，同理他的職位在該公司與該產業會碰到的困難
+- 包含明確的行動呼籲，目標是邀約客戶進行線上產品演示說明或是線上諮詢
+
+# 寫作風格：
+- 內容採用輕鬆、接近手寫信感的自然語氣，避免過度商業化，讓對方覺得是人與人的溝通
+- 長度控制在270~330字，內容要簡潔有力`,
+
+        email3: `# 任務
+請根據以下資訊撰寫第三封追蹤信件。請用繁體中文撰寫。
+
+# 背景
+- 客戶已參加過我方舉辦的活動，此信是第三封做後續追蹤的信
+
+# 信件主旨
+- 用類似的句型：給 <客戶稱謂> 的 <Mail Angle中提及能幫助客戶達到的具體效益> 建議
+- 必須20個字以內
+
+# 內容動機
+- 這是最後一次追蹤，必須融合Leads Profile和mail angle，重述客戶需求和挑戰
+- 強調錯過的成本
+- 提供最後的價值
+- 包含明確的行動呼籲，目標是邀約客戶進行線上產品演示說明或是線上諮詢
+- 留下好印象，為未來合作鋪路
+
+# 寫作風格：
+- 要有緊迫感
+- 內容採用輕鬆、接近手寫信感的自然語氣，避免過度商業化，讓對方覺得是人與人的溝通
+- 長度控制在270~330字，內容要簡潔有力`
+      }
+    };
+
+    return prompts[language] || prompts[this.DEFAULT_LANGUAGE];
+  },
+
+  /**
+   * 取得郵件生成提示詞模板
+   * 這是附加在用戶自定義郵件提示詞後面的通用模板
+   */
+  getEmailPromptTemplate(language = null) {
+    if (!language) {
+      language = this.getCurrentLanguage();
+    }
+
+    const templates = {
+      'en': `
+- Start by using Leads Profile information to demonstrate understanding of the client's position and their company
+- Content should use the Mail Angle perspective, using Leads Profile information to make the client feel this email is specifically written for 'them' and 'their company'
+- Especially consider the special needs and focus points of the client as {position} in the {department} department
+- Client title should only include a brief job title for mid-level management and above, otherwise use name only
+- When writing the email, based on the country or culture of the client company in Leads Profile, determine the most appropriate client title for formal emails according to business letter writing conventions. Email subject and email body must use the same title
+- Never translate the client's name, regardless of language
+
+# Client Information
+- Recipient: {firstName}
+- Position: {position}
+- Department: {department}
+- Leads Profile: {leadsProfile}
+
+# Our Event Information
+{seminarBrief}
+
+# Email Angle
+Mail Angle: {mailAngle}
+
+# Output
+Please provide in the following format:
+Subject: [Email Subject]
+Content: [Email Body]
+
+# Notes
+- Strictly prohibited from generating non-existent companies, brands, solutions, products, cases, data - only use the above information.
+- Do not mention any personal names other than the client in the email, only mention company names
+- Please do not use any Markdown format (such as **bold** or *italic*), please use plain text format, you can use quotation marks to emphasize key content.
+- Strictly prohibited from outputting any signature, greetings, or contact information, only write the email body content
+- Strictly limit not mentioning the client company's capital and number of employees in the email body
+- Please format the email body in paragraphs, avoiding overly long paragraphs. Content with the same theme or logical relationship should be grouped into the same paragraph. Leave a blank line between different paragraphs to ensure clear hierarchy and easier reading.`,
+
+      'zh': `
+- 開場使用Leads Profile的資訊展現對客戶職位與其公司的了解
+- 內容要使用 Mail Angle 的角度切入，使用Leads Profile的資訊讓客戶感覺此封信件是專門為'他'和'他的公司'寫的
+- 特別考慮客戶在{department}部門擔任{position}職位的特殊需求和關注重點
+- 客戶稱謂只有中階管理層以上才需要加上簡短職稱，不然用姓名即可
+- 在撰寫郵件時，請根據Leads Profile中的客戶公司的國家或文化的商業信件書寫慣例，判斷在正式郵件中最合適的客戶稱謂。郵件主旨與郵件正文務必使用同樣稱呼
+- 切勿翻譯客戶姓名，無論語言
+
+# 客戶方資訊
+- 收件人: {firstName}
+- 職位: {position}
+- 部門: {department}
+- Leads Profile : {leadsProfile}
+
+# 我方舉辦的活動資訊
+{seminarBrief}
+
+# 信件切入點
+Mail Angle: {mailAngle}
+
+# 輸出
+請按照以下格式提供：
+主旨：[郵件主旨]
+內容：[郵件正文]
+
+# 注意
+- 嚴禁生成不存在的公司、品牌、解決方案、產品、案例、數據，只能使用上的資訊。
+- 不要在信中提及客戶以外的個人姓名，只能提到公司名
+- 請不要使用任何 Markdown 格式（如 **粗體** 或 *斜體*），請使用純文字格式，可以用「」符號來強調重點內容。
+- 嚴禁輸出任何簽名、祝福或聯絡方式，只寫郵件正文內容
+- 嚴格限制不在郵件正文中提及客戶公司的資本額與人數
+- 郵件正文請分段排版，避免過長段落。相同主題或邏輯相關的內容，請群聚為同一段落。不同段落之間請空一行，確保層次清楚、內容更易讀。`
+    };
+
+    return templates[language] || templates[this.DEFAULT_LANGUAGE];
   }
 };
 

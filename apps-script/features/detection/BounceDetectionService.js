@@ -291,7 +291,7 @@ const BounceDetectionService = {
               bouncesFound++;
 
               // 更新 INFO 欄位顯示退信狀態
-              const bounceInfo = `Email bounced (${bounceResult.bounceDate.toLocaleString('zh-TW')})`;
+              const bounceInfo = `Email bounced (${bounceResult.bounceDate.toLocaleString('en-US')})`;
               SheetService.updateInfo(sheet, i, bounceInfo);
 
               console.log(`✅ 發現退信: ${firstName} (${email}) - 已標記退信狀態`);

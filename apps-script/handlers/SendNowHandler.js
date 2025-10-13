@@ -150,8 +150,8 @@ const SendNowHandler = {
       // 如果所有郵件都已發送（都有刪除線）
       if (mail1Sent && mail2Sent && mail3Sent) {
         SheetService.updateStatus(sheet, rowIndex, 'Done');
-        SheetService.updateInfo(sheet, rowIndex, '全部郵件已手動發送完成');
-        
+        SheetService.updateInfo(sheet, rowIndex, 'All emails manually sent');
+
         // 清除 Send Now 復選框
         SheetService.setupSendNowButton(sheet, rowIndex);
         

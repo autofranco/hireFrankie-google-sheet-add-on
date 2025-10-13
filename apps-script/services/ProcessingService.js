@@ -234,7 +234,7 @@ const ProcessingService = {
 
             // 標記為已處理
             SheetService.markRowProcessed(sheet, rowIndex);
-            SheetService.updateInfo(sheet, rowIndex, '🎉 完成！已設定所有郵件排程');
+            SheetService.updateInfo(sheet, rowIndex, '🎉 Complete! All email schedules set');
             successCount++;
             console.log(`第 ${rowIndex} 行處理成功`);
           } else {
@@ -281,7 +281,7 @@ const ProcessingService = {
 
       // 更新狀態
       batchRowIndexes.forEach(rowIndex => {
-        SheetService.updateInfo(sheet, rowIndex, '正在生成客戶畫像...');
+        SheetService.updateInfo(sheet, rowIndex, 'Generating leads profile...');
       });
 
       // 批次生成
@@ -292,9 +292,9 @@ const ProcessingService = {
         const rowIndex = batchRowIndexes[index];
         if (result.success) {
           sheet.getRange(rowIndex, COLUMNS.LEADS_PROFILE + 1).setValue(result.content);
-          SheetService.updateInfo(sheet, rowIndex, '✅ 客戶畫像已生成');
+          SheetService.updateInfo(sheet, rowIndex, '✅ Leads profile generated');
         } else {
-          SheetService.updateInfo(sheet, rowIndex, `❌ 客戶畫像生成失敗: ${result.error}`);
+          SheetService.updateInfo(sheet, rowIndex, `❌ Leads profile generation failed: ${result.error}`);
         }
       });
 
@@ -333,13 +333,13 @@ const ProcessingService = {
 
       if (validBatchData.length === 0) {
         console.log('沒有有效的客戶畫像可用於生成郵件切入點');
-        return batchRows.map(() => ({ success: false, error: '客戶畫像生成失敗' }));
+        return batchRows.map(() => ({ success: false, error: 'Leads profile generation failed' }));
       }
 
       // 更新狀態
       validIndexes.forEach(index => {
         const rowIndex = batchRowIndexes[index];
-        SheetService.updateInfo(sheet, rowIndex, '正在生成郵件切入點...');
+        SheetService.updateInfo(sheet, rowIndex, 'Generating mail angles...');
       });
 
       // 批次生成
@@ -372,9 +372,9 @@ const ProcessingService = {
           sheet.getRange(rowIndex, COLUMNS.MAIL_ANGLE_2 + 1).setValue(mailAngles.angle2);
           sheet.getRange(rowIndex, COLUMNS.MAIL_ANGLE_3 + 1).setValue(mailAngles.angle3);
 
-          SheetService.updateInfo(sheet, rowIndex, '✅ 所有郵件切入點已生成');
+          SheetService.updateInfo(sheet, rowIndex, '✅ All mail angles generated');
         } else {
-          SheetService.updateInfo(sheet, rowIndex, `❌ 郵件切入點生成失敗: ${result.error}`);
+          SheetService.updateInfo(sheet, rowIndex, `❌ Mail angles generation failed: ${result.error}`);
         }
       });
 
@@ -428,7 +428,7 @@ const ProcessingService = {
       // 更新狀態
       validIndexes.forEach(index => {
         const rowIndex = batchRowIndexes[index];
-        SheetService.updateInfo(sheet, rowIndex, '正在生成第1封追蹤郵件...');
+        SheetService.updateInfo(sheet, rowIndex, 'Generating follow-up email 1...');
       });
 
       // 批次生成
@@ -445,9 +445,9 @@ const ProcessingService = {
 
         if (result.success) {
           sheet.getRange(rowIndex, COLUMNS.FOLLOW_UP_1 + 1).setValue(result.content);
-          SheetService.updateInfo(sheet, rowIndex, '✅ 第1封追蹤郵件已生成');
+          SheetService.updateInfo(sheet, rowIndex, '✅ Follow-up email 1 generated');
         } else {
-          SheetService.updateInfo(sheet, rowIndex, `❌ 第一封郵件生成失敗: ${result.error}`);
+          SheetService.updateInfo(sheet, rowIndex, `❌ Email 1 generation failed: ${result.error}`);
         }
       });
 
@@ -466,7 +466,7 @@ const ProcessingService = {
    */
   setupSchedules(sheet, row, rowIndex) {
     console.log('步骤4: 设定排程时间...');
-    SheetService.updateInfo(sheet, rowIndex, '正在設定郵件排程時間...');
+    SheetService.updateInfo(sheet, rowIndex, 'Setting email schedules...');
     SpreadsheetApp.flush();
 
     const schedules = Utils.generateScheduleTimes();
@@ -476,7 +476,7 @@ const ProcessingService = {
     this.setScheduleCell(sheet, rowIndex, COLUMNS.SCHEDULE_2 + 1, schedules.schedule2);
     this.setScheduleCell(sheet, rowIndex, COLUMNS.SCHEDULE_3 + 1, schedules.schedule3);
 
-    SheetService.updateInfo(sheet, rowIndex, '✅ 排程時間已設定');
+    SheetService.updateInfo(sheet, rowIndex, '✅ Schedules set');
     SpreadsheetApp.flush();
     console.log('排程时间设定成功');
 
@@ -498,7 +498,7 @@ const ProcessingService = {
    */
   setupEmailTriggers(sheet, row, rowIndex) {
     console.log('步骤5: 設定郵件發送觸發器...');
-    SheetService.updateInfo(sheet, rowIndex, '正在設定郵件發送排程...');
+    SheetService.updateInfo(sheet, rowIndex, 'Setting email send schedules...');
     SpreadsheetApp.flush();
 
     const firstMail = sheet.getRange(rowIndex, COLUMNS.FOLLOW_UP_1 + 1).getValue();
