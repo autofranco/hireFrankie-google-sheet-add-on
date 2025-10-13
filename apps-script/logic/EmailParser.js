@@ -11,7 +11,8 @@ const EmailParser = {
    * Parse email content to extract subject and body
    * Pure function - no side effects
    *
-   * Input format: "主旨：title\n內容：\nbody content"
+   * Input format (Chinese): "主旨：title\n內容：\nbody content"
+   * Input format (English): "Subject: title\nContent: \nbody content"
    *
    * @param {string} content - Raw email content string
    * @returns {Object} { subject: string|null, body: string }
@@ -30,18 +31,20 @@ const EmailParser = {
       const line = lines[i];
       const trimmedLine = line.trim();
 
-      // Check for subject line
-      if (trimmedLine.includes('主旨：') || trimmedLine.includes('主旨:')) {
-        subject = trimmedLine.replace(/主旨[:：]/g, '').trim();
+      // Check for subject line (both Chinese and English)
+      if (trimmedLine.includes('主旨：') || trimmedLine.includes('主旨:') ||
+          trimmedLine.includes('Subject:') || trimmedLine.includes('Subject：')) {
+        subject = trimmedLine.replace(/主旨[:：]|Subject[:：]/g, '').trim();
         continue;
       }
 
-      // Check for content start line
-      if (trimmedLine.includes('內容：') || trimmedLine.includes('內容:')) {
+      // Check for content start line (both Chinese and English)
+      if (trimmedLine.includes('內容：') || trimmedLine.includes('內容:') ||
+          trimmedLine.includes('Content:') || trimmedLine.includes('Content：')) {
         inBodySection = true;
 
         // Check if there's text after the content marker on the same line
-        const contentAfterMarker = line.replace(/.*?內容[:：]\s*/, '');
+        const contentAfterMarker = line.replace(/.*?(內容|Content)[:：]\s*/, '');
         if (contentAfterMarker.trim() !== '') {
           bodyLines.push(contentAfterMarker);
         }
@@ -56,7 +59,8 @@ const EmailParser = {
 
     // If no content marker found but subject exists, use remaining as body
     if (!inBodySection && subject && lines.length > 1) {
-      const subjectLineIndex = lines.findIndex(line => line.includes('主旨'));
+      const subjectLineIndex = lines.findIndex(line =>
+        line.includes('主旨') || line.includes('Subject'));
       if (subjectLineIndex >= 0 && subjectLineIndex < lines.length - 1) {
         bodyLines = lines.slice(subjectLineIndex + 1);
       }
@@ -269,25 +273,39 @@ const EmailParser = {
 function testParseEmailContent() {
   console.log('=== Testing parseEmailContent ===');
 
-  // Test with proper format
+  // Test with Chinese format
   const content1 = '主旨：Test Subject\n內容：\nThis is the body\nMultiple lines';
   const result1 = EmailParser.parseEmailContent(content1);
-  console.log('Result 1:', result1);
-  assert(result1.subject === 'Test Subject', 'Subject should be extracted');
-  assert(result1.body.includes('This is the body'), 'Body should be extracted');
+  console.log('Result 1 (Chinese):', result1);
+  assert(result1.subject === 'Test Subject', 'Chinese subject should be extracted');
+  assert(result1.body.includes('This is the body'), 'Chinese body should be extracted');
 
-  // Test with alternative format
+  // Test with Chinese alternative format
   const content2 = '主旨:Another Subject\n內容:Body starts here';
   const result2 = EmailParser.parseEmailContent(content2);
-  console.log('Result 2:', result2);
-  assert(result2.subject === 'Another Subject', 'Subject with : should work');
+  console.log('Result 2 (Chinese alt):', result2);
+  assert(result2.subject === 'Another Subject', 'Chinese subject with : should work');
+
+  // Test with English format
+  const content3 = 'Subject: English Test\nContent: \nThis is the English body\nMultiple lines';
+  const result3 = EmailParser.parseEmailContent(content3);
+  console.log('Result 3 (English):', result3);
+  assert(result3.subject === 'English Test', 'English subject should be extracted');
+  assert(result3.body.includes('This is the English body'), 'English body should be extracted');
+
+  // Test with English alternative format
+  const content4 = 'Subject: Another English\nContent: Body starts here';
+  const result4 = EmailParser.parseEmailContent(content4);
+  console.log('Result 4 (English alt):', result4);
+  assert(result4.subject === 'Another English', 'English subject should work');
+  assert(result4.body.includes('Body starts here'), 'English body should work');
 
   // Test without markers
-  const content3 = 'Just plain content';
-  const result3 = EmailParser.parseEmailContent(content3);
-  console.log('Result 3:', result3);
-  assert(result3.subject === null, 'No subject should be null');
-  assert(result3.body === 'Just plain content', 'Content should be in body');
+  const content5 = 'Just plain content';
+  const result5 = EmailParser.parseEmailContent(content5);
+  console.log('Result 5 (no markers):', result5);
+  assert(result5.subject === null, 'No subject should be null');
+  assert(result5.body === 'Just plain content', 'Content should be in body');
 
   console.log('✅ parseEmailContent tests passed');
 }
@@ -369,11 +387,17 @@ function testTextToHtml() {
 function testExtractSubject() {
   console.log('=== Testing extractSubject ===');
 
-  const content = '主旨：Test Subject\n內容：\nBody content';
-  const result = EmailParser.extractSubject(content);
+  // Test Chinese format
+  const content1 = '主旨：Test Subject\n內容：\nBody content';
+  const result1 = EmailParser.extractSubject(content1);
+  console.log('Extracted subject (Chinese):', result1);
+  assert(result1 === 'Test Subject', 'Should extract Chinese subject');
 
-  console.log('Extracted subject:', result);
-  assert(result === 'Test Subject', 'Should extract subject');
+  // Test English format
+  const content2 = 'Subject: English Subject\nContent: \nBody content';
+  const result2 = EmailParser.extractSubject(content2);
+  console.log('Extracted subject (English):', result2);
+  assert(result2 === 'English Subject', 'Should extract English subject');
 
   console.log('✅ extractSubject tests passed');
 }
@@ -384,11 +408,17 @@ function testExtractSubject() {
 function testExtractBody() {
   console.log('=== Testing extractBody ===');
 
-  const content = '主旨：Test Subject\n內容：\nBody content\nMultiple lines';
-  const result = EmailParser.extractBody(content);
+  // Test Chinese format
+  const content1 = '主旨：Test Subject\n內容：\nBody content\nMultiple lines';
+  const result1 = EmailParser.extractBody(content1);
+  console.log('Extracted body (Chinese):', result1);
+  assert(result1.includes('Body content'), 'Should extract Chinese body');
 
-  console.log('Extracted body:', result);
-  assert(result.includes('Body content'), 'Should extract body');
+  // Test English format
+  const content2 = 'Subject: English Subject\nContent: \nEnglish body content\nMultiple lines';
+  const result2 = EmailParser.extractBody(content2);
+  console.log('Extracted body (English):', result2);
+  assert(result2.includes('English body content'), 'Should extract English body');
 
   console.log('✅ extractBody tests passed');
 }
