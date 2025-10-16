@@ -27,7 +27,12 @@ const Utils = {
     if (!currentHourSlot || emailCounter === 0) {
       // 如果計數器歸零，從當前時間段取得下一個時間段
       if (emailCounter === 0 && currentHourSlot) {
-        const slotDate = this.getNextHourSlot(new Date(parseInt(currentHourSlot)));
+        const storedSlotDate = new Date(parseInt(currentHourSlot));
+        const now = new Date();
+
+        // 檢查存儲的時間是否在過去，如果是則使用當前時間
+        const baseDate = storedSlotDate < now ? now : storedSlotDate;
+        const slotDate = this.getNextHourSlot(baseDate);
         currentHourSlot = slotDate.getTime().toString();
       } else {
         // 第一次執行，從現在開始
@@ -38,7 +43,19 @@ const Utils = {
     }
 
     // 轉換回 Date 物件
-    const schedule1 = new Date(parseInt(currentHourSlot));
+    let schedule1 = new Date(parseInt(currentHourSlot));
+
+    // 最後防線：確保 schedule1 不在過去
+    const now = new Date();
+    if (schedule1 < now) {
+      console.log('警告：檢測到過去的排程時間，重新生成...');
+      schedule1 = this.getNextHourSlot(now);
+      currentHourSlot = schedule1.getTime().toString();
+      properties.setProperty('currentHourSlot', currentHourSlot);
+      // 重置計數器
+      emailCounter = 0;
+      properties.setProperty('emailCounter', '0');
+    }
 
     // 第二封郵件：第一封後一週同時間
     const schedule2 = this.getNextWeekHourSlot(schedule1);
