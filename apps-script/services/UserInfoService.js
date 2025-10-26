@@ -214,10 +214,10 @@ const UserInfoService = {
       
       // 檢查 seminar info 是否為空
       if (!userInfo.seminarInfo || userInfo.seminarInfo.trim() === '') {
-        console.log('Seminar Info 為空，需要用戶填寫');
+        console.log('Seminar Info is empty, user input needed');
         return {
           success: false,
-          message: 'Seminar Info 欄位為空，請先填寫研習活動資訊',
+          message: 'Seminar Info field is empty',
           needsUserInput: true
         };
       }
