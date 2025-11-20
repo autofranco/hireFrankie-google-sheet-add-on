@@ -309,6 +309,169 @@ const APIService = {
   },
 
   /**
+   * 檢查用戶 Credit 餘額
+   *
+   * @function checkUserCredit
+   * @returns {Object} Credit 資訊 { credit: number, email: string }
+   * @throws {Error} 檢查失敗時拋出錯誤
+   */
+  checkUserCredit() {
+    try {
+      console.log('檢查用戶 Credit 餘額...');
+
+      // 獲取當前用戶
+      const user = Session.getActiveUser();
+      const userEmail = user.getEmail();
+
+      if (!userEmail || userEmail.trim() === '') {
+        throw new Error('無法取得用戶 Email，請確保已登入 Google 帳號');
+      }
+
+      console.log('檢查用戶:', userEmail);
+
+      // 調用 Firebase Cloud Function 取得用戶資訊
+      const payload = {
+        email: userEmail
+      };
+
+      const options = {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        payload: JSON.stringify({
+          data: payload
+        }),
+        muteHttpExceptions: true
+      };
+
+      const functionUrl = `${FIREBASE_CONFIG.functionsUrl}/getUserInfo`;
+      const response = UrlFetchApp.fetch(functionUrl, options);
+      const responseCode = response.getResponseCode();
+      const responseText = response.getContentText();
+
+      console.log('Credit 檢查回應狀態:', responseCode);
+
+      if (responseCode !== 200) {
+        let errorMessage = `HTTP ${responseCode}`;
+        try {
+          const errorData = JSON.parse(responseText);
+          errorMessage = errorData.error?.message || errorMessage;
+        } catch (e) {
+          errorMessage = responseText;
+        }
+        throw new Error(`Credit 檢查失敗: ${errorMessage}`);
+      }
+
+      let responseData;
+      try {
+        responseData = JSON.parse(responseText);
+      } catch (e) {
+        throw new Error('Credit 回應格式錯誤: ' + responseText);
+      }
+
+      if (!responseData.result) {
+        throw new Error('Credit 回應格式異常: ' + responseText);
+      }
+
+      const credit = responseData.result.credit || 0;
+      console.log(`用戶 ${userEmail} Credit 餘額: ${credit}`);
+
+      return {
+        credit: credit,
+        email: userEmail
+      };
+
+    } catch (error) {
+      console.error('檢查 Credit 錯誤:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * 扣除用戶 Credit
+   *
+   * @function deductCredit
+   * @param {number} [amount=1] - 要扣除的 Credit 數量
+   * @returns {Object} 扣除結果 { success: boolean, remainingCredit: number, deducted: number, message?: string }
+   * @throws {Error} 扣除失敗時拋出錯誤
+   */
+  deductCredit(amount = 1) {
+    try {
+      console.log(`扣除用戶 Credit: ${amount}`);
+
+      // 獲取當前用戶
+      const user = Session.getActiveUser();
+      const userEmail = user.getEmail();
+
+      if (!userEmail || userEmail.trim() === '') {
+        throw new Error('無法取得用戶 Email，請確保已登入 Google 帳號');
+      }
+
+      console.log('扣除用戶:', userEmail);
+
+      // 調用 Firebase Cloud Function 扣除 Credit
+      const payload = {
+        email: userEmail,
+        amount: amount
+      };
+
+      const options = {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        payload: JSON.stringify({
+          data: payload
+        }),
+        muteHttpExceptions: true
+      };
+
+      const functionUrl = `${FIREBASE_CONFIG.functionsUrl}/deductUserCredit`;
+      const response = UrlFetchApp.fetch(functionUrl, options);
+      const responseCode = response.getResponseCode();
+      const responseText = response.getContentText();
+
+      console.log('Credit 扣除回應狀態:', responseCode);
+
+      if (responseCode !== 200) {
+        let errorMessage = `HTTP ${responseCode}`;
+        try {
+          const errorData = JSON.parse(responseText);
+          errorMessage = errorData.error?.message || errorMessage;
+        } catch (e) {
+          errorMessage = responseText;
+        }
+        throw new Error(`Credit 扣除失敗: ${errorMessage}`);
+      }
+
+      let responseData;
+      try {
+        responseData = JSON.parse(responseText);
+      } catch (e) {
+        throw new Error('Credit 扣除回應格式錯誤: ' + responseText);
+      }
+
+      if (!responseData.result) {
+        throw new Error('Credit 扣除回應格式異常: ' + responseText);
+      }
+
+      const result = responseData.result;
+      console.log('Credit 扣除結果:', result);
+
+      if (!result.success) {
+        throw new Error(result.message || 'Credit 不足');
+      }
+
+      return result;
+
+    } catch (error) {
+      console.error('扣除 Credit 錯誤:', error);
+      throw error;
+    }
+  },
+
+  /**
    * 批次呼叫多個 LLM API (透過 Firebase Cloud Functions)
    * 使用 UrlFetchApp.fetchAll() 實現真正的並行處理
    *

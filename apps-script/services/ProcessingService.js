@@ -192,6 +192,16 @@ const ProcessingService = {
       APIService.checkUserPaymentStatus();
       console.log('✅ 用戶付費狀態驗證通過');
 
+      // 檢查用戶 Credit 餘額
+      const creditInfo = APIService.checkUserCredit();
+      console.log(`✅ Current Credit Balance: ${creditInfo.credit}`);
+
+      // 檢查是否有足夠的 Credit 處理這批次
+      const requiredCredits = batchRows.length;
+      if (creditInfo.credit < requiredCredits) {
+        throw new Error(`Credits not enough! Current balance: ${creditInfo.credit}, Required: ${requiredCredits}. Please purchase more credits to continue.`);
+      }
+
       // 獲取用戶資訊（只獲取一次）
       const userInfo = UserInfoService.getUserInfo();
 
@@ -231,6 +241,15 @@ const ProcessingService = {
               mailAnglesData[index],
               [firstMailsData[index]]
             );
+
+            // 扣除 Credit（每處理成功一筆扣除 1 credit）
+            try {
+              const deductResult = APIService.deductCredit(1);
+              console.log(`✅ Credit deducted. Remaining: ${deductResult.remainingCredit}`);
+            } catch (creditError) {
+              console.error(`Credit deduction failed for row ${rowIndex}:`, creditError);
+              // Credit 扣除失敗不影響已處理的狀態，但記錄錯誤
+            }
 
             // 標記為已處理
             SheetService.markRowProcessed(sheet, rowIndex);
