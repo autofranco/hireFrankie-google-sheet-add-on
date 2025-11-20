@@ -57,7 +57,8 @@ exports.createUser = onCall(async (request) => {
       return {
         isNewUser: false,
         email: existingUser.email,
-        paymentStatus: existingUser.paymentStatus
+        paymentStatus: existingUser.paymentStatus,
+        credit: existingUser.credit || 0
       };
     } else {
       // 用戶不存在，創建新用戶
@@ -69,12 +70,13 @@ exports.createUser = onCall(async (request) => {
           isPaidUser ? 'paid' : 'unpaid',
           'Auto-Create'
         );
-        console.log(`用戶 ${email} 已自動添加到 Google Sheets (${isPaidUser ? 'paid' : 'unpaid'})`);
+        console.log(`用戶 ${email} 已自動添加到 Google Sheets (${isPaidUser ? 'paid' : 'unpaid'}), 預設 10 credits`);
 
         return {
           isNewUser: true,
           email: email.toLowerCase(),
-          paymentStatus: isPaidUser ? 'paid' : 'unpaid'
+          paymentStatus: isPaidUser ? 'paid' : 'unpaid',
+          credit: 10
         };
       } catch (sheetError) {
         console.error('添加用戶到 Google Sheets 失敗:', sheetError);
@@ -146,6 +148,7 @@ exports.getUserInfo = onCall(async (request) => {
     return {
       email: userData.email,
       paymentStatus: userData.paymentStatus,
+      credit: userData.credit || 0,
       memberSince: userData.addedDate || null,
       updatedBy: userData.updatedBy || null
     };
@@ -275,9 +278,31 @@ async function getUserManagementSheet() {
 
   const doc = new GoogleSpreadsheet(config.sheet_id, serviceAccountAuth);
   await doc.loadInfo();
-  
+
   const sheet = doc.sheetsByIndex[0];
+
+  // 確保標題行正確設定（如果是空白工作表）
+  await ensureHeaderRow(sheet);
+
   return { doc, sheet };
+}
+
+/**
+ * 確保標題行正確設定
+ *
+ * @function ensureHeaderRow
+ * @async
+ * @private
+ * @param {Object} sheet - Google Sheets 工作表物件
+ */
+async function ensureHeaderRow(sheet) {
+  const rows = await sheet.getRows();
+
+  // 如果工作表是空的，設定標題行
+  if (rows.length === 0) {
+    await sheet.setHeaderRow(['Email', 'Payment Status', 'Credit', 'Added Date', 'Updated By']);
+    console.log('已初始化用戶管理工作表標題行');
+  }
 }
 
 /**
@@ -296,8 +321,9 @@ async function readUsersFromSheet() {
     return rows.map(row => ({
       email: row._rawData[0]?.toLowerCase() || '',
       paymentStatus: row._rawData[1]?.toLowerCase() || 'unpaid',
-      addedDate: row._rawData[2] || '',
-      updatedBy: row._rawData[3] || ''
+      credit: parseInt(row._rawData[2]) || 0,
+      addedDate: row._rawData[3] || '',
+      updatedBy: row._rawData[4] || ''
     })).filter(user => user.email);
     
   } catch (error) {
@@ -321,7 +347,7 @@ async function writeUsersToSheet(users) {
   await sheet.clear();
   
   // 設定標題行
-  await sheet.setHeaderRow(['Email', 'Payment Status', 'Added Date', 'Updated By']);
+  await sheet.setHeaderRow(['Email', 'Payment Status', 'Credit', 'Added Date', 'Updated By']);
   
   // 添加用戶資料
   const rows = users.map(user => ({
@@ -338,7 +364,7 @@ async function writeUsersToSheet(users) {
 
 /**
  * 在 Google Sheets 中更新用戶的付費狀態
- * 
+ *
  * @function updateUserPaymentStatusInSheet
  * @async
  * @private
@@ -347,29 +373,30 @@ async function writeUsersToSheet(users) {
  * @param {string} updatedBy - 更新者
  */
 async function updateUserPaymentStatusInSheet(email, paymentStatus, updatedBy) {
-  const users = await readUsersFromSheet();
+  const { sheet } = await getUserManagementSheet();
+  const rows = await sheet.getRows();
   const lowerEmail = email.toLowerCase();
-  
+
   // 尋找現有用戶
-  const existingUserIndex = users.findIndex(user => user.email === lowerEmail);
-  
-  if (existingUserIndex >= 0) {
-    // 更新現有用戶
-    users[existingUserIndex].paymentStatus = paymentStatus;
-    users[existingUserIndex].updatedBy = updatedBy;
+  const existingRow = rows.find(row => row._rawData[0]?.toLowerCase() === lowerEmail);
+
+  if (existingRow) {
+    // 更新現有用戶的特定欄位
+    existingRow._rawData[1] = paymentStatus;
+    existingRow._rawData[4] = updatedBy;
+    await existingRow.save();
+    console.log(`已更新用戶 ${lowerEmail} 的付費狀態為 ${paymentStatus}`);
   } else {
-    // 添加新用戶
-    users.push({
-      email: lowerEmail,
-      paymentStatus: paymentStatus,
-      addedDate: new Date().toISOString(),
-      updatedBy: updatedBy
+    // 添加新用戶到最後一行
+    await sheet.addRow({
+      'Email': lowerEmail,
+      'Payment Status': paymentStatus,
+      'Credit': 10,  // 新用戶預設 10 credits
+      'Added Date': new Date().toISOString(),
+      'Updated By': updatedBy
     });
+    console.log(`已新增用戶 ${lowerEmail}，預設 10 credits`);
   }
-  
-  // 寫回 Google Sheets
-  await writeUsersToSheet(users);
-  return users;
 }
 
 async function checkPaidUser(email) {
