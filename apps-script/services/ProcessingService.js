@@ -188,10 +188,6 @@ const ProcessingService = {
     let errorCount = 0;
 
     try {
-      // 檢查用戶付費狀態（只檢查一次）
-      APIService.checkUserPaymentStatus();
-      console.log('✅ 用戶付費狀態驗證通過');
-
       // 檢查用戶 Credit 餘額
       const creditInfo = APIService.checkUserCredit();
       console.log(`✅ Current Credit Balance: ${creditInfo.credit}`);
