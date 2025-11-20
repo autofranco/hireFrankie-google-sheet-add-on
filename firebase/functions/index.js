@@ -23,7 +23,7 @@ setGlobalOptions({
 
 // 匯入服務模組
 const {callLLMAPI, testPerplexity, testGemini, testGPT, testGPT5Mini, testGPT41Mini} = require('./src/llm-service');
-const {createUser, updateUserUsage, getUserInfo} = require('./src/user-service');
+const {createUser, updateUserUsage, getUserInfo, deductUserCredit} = require('./src/user-service');
 const {
   calculateTokenCost,
   logTokenUsage,
@@ -99,6 +99,12 @@ exports.updateUserUsage = updateUserUsage;
  * @see ./src/user-service.js#getUserInfo
  */
 exports.getUserInfo = getUserInfo;
+
+/**
+ * 扣除用戶 Credit
+ * @see ./src/user-service.js#deductUserCredit
+ */
+exports.deductUserCredit = deductUserCredit;
 
 /**
  * === Token Usage and Cost Calculation Functions ===

@@ -404,17 +404,17 @@ async function checkPaidUser(email) {
     // 從 Google Sheets 讀取所有用戶資料
     const users = await readUsersFromSheet();
     const lowerEmail = email.toLowerCase();
-    
+
     // 尋找用戶並檢查付費狀態
     const user = users.find(u => u.email === lowerEmail);
-    
+
     if (user) {
       return user.paymentStatus === 'paid';
     }
-    
+
     // 如果用戶不存在於 Google Sheets 中，預設為未付費
     return false;
-    
+
   } catch (error) {
     console.error('從 Google Sheets 檢查付費用戶錯誤:', error);
     // 如果 Google Sheets 讀取失敗，回退到 Firestore
@@ -423,7 +423,7 @@ async function checkPaidUser(email) {
         .collection('settings')
         .doc('paidUsers')
         .get();
-      
+
       if (paidUsersDoc.exists) {
         const paidData = paidUsersDoc.data();
         const paidEmails = paidData.emails || [];
@@ -432,7 +432,94 @@ async function checkPaidUser(email) {
     } catch (firestoreError) {
       console.error('Firestore 回退檢查也失敗:', firestoreError);
     }
-    
+
     return false;
   }
 }
+
+/**
+ * 扣除用戶 Credit
+ *
+ * @function deductUserCredit
+ * @async
+ * @param {Object} request - Firebase Functions 請求物件
+ * @param {Object} request.data - 請求數據
+ * @param {string} request.data.email - 用戶 Email
+ * @param {number} [request.data.amount=1] - 要扣除的 credit 數量，預設為 1
+ *
+ * @returns {Promise<Object>} 扣除結果
+ * @returns {boolean} returns.success - 是否扣除成功
+ * @returns {number} returns.remainingCredit - 剩餘 credit 數量
+ * @returns {string} [returns.message] - 錯誤訊息（如果失敗）
+ *
+ * @throws {HttpsError} invalid-argument - 參數無效
+ * @throws {HttpsError} failed-precondition - Credit 不足
+ * @throws {HttpsError} not-found - 用戶不存在
+ * @throws {HttpsError} internal - 系統錯誤
+ *
+ * @example
+ * // 在 Apps Script 中調用
+ * const deductCredit = firebase.functions().httpsCallable('deductUserCredit');
+ * const result = await deductCredit({ email: 'user@example.com', amount: 1 });
+ * console.log('剩餘 Credits:', result.data.remainingCredit);
+ */
+exports.deductUserCredit = onCall(async (request) => {
+  try {
+    const email = request.data.email;
+    const amount = request.data.amount || 1;
+
+    if (!email) {
+      throw new HttpsError('invalid-argument', '請提供用戶 email 地址');
+    }
+
+    if (amount <= 0) {
+      throw new HttpsError('invalid-argument', 'Credit 扣除數量必須大於 0');
+    }
+
+    console.log(`嘗試為用戶 ${email} 扣除 ${amount} credits`);
+
+    const { sheet } = await getUserManagementSheet();
+    const rows = await sheet.getRows();
+    const lowerEmail = email.toLowerCase();
+
+    // 尋找用戶
+    const userRow = rows.find(row => row._rawData[0]?.toLowerCase() === lowerEmail);
+
+    if (!userRow) {
+      throw new HttpsError('not-found', '用戶不存在，請先完成註冊');
+    }
+
+    // 獲取當前 credit (column index 2)
+    const currentCredit = parseInt(userRow._rawData[2]) || 0;
+
+    // 檢查 credit 是否足夠
+    if (currentCredit < amount) {
+      console.log(`用戶 ${email} credit 不足: 當前 ${currentCredit}, 需要 ${amount}`);
+      return {
+        success: false,
+        remainingCredit: currentCredit,
+        message: `Credit 不足。當前 credit: ${currentCredit}, 需要: ${amount}`
+      };
+    }
+
+    // 扣除 credit
+    const newCredit = currentCredit - amount;
+    userRow._rawData[2] = newCredit.toString();
+    await userRow.save();
+
+    console.log(`✅ 成功為用戶 ${email} 扣除 ${amount} credits，剩餘: ${newCredit}`);
+
+    return {
+      success: true,
+      remainingCredit: newCredit,
+      deducted: amount
+    };
+
+  } catch (error) {
+    console.error('deductUserCredit 錯誤:', error);
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+    throw new HttpsError('internal', '扣除 credit 時發生錯誤，請稍後重試');
+  }
+});
