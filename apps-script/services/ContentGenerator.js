@@ -200,7 +200,7 @@ const ContentGenerator = {
    * 構建郵件生成提示詞
    * @private
    */
-  buildMailPrompt(emailPrompt, data, seminarBrief) {
+  buildMailPrompt(emailPrompt, data, seminarBrief, backgroundContext = '') {
     // 取得當前語言的郵件提示詞模板
     const currentLang = LocalizationService.getCurrentLanguage();
 
@@ -223,7 +223,8 @@ const ContentGenerator = {
       .replace(/{seminarBrief}/g, seminarBrief)
       .replace(/{mailAngle}/g, data.mailAngle);
 
-    return `${emailPrompt}${promptTemplate}`;
+    // 在 emailPrompt 和 promptTemplate 之間插入 backgroundContext
+    return `${backgroundContext}\n\n${emailPrompt}${promptTemplate}`;
   },
 
   /**
@@ -238,6 +239,7 @@ const ContentGenerator = {
 
       const user = userInfo || UserInfoService.getUserInfo();
       const seminarBrief = user.seminarBrief || '';
+      const backgroundContext = user.backgroundContext || '';
 
       // 準備所有 API 請求
       const requests = batchData.map((data) => {
@@ -250,7 +252,7 @@ const ContentGenerator = {
         }
 
         return {
-          prompt: this.buildMailPrompt(emailPrompt, data, seminarBrief),
+          prompt: this.buildMailPrompt(emailPrompt, data, seminarBrief, backgroundContext),
           provider: 'gpt',
           model: 'gpt-5-mini-2025-08-07'
         };

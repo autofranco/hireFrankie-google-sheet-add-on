@@ -71,6 +71,10 @@ const UserInfoService = {
     sheet.getRange(USER_INFO_FIELDS.EMAIL2_PROMPT.row, USER_INFO_FIELDS.EMAIL2_PROMPT.col).setValue(emailPrompts.email2);
     sheet.getRange(USER_INFO_FIELDS.EMAIL3_PROMPT.row, USER_INFO_FIELDS.EMAIL3_PROMPT.col).setValue(emailPrompts.email3);
 
+    // 設定 Background Context 預設值
+    const backgroundContext = LocalizationService.getBackgroundContext(currentLang);
+    sheet.getRange(USER_INFO_FIELDS.BACKGROUND_CONTEXT.row, USER_INFO_FIELDS.BACKGROUND_CONTEXT.col).setValue(backgroundContext);
+
     // 設定列寬
     sheet.setColumnWidth(1, 120); // 標籤列
     sheet.setColumnWidth(2, 300); // 輸入列
@@ -106,7 +110,8 @@ const UserInfoService = {
         seminarBrief: sheet.getRange(USER_INFO_FIELDS.SEMINAR_BRIEF.row, USER_INFO_FIELDS.SEMINAR_BRIEF.col).getValue() || '',
         email1Prompt: sheet.getRange(USER_INFO_FIELDS.EMAIL1_PROMPT.row, USER_INFO_FIELDS.EMAIL1_PROMPT.col).getValue() || '',
         email2Prompt: sheet.getRange(USER_INFO_FIELDS.EMAIL2_PROMPT.row, USER_INFO_FIELDS.EMAIL2_PROMPT.col).getValue() || '',
-        email3Prompt: sheet.getRange(USER_INFO_FIELDS.EMAIL3_PROMPT.row, USER_INFO_FIELDS.EMAIL3_PROMPT.col).getValue() || ''
+        email3Prompt: sheet.getRange(USER_INFO_FIELDS.EMAIL3_PROMPT.row, USER_INFO_FIELDS.EMAIL3_PROMPT.col).getValue() || '',
+        backgroundContext: sheet.getRange(USER_INFO_FIELDS.BACKGROUND_CONTEXT.row, USER_INFO_FIELDS.BACKGROUND_CONTEXT.col).getValue() || ''
       };
       
       console.log(`已獲取用戶資訊: ${userInfo.name} (${userInfo.company})`);
@@ -116,7 +121,7 @@ const UserInfoService = {
       // 根據語言返回不同的預設問候語
       const currentLang = LocalizationService.getCurrentLanguage();
       const defaultGreeting = currentLang === 'en' ? 'Best Regards' : '順頌商祺';
-      return { greeting: defaultGreeting, name: '', company: '', title: '', contact: '', seminarInfo: '', seminarBrief: '', email1Prompt: '', email2Prompt: '', email3Prompt: '' };
+      return { greeting: defaultGreeting, name: '', company: '', title: '', contact: '', seminarInfo: '', seminarBrief: '', email1Prompt: '', email2Prompt: '', email3Prompt: '', backgroundContext: '' };
     }
   },
 
@@ -197,6 +202,10 @@ const UserInfoService = {
       // 更新問候語
       const defaultGreeting = language === 'en' ? 'Best Regards' : '順頌商祺';
       sheet.getRange(USER_INFO_FIELDS.GREETING.row, USER_INFO_FIELDS.GREETING.col).setValue(defaultGreeting);
+
+      // 更新 Background Context
+      const backgroundContext = LocalizationService.getBackgroundContext(language);
+      sheet.getRange(USER_INFO_FIELDS.BACKGROUND_CONTEXT.row, USER_INFO_FIELDS.BACKGROUND_CONTEXT.col).setValue(backgroundContext);
 
       console.log(`郵件提示詞已更新為 ${language} 語言`);
     } catch (error) {
