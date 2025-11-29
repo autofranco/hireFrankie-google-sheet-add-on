@@ -52,7 +52,14 @@ const UserInfoService = {
 
       // 設定輸入區域格式（第2列）
       const inputCell = sheet.getRange(field.row, field.col);
-      inputCell.setBackground('#f0f8ff');
+
+      // B8:B12 (Seminar Brief, Context, Email Prompts) use white background
+      if (field.row >= 8 && field.row <= 12) {
+        inputCell.setBackground('#ffffff');
+      } else {
+        inputCell.setBackground('#f0f8ff');
+      }
+
       inputCell.setBorder(true, true, true, true, false, false);
 
       // 根據語言設定預設值
@@ -74,6 +81,11 @@ const UserInfoService = {
     // 設定 Background Context 預設值
     const backgroundContext = LocalizationService.getBackgroundContext(currentLang);
     sheet.getRange(USER_INFO_FIELDS.BACKGROUND_CONTEXT.row, USER_INFO_FIELDS.BACKGROUND_CONTEXT.col).setValue(backgroundContext);
+
+    // 設定 Seminar Brief 的 placeholder (grey text)
+    const seminarBriefCell = sheet.getRange(USER_INFO_FIELDS.SEMINAR_BRIEF.row, USER_INFO_FIELDS.SEMINAR_BRIEF.col);
+    seminarBriefCell.setValue('(auto-generated)');
+    seminarBriefCell.setFontColor('#999999');
 
     // 設定列寬
     sheet.setColumnWidth(1, 120); // 標籤列
@@ -174,7 +186,9 @@ const UserInfoService = {
   updateSeminarBrief(seminarBrief) {
     try {
       const sheet = this.getUserInfoSheet();
-      sheet.getRange(USER_INFO_FIELDS.SEMINAR_BRIEF.row, USER_INFO_FIELDS.SEMINAR_BRIEF.col).setValue(seminarBrief);
+      const cell = sheet.getRange(USER_INFO_FIELDS.SEMINAR_BRIEF.row, USER_INFO_FIELDS.SEMINAR_BRIEF.col);
+      cell.setValue(seminarBrief);
+      cell.setFontColor('#000000'); // Change to black when AI-generated content is saved
       console.log('研習活動簡介已更新到工作表');
     } catch (error) {
       console.error('更新研習活動簡介到工作表失敗:', error);

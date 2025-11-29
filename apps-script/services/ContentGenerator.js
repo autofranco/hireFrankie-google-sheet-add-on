@@ -169,10 +169,6 @@ const ContentGenerator = {
     try {
       console.log('開始生成研習活動簡介...');
 
-      // 檢查用戶付費狀態
-      APIService.checkUserPaymentStatus();
-      console.log('✅ 用戶付費狀態驗證通過');
-
       const result = APIService.callLLMAPI(prompt, 'perplexity', 'sonar-pro');
       console.log('研習活動簡介生成成功:', result.content.substring(0, 100) + '...');
 

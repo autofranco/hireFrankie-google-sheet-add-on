@@ -317,7 +317,7 @@ Please write a professional email based on the following information. Please wri
 - Must be within 8 words
 
 # Content Motivation
-- Start by thanking them for participating in the event, empathize with the difficulties their position faces in their company and industry
+- Start by saying glad to connect the client, empathize with the difficulties their position faces in their company and industry
 - Include a clear call to action, aiming to invite the client for an online product demonstration or online consultation
 
 # Writing Style:
@@ -364,7 +364,7 @@ Please write the third email based on the following information. Please write in
 - 必須20個字以內
 
 # 內容動機
-- 開頭先感謝他參與活動，同理他的職位在該公司與該產業會碰到的困難
+- 開頭先說很開心能聯絡他，同理他的職位在該公司與該產業會碰到的困難
 - 包含明確的行動呼籲，目標是邀約客戶進行線上產品演示說明或是線上諮詢
 
 # 寫作風格：

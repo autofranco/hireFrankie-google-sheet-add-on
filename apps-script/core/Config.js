@@ -43,10 +43,10 @@ const USER_INFO_FIELDS = {
   CONTACT: { row: 6, col: 2, label: 'Contact' },
   SEMINAR_INFO: { row: 7, col: 2, label: 'Seminar Info' },
   SEMINAR_BRIEF: { row: 8, col: 2, label: 'Seminar Brief' },
-  BACKGROUND_CONTEXT: { row: 12, col: 2, label: 'Background Context' },
-  EMAIL1_PROMPT: { row: 9, col: 2, label: 'Email 1 Prompt' },
-  EMAIL2_PROMPT: { row: 10, col: 2, label: 'Email 2 Prompt' },
-  EMAIL3_PROMPT: { row: 11, col: 2, label: 'Email 3 Prompt' }
+  BACKGROUND_CONTEXT: { row: 9, col: 2, label: 'Context' },
+  EMAIL1_PROMPT: { row: 10, col: 2, label: 'Email 1 Prompt' },
+  EMAIL2_PROMPT: { row: 11, col: 2, label: 'Email 2 Prompt' },
+  EMAIL3_PROMPT: { row: 12, col: 2, label: 'Email 3 Prompt' }
 };
 
 // 郵件發送時間間隔配置
