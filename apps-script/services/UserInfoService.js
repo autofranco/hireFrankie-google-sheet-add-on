@@ -44,11 +44,20 @@ const UserInfoService = {
     const fields = Object.values(USER_INFO_FIELDS);
 
     for (const field of fields) {
-      // 設定標籤（第1列）
+      // 設定標籤（第1列）- Column A styling matching Leads page headers
       const labelCell = sheet.getRange(field.row, 1);
       labelCell.setValue(field.label + ':');
       labelCell.setFontWeight('bold');
       labelCell.setHorizontalAlignment('right');
+      labelCell.setBackground('#f0f0f0'); // Light gray background (same as Leads page headers)
+
+      // A2:A7 (basic info) - black text
+      // A8:A12 (AI/prompts) - gray text (same as Leads page gray headers)
+      if (field.row >= 8 && field.row <= 12) {
+        labelCell.setFontColor('#949494'); // Gray text for AI/prompt labels (same as Leads page)
+      } else {
+        labelCell.setFontColor('#000000'); // Black text for basic info labels
+      }
 
       // 設定輸入區域格式（第2列）
       const inputCell = sheet.getRange(field.row, field.col);
