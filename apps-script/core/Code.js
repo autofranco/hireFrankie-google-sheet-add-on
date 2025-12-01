@@ -47,6 +47,8 @@ function onOpen() {
   const languageDisplayName = LocalizationService.getLanguageDisplayName(currentLang);
 
   // Menu labels remain in English
+  // Note: Credit balance shows "?" in menu due to onOpen() permission limits
+  // Click the menu item to see actual credit balance
   ui.createMenu('Auto Lead Warmer')
     .addItem('⚙️ Initial Setup & Format', 'setupHeadersAndFormat')
     .addItem('🚀 Run', 'runAutoLeadWarmer')
@@ -54,6 +56,7 @@ function onOpen() {
     .addItem('👀 Check Opens & Replies', 'checkOpenAndReplies')
     .addSeparator()
     .addItem('🌐 Mail Language: ' + languageDisplayName, 'toggleLanguageMenu')
+    .addItem('💳 My Credits', 'showCreditsInfo')
     .addToUi();
 }
 

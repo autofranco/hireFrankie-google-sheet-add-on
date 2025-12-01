@@ -93,6 +93,37 @@ const MenuService = {
   },
 
   /**
+   * 顯示 Credits 資訊和購買選項
+   */
+  showCreditsInfo() {
+    try {
+      const ui = SpreadsheetApp.getUi();
+
+      console.log('顯示 Credits 資訊...');
+
+      // 獲取用戶 Credit 餘額
+      const creditInfo = APIService.checkUserCredit();
+      const credit = creditInfo.credit || 0;
+      const email = creditInfo.email || 'Unknown';
+
+      // 組合訊息
+      let message = `Email: ${email}\n`;
+      message += `Credits: ${credit}\n`;
+      message += `Get more: https://hirefrankie.ai`;
+
+      ui.alert('💳 My Credits', message, ui.ButtonSet.OK);
+
+    } catch (error) {
+      console.error('顯示 Credits 資訊失敗:', error);
+      SpreadsheetApp.getUi().alert(
+        'Error',
+        `Cannot get credits info: ${error.message}`,
+        SpreadsheetApp.getUi().ButtonSet.OK
+      );
+    }
+  },
+
+  /**
    * 檢查開信與回覆 - 綜合測試功能
    */
   checkOpenAndReplies() {
@@ -206,4 +237,8 @@ function checkOpenAndReplies() {
 
 function toggleLanguageMenu() {
   return MenuService.toggleLanguageMenu();
+}
+
+function showCreditsInfo() {
+  return MenuService.showCreditsInfo();
 }
