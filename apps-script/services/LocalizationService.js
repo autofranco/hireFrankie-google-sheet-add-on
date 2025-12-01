@@ -170,7 +170,7 @@ Please analyze the company background and output strictly in this format:
   /**
    * AI 提示詞模板 - 郵件切入點生成
    */
-  getMailAnglesPrompt(seminarBrief, firstName, position, department, leadsProfile, language = null) {
+  getMailAnglesPrompt(seminarBrief, firstName, position, department, leadsProfile, language = null, backgroundContext = '') {
     if (!language) {
       language = this.getCurrentLanguage();
     }
@@ -182,7 +182,7 @@ Please analyze the company background and output strictly in this format:
     const departmentContextChinese = hasDepartment ? `在${department}部門` : '';
 
     const prompts = {
-      'en': `# Our Event Information: ${seminarBrief}
+      'en': `${backgroundContext ? backgroundContext + '\n\n' : ''}# Our Event Information: ${seminarBrief}
 # Client Information:
 Client Name: ${firstName}
 Client Position: ${position}
@@ -200,11 +200,11 @@ Please strictly follow this format, with each angle as a separate paragraph:
 
 <aspect2>(**Participation Motivation and Communication Strategy, within 100 words, the client's possible needs for attending this seminar, and the most suitable follow-up methods and value propositions after the event**)</aspect2>
 
-<angle1>(**Email 1 content outline, within 50 words, including value proposition**)</angle1>
+<angle1>(**Email 1 content outline, within 50 words, including value proposition and the call to action above**)</angle1>
 
-<angle2>(**Email 2 outline, within 50 words, including value proposition**)</angle2>
+<angle2>(**Email 2 outline, within 50 words, including value proposition and the call to action above**)</angle2>
 
-<angle3>(**Email 3 outline, within 50 words, including value proposition**)</angle3>
+<angle3>(**Email 3 outline, within 50 words, including value proposition and the call to action above**)</angle3>
 
 # Format Requirements
 - Do not output the explanation text wrapped in **in parentheses()
@@ -215,7 +215,7 @@ ${hasDepartment ? `- Especially consider the work characteristics of the ${depar
 - Strictly prohibited from generating non-existent companies, brands, solutions, products, cases, data - only use the above information
 - Do not use Markdown format, use quotation marks to emphasize key points`,
 
-      'zh': `# 我方舉辦的活動資訊: ${seminarBrief}
+      'zh': `${backgroundContext ? backgroundContext + '\n\n' : ''}# 我方舉辦的活動資訊: ${seminarBrief}
 # 參與活動的客戶方資訊:
 客戶姓名：${firstName}
 客戶職位：${position}
@@ -233,11 +233,11 @@ ${hasDepartment ? `客戶部門：${department}` : ''}
 
 <aspect2>(**參與動機與溝通策略，100字內，客戶參加本研習活動的可能需求，以及活動後最適合的追蹤方式和價值主張**)</aspect2>
 
-<angle1>(**信件1內容大綱，50字內，包括價值主張**)</angle1>
+<angle1>(**信件1內容大綱，50字內，包括價值主張以及上方的行動呼籲**)</angle1>
 
-<angle2>(**信件2大綱，50字內，包括價值主張**)</angle2>
+<angle2>(**信件2大綱，50字內，包括價值主張以及上方的行動呼籲**)</angle2>
 
-<angle3>(**信件3大綱，50字內，包括價值主張**)</angle3>
+<angle3>(**信件3大綱，50字內，包括價值主張以及上方的行動呼籲**)</angle3>
 
 # 格式要求
 - 在parentheses()中被**包起來的說明文字不要輸出
@@ -318,7 +318,7 @@ Please write a professional email based on the following information. Please wri
 
 # Content Motivation
 - Start by saying glad to connect the client, empathize with the difficulties their position faces in their company and industry
-- Include a clear call to action, aiming to invite the client for an online product demonstration or online consultation
+- Include a clear call to action
 
 # Writing Style:
 - Keep length between 65-125 words, content should be concise and powerful`,
@@ -332,7 +332,7 @@ Please write the second email based on the following information. Please write i
 
 # Content Motivation
 - Start by saying it's great to contact you again, empathize with the difficulties their position faces in their company and industry
-- Include a clear call to action, aiming to invite the client for an online product demonstration or online consultation
+- Include a clear call to action
 
 # Writing Style:
 - Keep length between 65-125 words, content should be concise and powerful`,
@@ -348,7 +348,7 @@ Please write the third email based on the following information. Please write in
 - This is the last follow-up, must integrate Leads Profile and mail angle, restate client needs and challenges
 - Emphasize the cost of missing out
 - Provide the final value
-- Include a clear call to action, aiming to invite the client for an online product demonstration or online consultation
+- Include a clear call to action
 - Leave a good impression, pave the way for future cooperation
 
 # Writing Style:
@@ -365,7 +365,7 @@ Please write the third email based on the following information. Please write in
 
 # 內容動機
 - 開頭先說很開心能聯絡他，同理他的職位在該公司與該產業會碰到的困難
-- 包含明確的行動呼籲，目標是邀約客戶進行線上產品演示說明或是線上諮詢
+- 包含明確的行動呼籲
 
 # 寫作風格：
 - 長度控制在95~195字，內容要簡潔有力`,
@@ -379,7 +379,7 @@ Please write the third email based on the following information. Please write in
 
 # 內容動機
 - 開頭說很開心能再聯絡您，同理他的職位在該公司與該產業會碰到的困難
-- 包含明確的行動呼籲，目標是邀約客戶進行線上產品演示說明或是線上諮詢
+- 包含明確的行動呼籲
 
 # 寫作風格：
 - 長度控制在95~195字，內容要簡潔有力`,
@@ -395,7 +395,7 @@ Please write the third email based on the following information. Please write in
 - 這是最後一次追蹤，必須融合Leads Profile和mail angle，重述客戶需求和挑戰
 - 強調錯過的成本
 - 提供最後的價值
-- 包含明確的行動呼籲，目標是邀約客戶進行線上產品演示說明或是線上諮詢
+- 包含明確的行動呼籲
 - 留下好印象，為未來合作鋪路
 
 # 寫作風格：
@@ -417,12 +417,20 @@ Please write the third email based on the following information. Please write in
 
     const templates = {
       'en': `# Background
-The user has already attended our event, and the purpose of the email is to invite the client to take follow-up actions, with the email angles centered on the seminar content.
+The user has already attended our event
+
+# Call To Action
+The purpose of the email is to invite the client to book a online meeting
+
 # Tone
 Use a relaxed, natural tone close to handwritten letters, avoid being overly commercial, make the recipient feel it is person-to-person communication`,
 
       'zh': `# 背景
-用戶已經參加過我方舉辦的活動，信件的目的是邀約客戶做後續的動作，信件切入點以研習活動的內容為主軸。
+用戶已經參加過我方舉辦的活動
+
+# 行動呼籲
+信件的目的是邀約客戶進行線上諮詢
+
 # 口吻
 內容採用輕鬆、接近手寫信感的自然語氣，避免過度商業化，讓對方覺得是人與人的溝通`
     };
@@ -439,7 +447,7 @@ Use a relaxed, natural tone close to handwritten letters, avoid being overly com
     }
 
     const templates = {
-      'en': `
+      'en': `- Please ensure the email always includes a salutation at the beginning: Hi <Client Name>,
 - Using Leads Profile information to demonstrate understanding of the client's position and their company
 - Content should use the Mail Angle perspective, using Leads Profile information to make the client feel this email is specifically written for 'them' and 'their company'
 - Especially consider the special needs and focus points of the client as {position}{departmentContext}
@@ -471,7 +479,7 @@ Content: [Email Body]
 - Strictly limit not mentioning the client company's capital and number of employees in the email body
 - Please format the email body in paragraphs, avoiding overly long paragraphs. Content with the same theme or logical relationship should be grouped into the same paragraph. Leave a blank line between different paragraphs to ensure clear hierarchy and easier reading.`,
 
-      'zh': `
+      'zh': `- 務必加上上款：Hi <客戶稱謂>,
 - 使用Leads Profile的資訊展現對客戶職位與其公司的了解
 - 內容要使用 Mail Angle 的角度切入，使用Leads Profile的資訊讓客戶感覺此封信件是專門為'他'和'他的公司'寫的
 - 特別考慮客戶{departmentContextChinese}擔任{position}職位的特殊需求和關注重點

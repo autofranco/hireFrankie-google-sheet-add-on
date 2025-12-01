@@ -62,10 +62,11 @@ const ContentGenerator = {
   generateMailAngles(leadsProfile, firstName, position, department) {
     const userInfo = UserInfoService.getUserInfo();
     const seminarBrief = userInfo.seminarBrief || '';
+    const backgroundContext = userInfo.backgroundContext || '';
 
     // 使用當前語言生成提示詞
     const currentLang = LocalizationService.getCurrentLanguage();
-    const prompt = LocalizationService.getMailAnglesPrompt(seminarBrief, firstName, position, department, leadsProfile, currentLang);
+    const prompt = LocalizationService.getMailAnglesPrompt(seminarBrief, firstName, position, department, leadsProfile, currentLang, backgroundContext);
 
     try {
       console.log('开始生成邮件切入点...');
@@ -366,6 +367,7 @@ const ContentGenerator = {
       // 使用傳入的 userInfo 或獲取新的（向後兼容）
       const user = userInfo || UserInfoService.getUserInfo();
       const seminarBrief = user.seminarBrief || '';
+      const backgroundContext = user.backgroundContext || '';
 
       // 取得當前語言
       const currentLang = LocalizationService.getCurrentLanguage();
@@ -378,7 +380,8 @@ const ContentGenerator = {
           data.position,
           data.department,
           data.leadsProfile,
-          currentLang
+          currentLang,
+          backgroundContext
         );
 
         return {
