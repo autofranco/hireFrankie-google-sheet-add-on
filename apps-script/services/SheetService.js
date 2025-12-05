@@ -153,7 +153,7 @@ const SheetService = {
       ToastService.showCompletion('Sheet setup', {setup: 'Sheet rename, User Info create, Firebase init, column width set'}, 5);
 
       // 重要提醒仍使用console log
-      console.log('💡 重要提醒：請到 "User Info" 工作表填入個人資訊，並在 "Seminar Info" 欄位填寫研習活動資訊');
+      console.log('💡 重要提醒：請到 "User Info" 工作表填入個人資訊，並在 "Event Info" 欄位填寫研習活動資訊');
       console.log('✅ setupHeaders 全部完成');
 
     } catch (mainError) {

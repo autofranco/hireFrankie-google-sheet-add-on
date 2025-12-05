@@ -52,8 +52,8 @@ const ProcessingService = {
         if (seminarResult.needsUserInput) {
           // Seminar Info 為空，提醒用戶填寫
           SpreadsheetApp.getUi().alert(
-            '⚠️ Missing seminar info',
-            `${seminarResult.message}\n\nPlease go to "User Info" sheet, fill "Seminar Info" (event name, URL, etc).\n\nSystem will auto create "Seminar Brief" for all customer analysis.`,
+            '⚠️ Missing Event Info',
+            `${seminarResult.message}\n\nPlease go to "User Info" sheet, fill "Event Info" (event name, URL, etc).\n\nSystem will auto create "AI Summary" for all customer analysis.`,
             SpreadsheetApp.getUi().ButtonSet.OK
           );
           return false; // 停止執行，等用戶填寫資訊
@@ -61,8 +61,8 @@ const ProcessingService = {
           // 生成失敗，但不阻止流程繼續
           console.error('研習活動簡介生成失敗，但繼續執行:', seminarResult.message);
           SpreadsheetApp.getUi().alert(
-            '⚠️ Seminar Brief create fail',
-            `${seminarResult.message}\n\nWill use existing Seminar Brief to continue.`,
+            '⚠️ AI Summary create fail',
+            `${seminarResult.message}\n\nWill use existing AI Summary to continue.`,
             SpreadsheetApp.getUi().ButtonSet.OK
           );
         }
@@ -70,8 +70,8 @@ const ProcessingService = {
         // 成功生成，提供用戶反饋但不停止執行
         console.log('研習活動簡介自動生成成功');
         SpreadsheetApp.getActiveSpreadsheet().toast(
-          '✅ Seminar Brief updated, will use for all customer analysis',
-          'Seminar Brief create done',
+          '✅ AI Summary updated, will use for all customer analysis',
+          'AI Summary create done',
           3
         );
 
