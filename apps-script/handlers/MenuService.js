@@ -109,7 +109,7 @@ const MenuService = {
       // 組合訊息
       let message = `Email: ${email}\n`;
       message += `Credits: ${credit}\n`;
-      message += `Get more: https://hirefrankie.ai`;
+      message += `Get more: https://hirefrankie.ai/#PRiCING`;
 
       ui.alert('💳 My Credits', message, ui.ButtonSet.OK);
 
