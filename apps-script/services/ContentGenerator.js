@@ -78,7 +78,15 @@ const ContentGenerator = {
 
     try {
       console.log('开始生成邮件切入点...');
-      const result = APIService.callLLMAPI(prompt, 'gpt', 'gpt-5-mini-2025-08-07');
+      // callLLMAPI(prompt, provider, model, temperature, maxTokens, useGoogleSearch)
+      const result = APIService.callLLMAPI(
+        prompt,
+        'gemini',              // provider
+        'gemini-2.5-flash',    // model
+        0.2,                    // temperature
+        5000,                   // maxTokens
+        false                   // useGoogleSearch (no web search for mail angles)
+      );
       console.log('API 回应原始内容:', result.content);
 
       // 改进的解析方法
@@ -266,8 +274,11 @@ const ContentGenerator = {
 
         return {
           prompt: this.buildMailPrompt(emailPrompt, data, seminarBrief, backgroundContext),
-          provider: 'gpt',
-          model: 'gpt-5-mini-2025-08-07'
+          provider: 'gemini',
+          model: 'gemini-2.5-flash',
+          temperature: 0.2,
+          maxTokens: 5000,
+          useGoogleSearch: false  // No web search for email generation
         };
       });
 
@@ -405,8 +416,11 @@ const ContentGenerator = {
 
         return {
           prompt: prompt,
-          provider: 'gpt',
-          model: 'gpt-5-mini-2025-08-07'
+          provider: 'gemini',
+          model: 'gemini-2.5-flash',
+          temperature: 0.2,
+          maxTokens: 5000,
+          useGoogleSearch: false  // No web search for mail angles
         };
       });
 
