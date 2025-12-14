@@ -137,6 +137,14 @@ const ProcessingService = {
 
     console.log(`找到 ${data.rows.length} 行待处理数据，將使用批次並行處理（每批次 10 筆）`);
 
+    // 立即將所有待處理行標記為 Processing（確保 timeout 後可以續繼處理）
+    console.log('將所有待處理行標記為 Processing...');
+    data.rowIndexes.forEach(rowIndex => {
+      SheetService.updateStatus(sheet, rowIndex, 'Processing');
+    });
+    SpreadsheetApp.flush();
+    console.log(`✅ 已標記 ${data.rowIndexes.length} 行為 Processing 狀態`);
+
     let processedCount = 0;
     let errorCount = 0;
 
@@ -177,12 +185,6 @@ const ProcessingService = {
    */
   processBatchConcurrently(sheet, batchRows, batchRowIndexes) {
     console.log(`=== 開始真正並行處理 ${batchRows.length} 筆資料 ===`);
-
-    // 立即將所有行狀態更新為 Processing
-    batchRowIndexes.forEach(rowIndex => {
-      SheetService.updateStatus(sheet, rowIndex, 'Processing');
-    });
-    SpreadsheetApp.flush();
 
     let successCount = 0;
     let errorCount = 0;

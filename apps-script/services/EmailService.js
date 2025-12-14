@@ -314,7 +314,34 @@ const EmailService = {
       console.log(`=== 全域郵件檢查完成 ===`);
       console.log(`檢查了 ${checkedCount} 個潛在客戶，發送了 ${sentCount} 封郵件`);
 
-      return { checked: checkedCount, sent: sentCount, statsResult: statsResult };
+      // 檢查是否有未完成的 Processing 行（timeout 後的殘留）
+      let resumedCount = 0;
+      const processingRows = [];
+      for (let row = 2; row <= lastRow; row++) {
+        const status = sheet.getRange(row, COLUMNS.STATUS + 1).getValue();
+        if (status === 'Processing') {
+          processingRows.push(row);
+        }
+      }
+
+      if (processingRows.length > 0) {
+        console.log(`=== 發現 ${processingRows.length} 個未完成的 Processing 行 ===`);
+        console.log('開始繼續生成郵件內容和排程...');
+        try {
+          ProcessingService.processAllRows(); // 續繼處理未完成的行
+          resumedCount = processingRows.length;
+          console.log(`✅ 已完成 ${resumedCount} 個未完成行的處理`);
+        } catch (resumeError) {
+          console.error('Error processing unfinished rows:', resumeError);
+        }
+      }
+
+      return {
+        checked: checkedCount,
+        sent: sentCount,
+        resumed: resumedCount,
+        statsResult: statsResult
+      };
       
     } catch (error) {
       console.error('全域郵件檢查時發生錯誤:', error);
