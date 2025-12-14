@@ -34,11 +34,18 @@ class TokenService {
         input: 1.0,
         output: 1.0
       },
-      // New pricing table according to user requirements
+      // Google Gemini models
+      'gemini-2.5-flash': {
+        input: 0.30,  // $0.3 per 1M tokens
+        output: 2.50,  // $2.5 per 1M tokens
+        // Google Search grounding: Free up to 1500 requests/day, then $35/1000 requests
+        // For simplicity, we only charge token usage, not search requests
+      },
       'gemini-2.5-flash-lite': {
         input: 0.10,
         output: 0.40
       },
+      // OpenAI GPT models
       'gpt-5-mini': {
         input: 0.25,
         output: 2.00
@@ -47,6 +54,7 @@ class TokenService {
         input: 0.40,
         output: 1.60
       },
+      // Perplexity models
       'perplexity-sonar-pro': {
         input: 3.00,
         output: 15.00

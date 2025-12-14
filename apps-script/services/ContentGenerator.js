@@ -17,7 +17,15 @@ const ContentGenerator = {
     const prompt = LocalizationService.getLeadsProfilePrompt(companyUrl, currentLang);
 
     try {
-      const result = APIService.callLLMAPI(prompt, 'perplexity', 'sonar-pro');
+      // callLLMAPI(prompt, provider, model, temperature, maxTokens, useGoogleSearch)
+      const result = APIService.callLLMAPI(
+        prompt,
+        'gemini',              // provider
+        'gemini-2.5-flash',    // model
+        0.15,                   // temperature (lower = more focused)
+        5000,                   // maxTokens
+        true                    // useGoogleSearch (enable web search)
+      );
       console.log('生成客户画像成功:', result.content.substring(0, 100) + '...');
 
       // 清理 Markdown 格式，使其適合 Google Sheets 顯示
@@ -170,7 +178,15 @@ const ContentGenerator = {
     try {
       console.log('開始生成研習活動簡介...');
 
-      const result = APIService.callLLMAPI(prompt, 'perplexity', 'sonar-pro');
+      // callLLMAPI(prompt, provider, model, temperature, maxTokens, useGoogleSearch)
+      const result = APIService.callLLMAPI(
+        prompt,
+        'gemini',              // provider
+        'gemini-2.5-flash',    // model
+        0.15,                   // temperature (lower = more focused)
+        5000,                   // maxTokens
+        true                    // useGoogleSearch (enable web search)
+      );
       console.log('研習活動簡介生成成功:', result.content.substring(0, 100) + '...');
 
       // 清理 Markdown 格式
@@ -315,8 +331,11 @@ const ContentGenerator = {
 
         return {
           prompt: prompt,
-          provider: 'perplexity',
-          model: 'sonar-pro'
+          provider: 'gemini',
+          model: 'gemini-2.5-flash',
+          temperature: 0.15,
+          maxTokens: 5000,
+          useGoogleSearch: true  // Enable Google Search for company research
         };
       });
 

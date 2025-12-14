@@ -150,7 +150,7 @@ async function callPerplexityAPI(prompt, temperature = 0.2, maxTokens = 5000) {
  * const result = await callGeminiAPI('解釋 AI 如何工作', 'gemini-2.5-flash', 0.3, 1000);
  * console.log(result.content);
  */
-async function callGeminiAPI(prompt, model = 'gemini-2.5-flash', temperature = 0.2, maxTokens = 5000) {
+async function callGeminiAPI(prompt, model = 'gemini-2.5-flash', temperature = 0.2, maxTokens = 5000, useGoogleSearch = false) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new Error('GEMINI_API_KEY 環境變數未設定');
@@ -165,18 +165,33 @@ async function callGeminiAPI(prompt, model = 'gemini-2.5-flash', temperature = 0
       apiKey: apiKey
     });
 
-    console.log(`呼叫 Gemini API - 模型: ${model}, 提示詞長度: ${prompt.length}`);
+    console.log(`呼叫 Gemini API - 模型: ${model}, 提示詞長度: ${prompt.length}, Google Search: ${useGoogleSearch}`);
 
-    // 調用 generateContent 方法，關閉 thinking 以加速回應
-    const response = await ai.models.generateContent({
+    // 配置參數
+    const config = {
+      temperature: temperature,
+      thinkingConfig: {
+        thinkingBudget: 0 // 關閉 thinking 模式
+      },
+      mediaResolution: 'MEDIA_RESOLUTION_MEDIUM'
+    };
+
+    // 如果啟用 Google Search，添加 googleSearch 工具
+    const tools = useGoogleSearch ? [{ googleSearch: {} }] : [];
+
+    // 調用 generateContent 方法
+    const requestPayload = {
       model: model,
       contents: prompt.trim(),
-      config: {
-        thinkingConfig: {
-          thinkingBudget: 0 // 關閉 thinking 模式
-        }
-      }
-    });
+      config: config
+    };
+
+    // 只在啟用 Google Search 時添加 tools
+    if (tools.length > 0) {
+      requestPayload.tools = tools;
+    }
+
+    const response = await ai.models.generateContent(requestPayload);
 
     console.log('Gemini API 調用成功');
 
@@ -637,7 +652,8 @@ exports.callLLMAPI = onCall({
       case 'gemini':
         // Gemini 預設使用 gemini-2.5-flash
         actualModel = model || 'gemini-2.5-flash';
-        result = await callGeminiAPI(prompt, actualModel, temperature, maxTokens);
+        const useGoogleSearch = request.data.useGoogleSearch || false;
+        result = await callGeminiAPI(prompt, actualModel, temperature, maxTokens, useGoogleSearch);
         break;
 
       case 'gpt':

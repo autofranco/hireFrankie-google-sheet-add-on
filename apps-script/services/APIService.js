@@ -19,13 +19,14 @@ const APIService = {
    *
    * @function callLLMAPI
    * @param {string} prompt - API 請求的提示詞內容
-   * @param {string} [provider='perplexity'] - LLM 供應商 ('perplexity' | 'gemini' | 'gpt')
+   * @param {string} [provider='gemini'] - LLM 供應商 ('perplexity' | 'gemini' | 'gpt')
    * @param {string} [model] - AI 模型名稱，依供應商而定
    * @param {number} [temperature=0.2] - AI 回應的創意程度
    * @param {number} [maxTokens=1000] - 最大回應 Token 數量
+   * @param {boolean} [useGoogleSearch=false] - 是否啟用 Google Search（僅 Gemini 支援）
    * @returns {Object} AI 回應結果，包含 content、provider、model、usage 等資訊
    */
-  callLLMAPI(prompt, provider = 'perplexity', model = null, temperature = 0.2, maxTokens = 1000) {
+  callLLMAPI(prompt, provider = 'gemini', model = null, temperature = 0.2, maxTokens = 1000, useGoogleSearch = false) {
     // 检查 prompt 是否为空或无效
     if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
       throw new Error('提示詞不能為空');
@@ -50,7 +51,8 @@ const APIService = {
         provider: provider,
         model: model,
         temperature: temperature,
-        maxTokens: maxTokens
+        maxTokens: maxTokens,
+        useGoogleSearch: useGoogleSearch
       };
 
       const options = {
@@ -422,10 +424,11 @@ const APIService = {
         const payload = {
           email: userEmail,
           prompt: request.prompt.trim(),
-          provider: request.provider || 'perplexity',
+          provider: request.provider || 'gemini',
           model: request.model || null,
           temperature: request.temperature || 0.2,
-          maxTokens: request.maxTokens || 1000
+          maxTokens: request.maxTokens || 1000,
+          useGoogleSearch: request.useGoogleSearch || false
         };
 
         return {
